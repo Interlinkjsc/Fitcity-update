@@ -1,32 +1,29 @@
+require('dotenv').config();
 const mongoose = require('mongoose');
-const path = require('path');
-
-// Load env from server env file or use MONGODB_URI env var
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://mongo:27017/Fitcity';
 
 async function migrate() {
-  await mongoose.connect(MONGODB_URI);
+  const uri = process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb://localhost:27017/Fitcity';
+  await mongoose.connect(uri);
   console.log('Connected to MongoDB');
 
   const MealPlan = require('../src/modules/programs/models/mealPlanModel');
 
-  // Set all existing meal plans without status to 'approved' (they were active before)
-  const result = await MealPlan.updateMany(
+  // Backfill status for old meal plans that have no status field
+  const r1 = await MealPlan.updateMany(
     { status: { $exists: false } },
-    { $set: { status: 'approved', rejectionReason: '' } }
+    { $set: { status: 'approved' } }
   );
-  console.log('Migrated meal plans without status:', result.modifiedCount);
+  console.log('Set status=approved (no status field):', r1.modifiedCount, 'documents');
 
-  // Also set active: true for all approved meal plans that have active: true already (no change needed)
-  // Set active: false for pending/rejected ones (they were just created)
-  const result2 = await MealPlan.updateMany(
-    { status: 'pending_admin' },
-    { $set: { active: false } }
+  // Fix active=true meal plans that have invalid/missing status
+  const r2 = await MealPlan.updateMany(
+    { active: true, status: { $nin: ['approved', 'pending_admin', 'rejected'] } },
+    { $set: { status: 'approved' } }
   );
-  console.log('Set active:false for pending meal plans:', result2.modifiedCount);
+  console.log('Fix active meal plans with invalid status:', r2.modifiedCount, 'documents');
 
   await mongoose.disconnect();
-  console.log('Migration complete');
+  console.log('Migration complete.');
 }
 
 migrate().catch(e => { console.error(e); process.exit(1); });

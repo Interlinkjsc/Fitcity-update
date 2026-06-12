@@ -213,8 +213,11 @@ exports.getSessionQr = async (req, res, next) => {
 
         // Basic state guard (final guard will be on PT scan endpoint)
         if (action === 'start' && session.status !== 'Scheduled') {
-            if (isJson) return res.status(400).json({ success: false, message: 'Chỉ có thể hiển thị QR bắt đầu cho buổi Scheduled.' });
-            req.flash('error_msg', 'Chỉ có thể hiển thị QR bắt đầu cho buổi Scheduled.');
+            const pendingMsg = 'Lịch tập này đang chờ Admin phê duyệt. Bạn sẽ nhận thông báo khi được duyệt.';
+            const genericMsg = 'Chỉ có thể hiển thị QR bắt đầu cho buổi Scheduled.';
+            const msg = session.status === 'Pending_Admin' ? pendingMsg : genericMsg;
+            if (isJson) return res.status(400).json({ success: false, message: msg });
+            req.flash('error_msg', msg);
             return res.redirect('/client/workouts');
         }
         if (action === 'end' && session.status !== 'In_Progress') {

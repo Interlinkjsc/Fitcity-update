@@ -306,8 +306,35 @@ async function init() {
     }
 }
 
+/**
+ * Auto-sync: with isCustom=true docs in DB, append any new registry permissions
+ * whose suggestedRoles includes that role but are not yet in the stored list.
+ * Only appends — never deletes existing permissions.
+ */
+async function syncNewPermissionsToRoles() {
+    try {
+        const docs = await RolePermission.find({ isCustom: true }).lean();
+        for (const doc of docs) {
+            const current = new Set(Array.isArray(doc.permissionIds) ? doc.permissionIds : []);
+            const toAdd = registry.PERMISSIONS
+                .filter((p) => p.suggestedRoles.includes(doc.role) && !current.has(p.id))
+                .map((p) => p.id);
+            if (toAdd.length > 0) {
+                const updated = [...current, ...toAdd];
+                await RolePermission.updateOne({ role: doc.role }, { $set: { permissionIds: updated } });
+                console.log(`[syncNewPermissionsToRoles] Role "${doc.role}": appended ${toAdd.length} new permission(s): ${toAdd.join(', ')}`);
+            }
+        }
+        await refreshCache();
+        console.log('[syncNewPermissionsToRoles] Sync complete.');
+    } catch (e) {
+        console.error('[syncNewPermissionsToRoles] Error:', e.message);
+    }
+}
+
 module.exports = {
     init,
+    syncNewPermissionsToRoles,
     refreshCache,
     ensureCache,
     roleHasPermission,

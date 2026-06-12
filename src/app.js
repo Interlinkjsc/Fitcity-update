@@ -63,12 +63,23 @@ app.use((req, res, next) => {
 app.use(fetchNotifications);
 
 // Middleware: tính menu items được phép cho sidebar (dựa trên role)
-app.use((req, res, next) => {
+app.use(async (req, res, next) => {
     const user = req.session.user;
     if (user) {
         res.locals.allowedAdminMenuItems = getAllowedMenuItems(user);
         res.locals.sidebarMenuGroups = getAllowedMenuGroups(user);
         res.locals.sidebarNavPayload = getSidebarNavPayload(user);
+        if (['Admin', 'Manager', 'SA'].includes(user.role)) {
+            try {
+                const WorkoutSession = require('./modules/programs/models/workoutSessionModel');
+                const MealPlan = require('./modules/programs/models/mealPlanModel');
+                res.locals.pendingSessionsCount = await WorkoutSession.countDocuments({ status: 'Pending_Admin' });
+                res.locals.pendingMealPlansCount = await MealPlan.countDocuments({ status: 'pending_admin' });
+            } catch (e) {
+                res.locals.pendingSessionsCount = 0;
+                res.locals.pendingMealPlansCount = 0;
+            }
+        }
     } else {
         res.locals.allowedAdminMenuItems = [];
         res.locals.sidebarMenuGroups = [];

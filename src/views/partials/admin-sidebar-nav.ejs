@@ -1,6 +1,11 @@
 <%#
   Collapsible admin sidebar — data from sidebarMenu.js (sidebarMenuGroups + activePage).
 %>
+<%
+  const _pendingSessions = (typeof locals.pendingSessionsCount === 'number' && locals.pendingSessionsCount > 0) ? locals.pendingSessionsCount : 0;
+  const _pendingMealPlans = (typeof locals.pendingMealPlansCount === 'number' && locals.pendingMealPlansCount > 0) ? locals.pendingMealPlansCount : 0;
+  const _badgeMap = { 'session-approval': _pendingSessions, 'meal-plan-approval': _pendingMealPlans };
+%>
 <% const navPayload = {
     groups: (typeof sidebarMenuGroups !== 'undefined' ? sidebarMenuGroups : []).map(function (g) {
         return {
@@ -9,7 +14,7 @@
             moduleIcon: g.moduleIcon,
             collapsible: g.collapsible,
             items: g.items.map(function (i) {
-                return { key: i.key, label: i.label, href: i.href, icon: i.icon };
+                return { key: i.key, label: i.label, href: i.href, icon: i.icon, badge: _badgeMap[i.key] || 0 };
             }),
         };
     }),
@@ -28,6 +33,7 @@
                             <a :href="item.href" :title="item.label" :class="itemLinkClass(item.key)">
                                 <span class="material-symbols-outlined h-5 w-5 flex-shrink-0 opacity-75 text-[20px] leading-none" x-text="item.icon"></span>
                                 <span class="ml-3 whitespace-nowrap overflow-hidden" x-text="item.label"></span>
+                                <span x-show="item.badge > 0" x-text="item.badge" class="ml-auto inline-flex items-center justify-center w-5 h-5 text-[10px] font-black bg-amber-500 text-white rounded-full flex-shrink-0"></span>
                             </a>
                         </template>
                     </div>
@@ -51,6 +57,7 @@
                                 <a :href="item.href" :title="item.label" :class="itemLinkClass(item.key) + ' pl-6'">
                                     <span class="material-symbols-outlined h-5 w-5 flex-shrink-0 opacity-75 text-[20px] leading-none" x-text="item.icon"></span>
                                     <span class="ml-3 whitespace-nowrap overflow-hidden text-[13px]" x-text="item.label"></span>
+                                    <span x-show="item.badge > 0" x-text="item.badge" class="ml-auto inline-flex items-center justify-center w-5 h-5 text-[10px] font-black bg-amber-500 text-white rounded-full flex-shrink-0"></span>
                                 </a>
                             </template>
                         </div>
