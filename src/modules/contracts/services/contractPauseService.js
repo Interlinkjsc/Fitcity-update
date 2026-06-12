@@ -50,9 +50,9 @@ exports.pauseContract = async (contractId, durationDays, reason) => {
     
     // Disable any scheduled workout sessions during the pause period
     await WorkoutSession.updateMany(
-        { 
-            contract: contract._id, 
-            status: 'Scheduled',
+        {
+            contract: contract._id,
+            status: { $in: ['Scheduled', 'Pending_Admin'] },
             scheduledTime: { $gte: pauseStartDate, $lte: pauseEndDate }
         },
         { status: 'Cancelled' }

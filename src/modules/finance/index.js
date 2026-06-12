@@ -7,8 +7,7 @@ module.exports = {
     models: {
         expenseModel: require('./models/expenseModel'),
         payrollModel: require('./models/payrollModel'),
-        couponModel: require('./models/couponModel'),
-        transactionModel: require('./models/transactionModel')
+        couponModel: require('./models/couponModel')
     },
     services: {
         payrollService: require('./services/payrollService'),
