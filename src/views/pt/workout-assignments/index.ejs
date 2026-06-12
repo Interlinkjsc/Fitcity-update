@@ -1,0 +1,32 @@
+<%- include('../../partials/header', { title: 'Gán lộ trình tuần', activePage: 'workout-assignments' }) %>
+
+<div class="mb-6">
+    <h2 class="text-2xl font-bold text-slate-800">Gán lộ trình tuần</h2>
+    <p class="text-slate-500 text-sm mt-1">Chọn giáo trình WorkoutProgram cho từng hội viên (SRS S6-03)</p>
+</div>
+
+<div class="bg-white rounded-xl border border-slate-200 p-6 max-w-xl">
+    <form action="/pt/workout-assignments" method="POST" class="space-y-4">
+        <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">Hội viên</label>
+            <select name="clientId" required class="w-full border border-slate-300 rounded-lg py-2 px-3 text-sm">
+                <option value="">— Chọn —</option>
+                <% (clients || []).forEach(c => { %>
+                <option value="<%= c._id %>"><%= c.name %></option>
+                <% }) %>
+            </select>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">Giáo trình</label>
+            <select name="programId" required class="w-full border border-slate-300 rounded-lg py-2 px-3 text-sm">
+                <option value="">— Chọn —</option>
+                <% (programs || []).forEach(p => { %>
+                <option value="<%= p._id %>"><%= p.title %> (<%= p.goal %> · <%= p.level %>)</option>
+                <% }) %>
+            </select>
+        </div>
+        <button type="submit" class="px-5 py-2 bg-green-600 text-white font-bold rounded-lg text-sm">Gán lộ trình</button>
+    </form>
+</div>
+
+<%- include('../../partials/footer') %>

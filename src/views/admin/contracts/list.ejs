@@ -1,0 +1,236 @@
+<%- include('../../partials/header', { title: 'Quản lý Thu Chi & Hợp đồng', activePage: 'contracts' }) %>
+
+<div class="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div>
+        <h2 class="text-2xl font-bold text-slate-800">Doanh thu & Hợp đồng Hội viên</h2>
+        <p class="text-slate-500 text-sm mt-1">Lưu trữ hoá đơn đóng tiền, hoa hồng và theo dõi ngày hết hạn gói tập</p>
+    </div>
+    <a href="/admin/contracts/create" class="inline-flex items-center justify-center px-4 py-2 bg-lime-500 hover:bg-lime-600 text-slate-900 font-semibold rounded-lg transition-colors shadow-sm">
+        <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+        </svg>
+        Ký Hợp Đồng Mới
+    </a>
+</div>
+
+<!-- Revenue Summary Cards -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm border-l-4 border-l-blue-500">
+        <p class="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">Tổng DT trước thuế (net)</p>
+        <h3 class="text-xl font-extrabold text-blue-600"><%= new Intl.NumberFormat('vi-VN').format(typeof totalBeforeTax !== 'undefined' ? totalBeforeTax : 0) %> <small class="text-xs font-normal text-slate-400">VNĐ</small></h3>
+    </div>
+    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm border-l-4 border-l-emerald-500">
+        <p class="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">Tổng DT sau thuế (VAT)</p>
+        <h3 class="text-xl font-extrabold text-emerald-600"><%= new Intl.NumberFormat('vi-VN').format(typeof totalAfterTax !== 'undefined' ? totalAfterTax : 0) %> <small class="text-xs font-normal text-slate-400">VNĐ</small></h3>
+    </div>
+    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm border-l-4 border-l-lime-500">
+        <p class="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">Đã thu</p>
+        <h3 class="text-xl font-extrabold text-lime-600"><%= new Intl.NumberFormat('vi-VN').format(typeof totalPaid !== 'undefined' ? totalPaid : 0) %> <small class="text-xs font-normal text-slate-400">VNĐ</small></h3>
+    </div>
+</div>
+
+<!-- DATA TABLE -->
+<div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+    <div class="p-5 border-b border-slate-200 bg-slate-50/50 flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div class="w-full max-w-sm relative">
+            <svg class="h-5 w-5 absolute left-3 top-2.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            </svg>
+            <input type="text" placeholder="Tìm kiếm theo mã Hợp đồng hoặc tên KH..." class="pl-10 pr-4 py-2 w-full border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-lime-500 focus:border-lime-500 outline-none transition-all">
+        </div>
+        <div class="flex flex-wrap gap-3 items-center w-full sm:w-auto">
+            <% if (typeof branches !== 'undefined' && branches && branches.length > 0) { %>
+            <form method="GET" action="/admin/contracts/list" class="flex items-center gap-2">
+                <select name="branchId" onchange="this.form.submit()" class="border border-slate-300 rounded-lg text-sm py-2 px-3 focus:ring-2 focus:ring-lime-500 outline-none bg-white">
+                    <option value="">Tất cả chi nhánh</option>
+                    <% branches.forEach(function(b) { %>
+                    <option value="<%= b._id %>" <%= query.branchId === b._id.toString() ? 'selected' : '' %>><%= b.name %></option>
+                    <% }); %>
+                </select>
+                <% if (query.status) { %><input type="hidden" name="status" value="<%= query.status %>"><% } %>
+            </form>
+            <% } %>
+            <select id="statusFilter" onchange="filterContracts()" class="border border-slate-300 rounded-lg text-sm py-2 px-3 focus:ring-2 focus:ring-lime-500 outline-none bg-white">
+                <option value="all">Tất cả trạng thái</option>
+                <option value="frozen">Đang bảo lưu ❄️</option>
+                <option value="liquidated">Đã thanh lý 💀</option>
+                <option value="paid">Đã thu đủ tiền ✅</option>
+                <option value="unpaid">Chưa thanh toán ⚠️</option>
+            </select>
+            <span class="px-3 py-1.5 bg-emerald-100 text-emerald-800 text-[10px] font-black rounded-full uppercase tracking-tighter">
+                Tổng thu: <%= typeof contracts !== 'undefined' ? new Intl.NumberFormat('vi-VN').format(contracts.reduce((acc, c) => acc + (c.paidAmount || 0), 0)) : 0 %>đ
+            </span>
+        </div>
+    </div>
+    
+    <script>
+        function filterContracts() {
+            const status = document.getElementById('statusFilter').value;
+            const rows = document.querySelectorAll('tbody tr');
+            
+            rows.forEach(row => {
+                if (status === 'all') {
+                    row.style.display = '';
+                    return;
+                }
+                
+                const text = row.innerText.toLowerCase();
+                let show = false;
+                
+                if (status === 'frozen' && text.includes('đang bảo lưu')) show = true;
+                if (status === 'liquidated' && text.includes('đã thanh lý')) show = true;
+                if (status === 'paid' && text.includes('đã thu đủ tiền')) show = true;
+                if (status === 'unpaid' && text.includes('chưa thanh toán')) show = true;
+                
+                row.style.display = show ? '' : 'none';
+            });
+        }
+    </script>
+    
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider border-b border-slate-200">
+                    <th class="p-4 font-semibold">Mã HĐ / Khách Hàng</th>
+                    <th class="p-4 font-semibold">Dịch vụ & Gói</th>
+                    <th class="p-4 font-semibold text-center">Giá trị HĐ (VNĐ)</th>
+                    <th class="p-4 font-semibold text-center">Trạng thái & Loại TT</th>
+                    <th class="p-4 font-semibold text-center">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+                <% if(typeof contracts !== 'undefined' && contracts.length > 0) { %>
+                    <% contracts.forEach(contract => { %>
+                        <tr class="hover:bg-slate-50/70 transition-colors">
+                            <td class="p-4">
+                                <div class="font-bold text-slate-800 font-mono text-sm flex items-center gap-1">
+                                    #<%= contract._id.toString().substring(18, 24).toUpperCase() %>
+                                    <% if (contract.googleDriveFileId) { %>
+                                        <span class="material-symbols-outlined text-[14px] text-blue-500" title="Đã lưu trữ Cloud">cloud_done</span>
+                                    <% } %>
+                                </div>
+                                <div class="text-sm text-slate-600 mt-1 font-medium"><%= contract.client ? contract.client.name : 'Unknown' %></div>
+                            </td>
+                            <td class="p-4">
+                                <div class="font-bold text-slate-800 text-sm">
+                                    <%= contract.packageSnapshot ? contract.packageSnapshot.name : (contract.servicePackage ? contract.servicePackage.name : 'N/A') %>
+                                    <% if (contract.packageSnapshot && contract.packageSnapshot.isCustom) { %>
+                                        <span class="text-[9px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-black uppercase ml-1">Tuỳ chỉnh</span>
+                                    <% } %>
+                                </div>
+                                <div class="text-xs text-slate-500 mt-1">
+                                    <span class="inline-block bg-slate-100 rounded px-1 flex items-center gap-1 w-fit">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg> 
+                                        PT: <%= contract.pt ? contract.pt.name : 'Tự tập' %>
+                                    </span>
+                                </div>
+                            </td>
+                            <td class="p-4 text-center">
+                                <div class="text-sm font-bold text-slate-800"><%= new Intl.NumberFormat('vi-VN').format(contract.totalAmount) %></div>
+                                <% if(contract.discount > 0) { %>
+                                    <div class="text-xs text-red-500">- <%= new Intl.NumberFormat('vi-VN').format(contract.discount) %></div>
+                                <% } %>
+                            </td>
+                            <td class="p-4 text-center">
+                                <!-- Status Badge -->
+                                <% if(contract.contractStatus === 'Liquidated') { %>
+                                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-800 text-white border border-slate-700">
+                                        Đã thanh lý (LQD)
+                                    </span>
+                                <% } else if(contract.paymentStatus === 'Paid') { %>
+                                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">
+                                        Đã thu đủ tiền
+                                    </span>
+                                <% } else if(contract.paymentStatus === 'Deposit') { %>
+                                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">
+                                        Đã đặt cọc
+                                    </span>
+                                <% } else { %>
+                                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800 mb-1">
+                                        Chưa thanh toán
+                                    </span>
+                                <% } %>
+
+                                <!-- Frozen Badge -->
+                                <% if(contract.isFrozen) { %>
+                                    <div class="mt-1">
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-cyan-100 text-cyan-800 border border-cyan-200 uppercase">
+                                            <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M12.395 2.553a1 1 0 00-1.45-.385c-.345.23-.614.558-.822.88-.214.33-.403.713-.57 1.116-.334.804-.614 1.768-.84 2.734a31.365 31.365 0 00-.613 3.58 2.64 2.64 0 01-.945-1.067c-.328-.68-.398-1.534-.398-2.654A1 1 0 005.05 6.05 6.981 6.981 0 003 11a7 7 0 1011.95-4.95c-.592-.591-.98-1.426-1.127-2.317-.113-.694-.252-1.396-.428-2.18z" clip-rule="evenodd"></path></svg>
+                                            Đang bảo lưu
+                                        </span>
+                                    </div>
+                                <% } %>
+
+                                <!-- Hạn chót 15 ngày warning -->
+                                <% if (contract.paymentStatus !== 'Paid' && contract.contractStatus !== 'Liquidated' && contract.paymentDeadline) { 
+                                    const daysLeft = Math.ceil((new Date(contract.paymentDeadline) - new Date()) / (1000 * 60 * 60 * 24));
+                                    if (daysLeft <= 3) { %>
+                                        <div class="mt-1">
+                                            <span class="text-[10px] font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded border border-red-200 animate-pulse">
+                                                <%= daysLeft < 0 ? 'QUÁ HẠN 15 NGÀY' : `Hạn: ${daysLeft} ngày` %>
+                                            </span>
+                                        </div>
+                                <%  } 
+                                   } %>
+                                <div class="text-slate-500 text-xs font-medium flex justify-center items-center mt-1">
+                                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
+                                    <% 
+                                      const pm = (contract.paymentMethods && contract.paymentMethods.length > 0) 
+                                        ? contract.paymentMethods[0] 
+                                        : contract.paymentMethod; 
+                                    %>
+                                    <%= pm === 'Cash' ? 'Tiền mặt' : 
+                                       (pm === 'Transfer' ? 'Chuyển khoản' : 
+                                       (pm === 'Card' ? 'Quẹt thẻ' : 
+                                       (pm === 'Installment' ? 'Trả góp' : 'Khác'))) %>
+                                </div>
+                            </td>
+                            <td class="p-4 text-center">
+                                <div class="flex items-center justify-center gap-2 text-slate-400">
+                                    <a href="/admin/contracts/download/<%= contract._id %>" class="hover:text-emerald-600 transition-colors bg-slate-50 p-1.5 rounded" title="Xuất PDF Hợp đồng">
+                                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                        </svg>
+                                    </a>
+                                    
+                                    <a href="/admin/contracts/detail/<%= contract._id %>" class="hover:text-emerald-600 transition-colors bg-slate-50 p-1.5 rounded" title="Xem chi tiết Hợp đồng">
+                                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                        </svg>
+                                    </a>
+
+                                    <% if (user && ['SA', 'Admin'].includes(user.role)) { %>
+
+                                        <a href="/admin/contracts/edit/<%= contract._id %>" class="hover:text-blue-600 transition-colors bg-slate-50 p-1.5 rounded" title="Điều chỉnh / Cập nhật">
+                                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                            </svg>
+                                        </a>
+
+                                        <form action="/admin/contracts/delete/<%= contract._id %>" method="POST" class="inline-block" onsubmit="return confirm('CẢNH BÁO BÁO CÁO TÀI CHÍNH: Xoá hợp đồng này sẽ làm móp méo dữ liệu Doanh thu đang ghi nhận. Có chắc chắn xoá?');">
+                                            <button type="submit" class="hover:text-red-600 transition-colors bg-slate-50 p-1.5 rounded" title="Hủy bỏ">
+                                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                                </svg>
+                                            </button>
+                                        </form>
+                                    <% } %>
+                                </div>
+                            </td>
+                        </tr>
+                    <% }) %>
+                <% } else { %>
+                    <tr>
+                        <td colspan="5" class="p-8 text-center text-slate-500">
+                            Chưa có dữ liệu Hợp đồng trong tháng này!
+                        </td>
+                    </tr>
+                <% } %>
+            </tbody>
+        </table>
+    </div>
+</div>
+<%- include('../../partials/pagination') %>
+
+<%- include('../../partials/footer') %>

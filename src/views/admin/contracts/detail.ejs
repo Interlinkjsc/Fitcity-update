@@ -1,0 +1,520 @@
+<%- include('../../partials/header', { title: 'Chi tiết Hợp đồng', activePage: 'contracts' }) %>
+
+<div class="mb-6 flex items-center justify-between">
+    <div>
+        <a href="/admin/contracts/list" class="text-sm text-slate-500 hover:text-lime-600 transition-colors flex items-center gap-1 mb-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+            Quay lại danh sách Hợp đồng
+        </a>
+        <h2 class="text-2xl font-bold text-slate-800">Mã: #<%= contract.contractCode %></h2>
+    </div>
+    <div class="flex gap-2">
+        <button onclick="openPreviewModal('/admin/contracts/<%= contract._id %>/preview/contract')" class="px-4 py-2 bg-indigo-50 text-indigo-700 font-semibold rounded-lg hover:bg-indigo-100 transition-colors shadow-sm inline-flex items-center">
+            <svg class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+            </svg>
+            Preview Hợp Đồng
+        </button>
+        <% if (contract.paymentStatus !== 'Paid') { %>
+        <button onclick="document.getElementById('paymentModal').classList.remove('hidden')" class="px-4 py-2 bg-lime-600 text-white font-semibold rounded-lg hover:bg-lime-700 transition-colors shadow-sm inline-flex items-center">
+            <svg class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+            </svg>
+            Thanh Toán
+        </button>
+        <% } %>
+
+        <% if (contract.contractStatus === 'Active') { %>
+        <button onclick="document.getElementById('pauseModal').classList.remove('hidden')" class="px-4 py-2 bg-amber-500 text-white font-semibold rounded-lg hover:bg-amber-600 transition-colors shadow-sm inline-flex items-center">
+            <span class="material-symbols-outlined text-[18px] mr-2">pause_circle</span>
+            Bảo Lưu
+        </button>
+        <% } else if (contract.contractStatus === 'Paused') { %>
+        <form action="/admin/contracts/unpause/<%= contract._id %>" method="POST" onsubmit="return confirm('Hệ thống sẽ tính toán số ngày nghỉ thực tế và gia hạn bù cho khách. Xác nhận kích hoạt lại?')">
+            <button type="submit" class="px-4 py-2 bg-emerald-600 text-white font-semibold rounded-lg hover:bg-emerald-700 transition-colors shadow-sm inline-flex items-center">
+                <span class="material-symbols-outlined text-[18px] mr-2">play_circle</span>
+                Kích Hoạt Lại
+            </button>
+        </form>
+        <% } %>
+
+        <a href="/admin/contracts/edit/<%= contract._id %>" class="px-4 py-2 bg-white border border-slate-200 text-slate-700 font-semibold rounded-lg hover:bg-slate-50 transition-colors shadow-sm inline-flex items-center">
+            <svg class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+            </svg>
+            Sửa
+        </a>
+    </div>
+</div>
+
+<!-- ============ PAUSE CONTRACT MODAL ============ -->
+<div id="pauseModal" class="hidden fixed inset-0 z-50 overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen px-4">
+        <div class="fixed inset-0 bg-black/50 transition-opacity" onclick="document.getElementById('pauseModal').classList.add('hidden')"></div>
+        <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-md p-6 z-10">
+            <h3 class="text-xl font-bold text-slate-800 mb-4">Bảo lưu Hợp đồng</h3>
+            <form action="/admin/contracts/pause/<%= contract._id %>" method="POST" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Số ngày bảo lưu dự kiến (Tối đa 365 ngày)</label>
+                    <input type="number" name="durationDays" required min="7" max="365" value="30"
+                           class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none">
+                    <p class="text-[10px] text-slate-500 mt-1">* Hệ thống sẽ tính phí 200.000đ/tháng dựa trên thời gian thực tế.</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Lý do bảo lưu</label>
+                    <textarea name="reason" rows="3" required class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none" placeholder="VD: Khách đi công tác, chấn thương..."></textarea>
+                </div>
+                <div class="flex gap-3 pt-2">
+                    <button type="submit" class="flex-1 px-4 py-2.5 bg-amber-500 text-white font-bold rounded-lg hover:bg-amber-600 transition-colors">XÁC NHẬN BẢO LƯU</button>
+                    <button type="button" onclick="document.getElementById('pauseModal').classList.add('hidden')" class="px-4 py-2.5 bg-slate-100 text-slate-700 font-semibold rounded-lg hover:bg-slate-200 transition-colors">Hủy</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Left Column: Overview Details -->
+    <div class="lg:col-span-2 space-y-6">
+        
+        <!-- Client & Product Info -->
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden p-6 relative">
+            <!-- Background Badge for Status -->
+            <div class="absolute top-6 right-6">
+                <% if(contract.contractStatus === 'Active') { %>
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-black bg-emerald-100 text-emerald-800 uppercase tracking-wider">
+                        Đang hiệu lực
+                    </span>
+                <% } else if(contract.contractStatus === 'Paused') { %>
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-black bg-amber-100 text-amber-800 uppercase tracking-wider">
+                        Đang bảo lưu
+                    </span>
+                <% } else { %>
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-black bg-slate-100 text-slate-800 uppercase tracking-wider">
+                        <%= contract.contractStatus %>
+                    </span>
+                <% } %>
+            </div>
+
+            <h3 class="text-lg font-bold text-slate-800 mb-4 border-b border-slate-100 pb-2">Thông tin Khách Hàng</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="flex items-center gap-4">
+                    <img src="<%= contract.client.avatar || '/images/default-avatar.png' %>" class="w-16 h-16 rounded-full border border-slate-200 object-cover"
+                         onerror="this.src='https://ui-avatars.com/api/?name=<%= encodeURIComponent(contract.client.name) %>&background=e2e8f0&color=475569'">
+                    <div>
+                        <h4 class="font-bold text-slate-800 text-lg"><%= contract.client.name %></h4>
+                        <p class="text-sm text-slate-500"><%= contract.client.email %></p>
+                        <p class="text-sm text-slate-500"><%= contract.client.phone || 'Chưa cập nhật SĐT' %></p>
+                    </div>
+                </div>
+                <div class="flex flex-col justify-center">
+                    <p class="text-xs text-slate-500 uppercase tracking-wider font-bold mb-1">Mã CCCD / Passport</p>
+                    <p class="text-slate-800 font-mono bg-slate-50 px-3 py-2 rounded border border-slate-200"><%= contract.client.cccdHash || 'Chưa cập nhật định danh' %></p>
+                </div>
+            </div>
+
+            <h3 class="text-lg font-bold text-slate-800 mt-8 mb-4 border-b border-slate-100 pb-2">Thông tin Gói Tập (Dịch Vụ)</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="text-xs text-slate-500 font-semibold uppercase">Tên gói / Mệnh giá gốc</label>
+                    <p class="text-md font-bold text-slate-800">
+                        <%= contract.packageSnapshot ? contract.packageSnapshot.name : (contract.servicePackage ? contract.servicePackage.name : 'Unknown') %>
+                        <% if (contract.packageSnapshot && contract.packageSnapshot.isCustom) { %>
+                            <span class="text-[10px] bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-black uppercase ml-1">Tuỳ chỉnh</span>
+                        <% } %>
+                    </p>
+                    <p class="text-sm text-slate-600">
+                        <%= contract.packageSnapshot ? new Intl.NumberFormat('vi-VN').format(contract.packageSnapshot.price) : (contract.servicePackage ? new Intl.NumberFormat('vi-VN').format(contract.servicePackage.price) : '0') %> VNĐ
+                    </p>
+                </div>
+                <div>
+                    <label class="text-xs text-slate-500 font-semibold uppercase">Thời hạn & Số Buổi</label>
+                    <p class="text-md font-bold text-slate-800">
+                        <% if (contract.packageSnapshot) { %>
+                            <% const snapMonths = contract.packageSnapshot.durationMonths || Math.max(1, Math.round((contract.packageSnapshot.duration || 30) / 30)); %>
+                            <%= snapMonths %> tháng
+                        <% } else if (contract.servicePackage) { %>
+                            <% const pkgMonths = contract.servicePackage.durationMonths || Math.max(1, Math.round((contract.servicePackage.duration || 30) / 30)); %>
+                            <%= pkgMonths %> tháng
+                        <% } else { %>
+                            -
+                        <% } %>
+                    </p>
+                    <p class="text-sm text-lime-600 font-bold">
+                        <% if (contract.packageSnapshot) { %>
+                            <%= contract.packageSnapshot.sessions > 0 ? contract.packageSnapshot.sessions + ' buổi' : 'Tập tự do (Không giới hạn)' %>
+                        <% } else if (contract.servicePackage) { %>
+                            <%= contract.servicePackage.maxSessions ? contract.servicePackage.maxSessions + ' buổi' : 'Tập tự do (Không giới hạn)' %>
+                        <% } %>
+                    </p>
+                </div>
+                <div>
+                    <label class="text-xs text-slate-500 font-semibold uppercase">HLV Cá nhân (PT)</label>
+                    <% if (contract.pt) { %>
+                        <div class="flex items-center gap-2 mt-1">
+                            <img src="<%= contract.pt.avatar || '/images/default-avatar.png' %>" class="w-6 h-6 rounded-full border border-slate-200" onerror="this.src='https://ui-avatars.com/api/?name=<%= encodeURIComponent(contract.pt.name) %>'"/>
+                            <span class="text-sm font-bold text-slate-800"><%= contract.pt.name %></span>
+                        </div>
+                    <% } else { %>
+                        <p class="text-sm text-slate-500 mt-1 italic">Không có HLV phụ trách (Tự tập)</p>
+                    <% } %>
+                </div>
+                <div>
+                    <label class="text-xs text-slate-500 font-semibold uppercase">Cơ sở đăng ký</label>
+                    <p class="text-sm font-medium text-slate-800 mt-1"><%= contract.branch ? contract.branch.name : 'Chưa phân bổ' %></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Progress and Timeline -->
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 line-clamp-4">
+            <h3 class="text-lg font-bold text-slate-800 mb-4 border-b border-slate-100 pb-2">Tiến độ Sử dụng</h3>
+            
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div class="bg-slate-50 p-4 rounded-lg border border-slate-100 text-center">
+                    <p class="text-slate-500 text-xs font-semibold uppercase">Ngày Bắt Đầu</p>
+                    <p class="text-base font-bold text-slate-800 mt-1"><%= new Date(contract.startDate).toLocaleDateString('vi-VN') %></p>
+                </div>
+                <div class="bg-slate-50 p-4 rounded-lg border border-slate-100 text-center">
+                    <p class="text-slate-500 text-xs font-semibold uppercase">Ngày Hết Hạn</p>
+                    <p class="text-base font-bold text-slate-800 mt-1"><%= new Date(contract.endDate).toLocaleDateString('vi-VN') %></p>
+                </div>
+                <div class="bg-slate-50 p-4 rounded-lg border border-slate-100 text-center">
+                    <p class="text-slate-500 text-xs font-semibold uppercase">Tổng Buổi</p>
+                    <p class="text-base font-bold text-blue-600 mt-1"><%= contract.totalSessions %></p>
+                </div>
+                <div class="bg-slate-50 p-4 rounded-lg border border-slate-100 text-center">
+                    <p class="text-slate-500 text-xs font-semibold uppercase">Còn lại</p>
+                    <p class="text-base font-bold text-emerald-600 mt-1"><%= contract.remainingSessions %></p>
+                </div>
+            </div>
+
+            <div class="w-full bg-slate-100 rounded-full h-3 mb-2">
+                <% 
+                   const usedPercentage = contract.totalSessions ? ((contract.totalSessions - contract.remainingSessions) / contract.totalSessions) * 100 : 0; 
+                %>
+                <div class="bg-lime-500 h-3 rounded-full progress-bar" data-width="<%= usedPercentage %>"></div>
+            </div>
+            <p class="text-right text-xs text-slate-500 font-semibold"><%= Math.round(usedPercentage) %>% đã hoàn thành</p>
+        </div>
+
+    </div>
+
+    <!-- Right Column: Financial Data -->
+    <div class="space-y-6">
+        <div class="bg-slate-800 rounded-xl border border-slate-700 shadow-sm p-6 text-white relative overflow-hidden">
+            <div class="absolute -right-8 -top-8 w-32 h-32 bg-lime-500/20 rounded-full blur-3xl"></div>
+            
+            <h3 class="text-lg font-bold text-white mb-6 border-b border-slate-700 pb-2">Hồ sơ Thanh toán</h3>
+            
+            <div class="space-y-4">
+                <div class="flex justify-between items-center">
+                    <span class="text-slate-400 text-sm">Sale phụ trách:</span>
+                    <span class="font-bold text-sm"><%= contract.sales ? contract.sales.name : 'Unknown' %></span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-slate-400 text-sm">VAT (Thuế):</span>
+                    <span class="font-bold text-sm"><%= contract.vat %>%</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-slate-400 text-sm">Mã giảm giá/Khuyến mãi:</span>
+                    <span class="font-bold text-sm text-lime-400"><%= contract.couponCode || 'Không áp dụng' %></span>
+                </div>
+                
+                <hr class="border-slate-700 my-4">
+                
+                <div class="flex justify-between items-center">
+                    <span class="text-slate-300 font-semibold">TỔNG GIÁ TRỊ HĐ:</span>
+                    <span class="font-extrabold text-xl"><%= new Intl.NumberFormat('vi-VN').format(contract.totalAmount) %> <span class="text-xs font-normal">VNĐ</span></span>
+                </div>
+                <div class="flex justify-between items-center mt-2">
+                    <span class="text-slate-400 text-sm">Đã thu:</span>
+                    <span class="font-bold text-sm text-emerald-400"><%= new Intl.NumberFormat('vi-VN').format(contract.paidAmount) %> VNĐ</span>
+                </div>
+                <div class="flex justify-between items-center mt-2">
+                    <span class="text-slate-400 text-sm">Công nợ (Còn thiếu):</span>
+                    <span class="font-bold text-sm text-red-400"><%= new Intl.NumberFormat('vi-VN').format(contract.totalAmount - contract.paidAmount) %> VNĐ</span>
+                </div>
+
+                <!-- Hạn chót thanh toán 15 ngày -->
+                <% if (contract.paymentStatus !== 'Paid' && contract.paymentDeadline) { %>
+                    <div class="flex justify-between items-center mt-2 p-2 bg-red-500/10 border border-red-500/20 rounded">
+                        <span class="text-red-400 text-xs font-bold uppercase">Hạn chót đóng đủ:</span>
+                        <span class="font-bold text-sm text-red-400"><%= new Date(contract.paymentDeadline).toLocaleDateString('vi-VN') %></span>
+                    </div>
+                <% } %>
+
+                <!-- Thông tin Bảo lưu -->
+                <% if (contract.isFrozen || contract.contractStatus === 'Paused') { %>
+                    <div class="flex flex-col gap-2 mt-4 p-3 bg-amber-500/10 border border-amber-500/20 rounded">
+                        <div class="flex justify-between items-center">
+                            <span class="text-amber-400 text-xs font-bold uppercase">Ngày bắt đầu bảo lưu:</span>
+                            <span class="font-bold text-sm text-amber-200"><%= contract.frozenAt ? new Date(contract.frozenAt).toLocaleDateString('vi-VN') : 'N/A' %></span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-amber-400 text-xs font-bold uppercase">Phí tích lũy đến nay:</span>
+                            <span class="font-black text-sm text-red-500 bg-white px-2 py-0.5 rounded shadow-sm">
+                                <%= new Intl.NumberFormat('vi-VN').format(contract.calculatedFreezeFee) %> VNĐ
+                            </span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-amber-400 text-[10px] font-bold uppercase">Đơn giá:</span>
+                            <span class="font-bold text-xs text-amber-200 opacity-80"><%= new Intl.NumberFormat('vi-VN').format(contract.freezeFee || 200000) %> VNĐ/tháng</span>
+                        </div>
+                        <p class="text-[10px] text-amber-500/80 italic mt-1">* Tự động thanh lý sau 12 tháng bảo lưu</p>
+                    </div>
+                <% } %>
+            </div>
+
+            <div class="mt-8 pt-4 border-t border-slate-700">
+                <span class="block text-xs text-slate-400 mb-2 uppercase tracking-wide">Trạng thái Kế toán</span>
+                <% if(contract.paymentStatus === 'Paid') { %>
+                    <div class="w-full bg-emerald-500/20 text-emerald-400 text-center py-2 rounded-lg font-black tracking-widest border border-emerald-500/30">
+                        ĐÃ THU ĐỦ (PAID)
+                    </div>
+                <% } else if(contract.paymentStatus === 'Deposit') { %>
+                    <div class="w-full bg-amber-500/20 text-amber-400 text-center py-2 rounded-lg font-black tracking-widest border border-amber-500/30">
+                        ĐÃ ĐẶT CỌC (DEPOSIT)
+                    </div>
+                <% } else { %>
+                    <div class="w-full bg-red-500/20 text-red-400 text-center py-2 rounded-lg font-black tracking-widest border border-red-500/30">
+                        CHƯA THANH TOÁN (UNPAID)
+                    </div>
+                <% } %>
+            </div>
+            
+            <% if (contract.paymentMethods && contract.paymentMethods.length > 0) { %>
+            <div class="mt-4 text-xs text-slate-400">
+                Phương thức nạp: <span class="text-slate-200 font-medium"><%= contract.paymentMethods.join(', ') %></span>
+            </div>
+            <% } %>
+        </div>
+
+        <% if (contract.notes) { %>
+            <div class="bg-yellow-50 rounded-xl border border-yellow-200 p-4">
+                <h4 class="text-sm font-bold text-yellow-800 flex items-center gap-2 mb-2">
+                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    Ghi chú Hợp đồng
+                </h4>
+                <p class="text-sm text-yellow-700 whitespace-pre-line"><%= contract.notes %></p>
+            </div>
+        <% } %>
+    </div>
+</div>
+
+<!-- ============ PAYMENT HISTORY TABLE ============ -->
+<div class="mt-6 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+    <div class="p-6 border-b border-slate-100 flex items-center justify-between">
+        <h3 class="text-lg font-bold text-slate-800">Lịch sử Thanh toán</h3>
+        <span class="text-sm text-slate-500"><%= paymentHistory ? paymentHistory.length : 0 %> giao dịch</span>
+    </div>
+    <% if (paymentHistory && paymentHistory.length > 0) { %>
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead class="bg-slate-50">
+                <tr>
+                    <th class="px-4 py-3 text-left font-semibold text-slate-600 uppercase text-xs tracking-wider">Mã Phiếu Thu</th>
+                    <th class="px-4 py-3 text-left font-semibold text-slate-600 uppercase text-xs tracking-wider">Ngày</th>
+                    <th class="px-4 py-3 text-right font-semibold text-slate-600 uppercase text-xs tracking-wider">Số tiền</th>
+                    <th class="px-4 py-3 text-center font-semibold text-slate-600 uppercase text-xs tracking-wider">Loại GD</th>
+                    <th class="px-4 py-3 text-center font-semibold text-slate-600 uppercase text-xs tracking-wider">Phương thức</th>
+                    <th class="px-4 py-3 text-center font-semibold text-slate-600 uppercase text-xs tracking-wider">Trạng thái</th>
+                    <th class="px-4 py-3 text-center font-semibold text-slate-600 uppercase text-xs tracking-wider">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+                <% paymentHistory.forEach(function(txn) { %>
+                <tr class="hover:bg-slate-50 transition-colors">
+                    <td class="px-4 py-3 font-mono font-bold text-indigo-600"><%= txn.receiptNumber %></td>
+                    <td class="px-4 py-3 text-slate-600"><%= new Date(txn.createdAt).toLocaleDateString('vi-VN') %></td>
+                    <td class="px-4 py-3 text-right font-bold text-slate-800"><%= new Intl.NumberFormat('vi-VN').format(txn.amount) %> VNĐ</td>
+                    <td class="px-4 py-3 text-center">
+                        <% if (txn.transactionType === 'Deposit') { %>
+                            <span class="px-2 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-700">Đặt cọc</span>
+                        <% } else if (txn.transactionType === 'Full_Payment') { %>
+                            <span class="px-2 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700">Trả đủ</span>
+                        <% } else if (txn.transactionType === 'Installment') { %>
+                            <span class="px-2 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700">Trả góp</span>
+                        <% } else { %>
+                            <span class="px-2 py-1 rounded-full text-xs font-bold bg-purple-100 text-purple-700">Trả nốt</span>
+                        <% } %>
+                    </td>
+                    <td class="px-4 py-3 text-center text-slate-600"><%= txn.paymentMethod === 'Cash' ? 'Tiền mặt' : txn.paymentMethod === 'Transfer' ? 'Chuyển khoản' : 'Thẻ' %></td>
+                    <td class="px-4 py-3 text-center">
+                        <% if (txn.status === 'Success') { %>
+                            <span class="px-2 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700">Thành công</span>
+                        <% } else { %>
+                            <span class="px-2 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700"><%= txn.status %></span>
+                        <% } %>
+                    </td>
+                    <td class="px-4 py-3 text-center">
+                        <button type="button" onclick="openPreviewModal('/admin/contracts/<%= contract._id %>/preview/receipt/<%= txn._id %>')" 
+                           class="inline-flex items-center gap-1 px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 transition-colors text-xs font-semibold">
+                            <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
+                            </svg>
+                            Phiếu Thu
+                        </button>
+                    </td>
+                </tr>
+                <% }); %>
+            </tbody>
+        </table>
+    </div>
+    <% } else { %>
+    <div class="p-8 text-center">
+        <svg class="mx-auto h-12 w-12 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+        </svg>
+        <p class="mt-2 text-sm text-slate-500">Chưa có giao dịch thanh toán nào.</p>
+        <% if (contract.paymentStatus !== 'Paid') { %>
+        <button onclick="document.getElementById('paymentModal').classList.remove('hidden')" class="mt-4 px-4 py-2 bg-lime-600 text-white font-semibold rounded-lg hover:bg-lime-700 transition-colors text-sm">
+            + Thêm Thanh Toán Đầu Tiên
+        </button>
+        <% } %>
+    </div>
+    <% } %>
+</div>
+
+<!-- ============ ADD PAYMENT MODAL ============ -->
+<div id="paymentModal" class="hidden fixed inset-0 z-50 overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen px-4">
+        <!-- Overlay -->
+        <div class="fixed inset-0 bg-black/50 transition-opacity" onclick="document.getElementById('paymentModal').classList.add('hidden')"></div>
+        
+        <!-- Modal Content -->
+        <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-lg p-6 z-10">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-bold text-slate-800">Ghi nhận Thanh toán</h3>
+                <button onclick="document.getElementById('paymentModal').classList.add('hidden')" class="text-slate-400 hover:text-slate-600">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+
+            <form action="/admin/contracts/<%= contract._id %>/payments/store" method="POST" class="space-y-4">
+                <!-- Amount -->
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Số tiền thanh toán (VNĐ) *</label>
+                    <input type="number" name="amount" required min="1" max="<%= contract.totalAmount - contract.paidAmount %>"
+                           class="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-lime-500 focus:border-lime-500"
+                           placeholder="Nhập số tiền...">
+                    <p class="text-xs text-slate-500 mt-1">Công nợ còn lại: <strong class="text-red-600"><%= new Intl.NumberFormat('vi-VN').format(contract.totalAmount - contract.paidAmount) %> VNĐ</strong></p>
+                </div>
+
+                <!-- Transaction Type -->
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Loại giao dịch *</label>
+                    <select name="transactionType" required class="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-lime-500 focus:border-lime-500">
+                        <option value="Deposit">Đặt cọc (Deposit)</option>
+                        <option value="Full_Payment">Thanh toán đủ (Full Payment)</option>
+                        <option value="Installment">Trả góp (Installment)</option>
+                        <option value="Balance_Payment">Trả nốt (Balance Payment)</option>
+                    </select>
+                </div>
+
+                <!-- Payment Method -->
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Phương thức thanh toán *</label>
+                    <select name="paymentMethod" required class="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-lime-500 focus:border-lime-500">
+                        <option value="Cash">Tiền mặt (Cash)</option>
+                        <option value="Transfer">Chuyển khoản (Transfer)</option>
+                        <option value="Card">Thẻ (Card)</option>
+                    </select>
+                </div>
+
+                <!-- Notes -->
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Ghi chú</label>
+                    <textarea name="notes" rows="2" class="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-lime-500 focus:border-lime-500" placeholder="Ghi chú thêm..."></textarea>
+                </div>
+
+                <!-- Actions -->
+                <div class="flex gap-3 pt-2">
+                    <button type="submit" class="flex-1 px-4 py-2.5 bg-lime-600 text-white font-bold rounded-lg hover:bg-lime-700 transition-colors">
+                        Xác nhận Thanh toán
+                    </button>
+                    <button type="button" onclick="document.getElementById('paymentModal').classList.add('hidden')" class="px-4 py-2.5 bg-slate-100 text-slate-700 font-semibold rounded-lg hover:bg-slate-200 transition-colors">
+                        Hủy
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.querySelectorAll('.progress-bar[data-width]').forEach(function(el) {
+    el.style.width = el.dataset.width + '%';
+});
+
+function openPreviewModal(url) {
+    const modal = document.getElementById('previewModal');
+    const iframe = document.getElementById('previewIframe');
+    const loader = document.getElementById('previewLoader');
+    
+    // Show modal and loader, hide iframe temporarily
+    modal.classList.remove('hidden');
+    loader.classList.remove('hidden');
+    iframe.classList.add('hidden');
+    
+    // Append modal=true param to hide internal buttons
+    const finalUrl = url.includes('?') ? url + '&modal=true' : url + '?modal=true';
+    
+    // Set src to trigger load
+    iframe.src = finalUrl;
+}
+
+function closePreviewModal() {
+    const modal = document.getElementById('previewModal');
+    const iframe = document.getElementById('previewIframe');
+    modal.classList.add('hidden');
+    iframe.src = 'about:blank'; // Clear memory
+}
+
+function printPreview() {
+    const iframe = document.getElementById('previewIframe');
+    if (iframe && iframe.contentWindow) {
+        iframe.contentWindow.print();
+    }
+}
+</script>
+
+<!-- ============ PREVIEW MODAL ============ -->
+<div id="previewModal" class="hidden fixed inset-0 z-[100] overflow-hidden">
+    <div class="flex items-center justify-center min-h-screen p-4 sm:p-6">
+        <!-- Overlay -->
+        <div class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm transition-opacity" onclick="closePreviewModal()"></div>
+        
+        <!-- Modal Content -->
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-5xl h-[85vh] flex flex-col z-10 overflow-hidden">
+            <!-- Header -->
+            <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50">
+                <h3 class="text-lg font-bold text-slate-800">Xem Trước Tài Liệu</h3>
+                <div class="flex items-center gap-3">
+                    <button onclick="printPreview()" class="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors shadow-sm inline-flex items-center text-sm">
+                        <svg class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
+                        </svg>
+                        In Tài Liệu
+                    </button>
+                    <button onclick="closePreviewModal()" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Iframe -->
+            <div class="flex-1 bg-slate-200 relative rounded-b-2xl overflow-hidden">
+                <!-- Loader -->
+                <div id="previewLoader" class="absolute inset-0 flex flex-col items-center justify-center bg-white z-10">
+                    <div class="w-10 h-10 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
+                    <span class="mt-3 text-sm font-semibold text-slate-500">Đang tải tài liệu...</span>
+                </div>
+                <iframe id="previewIframe" class="w-full h-full border-none hidden" onload="document.getElementById('previewLoader').classList.add('hidden'); this.classList.remove('hidden');"></iframe>
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- include('../../partials/footer') %>

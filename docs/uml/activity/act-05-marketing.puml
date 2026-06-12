@@ -1,0 +1,26 @@
+@startuml ACT_Marketing
+title Activity — Marketing
+skinparam activityStyle rectangle
+
+start
+:Đăng nhập /admin;
+partition "Leads" {
+  :Nhận noti lead mới;
+  :GET /admin/leads + funnel widget;
+  :Cập nhật F→Contacted→Qualified\n(không Signed = đã ký HĐ);
+  :Export Excel;
+}
+partition "CMS & Content" {
+  :CRUD /admin/cms (hero, blog, SEO);
+  :Upload /admin/content-library\n(local + Drive);
+}
+partition "Landing" {
+  :Nội dung public /, /blog phản ánh CMS;
+}
+stop
+
+note right
+  UC-CRM10-31, SEQ-01
+end note
+
+@enduml

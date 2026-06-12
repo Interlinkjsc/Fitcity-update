@@ -1,0 +1,46 @@
+<%- include('../../partials/header', { title: 'Chi tiết thực đơn', activePage: 'meal-plans' }) %>
+
+<div class="mb-6 flex justify-between items-start gap-4">
+    <div>
+        <h2 class="text-2xl font-bold text-slate-800">Thực đơn — <%= mealPlan.client ? mealPlan.client.name : 'KH' %></h2>
+        <p class="text-slate-500 text-sm mt-1"><%= mealPlan.goal %> · <%= mealPlan.dailyCalories %> kcal/ngày</p>
+    </div>
+    <div class="flex gap-2">
+        <a href="/pt/meal-plan/<%= mealPlan._id %>/edit" class="px-4 py-2 bg-slate-800 text-white text-sm font-bold rounded-lg">Sửa</a>
+        <a href="/pt/meal-plans" class="px-4 py-2 border border-slate-300 text-sm font-bold rounded-lg">Quay lại</a>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="bg-white rounded-xl border border-slate-200 p-6">
+        <h3 class="text-xs font-black uppercase text-slate-500 mb-4">Macro</h3>
+        <div class="grid grid-cols-2 gap-3 text-sm">
+            <div>Đạm: <strong><%= mealPlan.macros.protein %>%</strong></div>
+            <div>Carbs: <strong><%= mealPlan.macros.carbs %>%</strong></div>
+            <div>Béo: <strong><%= mealPlan.macros.fat %>%</strong></div>
+            <div>Xơ: <strong><%= mealPlan.macros.fiber || 0 %>%</strong></div>
+        </div>
+        <% if (mealPlan.startDate) { %>
+        <p class="text-xs text-slate-500 mt-4">Hiệu lực <%= new Date(mealPlan.startDate).toLocaleDateString('vi-VN') %> – <%= new Date(mealPlan.endDate).toLocaleDateString('vi-VN') %></p>
+        <% } %>
+    </div>
+    <div class="lg:col-span-2 bg-white rounded-xl border border-slate-200 p-6">
+        <h3 class="text-xs font-black uppercase text-slate-500 mb-4">Các bữa trong ngày</h3>
+        <div class="space-y-4">
+            <% mealPlan.meals.forEach((meal, index) => { %>
+            <% const mn = mealNutritionByMeal[index]; %>
+            <div class="border border-slate-100 rounded-lg p-4">
+                <div class="flex justify-between mb-2">
+                    <span class="font-bold text-slate-800"><%= meal.time %> — <%= meal.notes || 'Bữa ' + (index+1) %></span>
+                    <% if (mn) { %><span class="text-primary font-bold text-sm"><%= mn.kcal %> kcal</span><% } %>
+                </div>
+                <% (meal.foodItems || []).forEach(item => { %>
+                <p class="text-sm text-slate-600">• <%= item.name %> (<%= item.quantity %>)</p>
+                <% }) %>
+            </div>
+            <% }) %>
+        </div>
+    </div>
+</div>
+
+<%- include('../../partials/footer') %>

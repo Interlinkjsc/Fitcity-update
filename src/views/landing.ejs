@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= typeof homeSeo !== 'undefined' && homeSeo && homeSeo.seoTitle ? homeSeo.seoTitle : 'FitCity - Nâng Tầm Thể Chất, Khẳng Định Bản Thân' %></title>
+    <% if (typeof homeSeo !== 'undefined' && homeSeo && homeSeo.seoDescription) { %>
+    <meta name="description" content="<%= homeSeo.seoDescription %>">
+    <% } %>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#16A34A',
+                        'primary-dark': '#15803d',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #F8FAF7; color: #0F172A; }
+        .glass { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(0, 0, 0, 0.05); }
+        .neon-glow { box-shadow: 0 0 20px rgba(22, 163, 74, 0.2); }
+        .hero-gradient { background: radial-gradient(circle at 70% 30%, rgba(22, 163, 74, 0.15) 0%, transparent 60%); }
+    </style>
+</head>
+<body class="overflow-x-hidden">
+    <!-- Navigation -->
+    <nav x-data="{ open: false }" class="fixed top-0 w-full z-50 glass px-6 py-4 flex justify-between items-center">
+        <div class="text-2xl font-black tracking-tighter text-primary">FITCITY</div>
+        
+        <!-- Desktop Nav -->
+        <div class="hidden md:flex gap-8 text-sm font-semibold text-slate-600">
+            <a href="#about" class="hover:text-primary transition-colors">Về chúng tôi</a>
+            <a href="#packages" class="hover:text-primary transition-colors">Gói tập</a>
+            <a href="#branches" class="hover:text-primary transition-colors">Chi nhánh</a>
+            <a href="/blog" class="hover:text-primary transition-colors">Blog</a>
+            <a href="/contact" class="hover:text-primary transition-colors">Liên hệ</a>
+        </div>
+        <div class="hidden md:flex items-center gap-4">
+            <a href="/auth/login" class="text-sm font-bold text-slate-700 hover:text-black">Đăng nhập</a>
+            <a href="/auth/login?view=register" class="text-sm font-bold text-slate-700 hover:text-primary">Đăng ký hội viên</a>
+            <a href="#trial" class="px-5 py-2 bg-primary text-white text-sm font-black rounded-lg uppercase tracking-tight hover:brightness-110 shadow-md shadow-primary/20 transition-all">Tập thử 0đ</a>
+        </div>
+
+        <!-- Mobile Nav Button -->
+        <button @click="open = !open" class="md:hidden text-slate-800 hover:text-primary focus:outline-none">
+            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path x-show="!open" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                <path x-show="open" style="display: none;" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
+
+        <!-- Mobile Menu Drawer -->
+        <div x-show="open" x-transition.opacity 
+             @click.away="open = false"
+             class="absolute top-16 left-0 w-full bg-white/95 backdrop-blur-2xl border-b border-slate-200 p-6 md:hidden flex flex-col gap-6"
+             style="display: none;">
+            <a @click="open = false" href="#about" class="text-lg font-bold text-slate-700 hover:text-primary transition-colors">Về chúng tôi</a>
+            <a @click="open = false" href="#packages" class="text-lg font-bold text-slate-700 hover:text-primary transition-colors">Gói tập</a>
+            <a @click="open = false" href="#branches" class="text-lg font-bold text-slate-700 hover:text-primary transition-colors">Chi nhánh</a>
+            <hr class="border-slate-200" />
+            <a href="/auth/login" class="text-lg font-bold text-slate-700 hover:text-primary transition-colors">Đăng nhập hệ thống</a>
+            <a href="/auth/login?view=register" class="text-lg font-bold text-slate-700 hover:text-primary transition-colors">Đăng ký hội viên</a>
+            <a @click="open = false" href="#trial" class="py-4 bg-primary text-white text-lg text-center font-black rounded-xl uppercase tracking-tight shadow-xl shadow-primary/20">Để lại thông tin tư vấn (Lead)</a>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="relative min-h-screen flex items-center pt-20 hero-gradient">
+        <% if (typeof banners !== 'undefined' && banners && banners.length > 0) { %>
+        <div class="absolute inset-0 z-0 overflow-hidden opacity-20">
+            <% banners.forEach(b => { if (b.imageUrl) { %>
+            <img src="<%= b.imageUrl %>" alt="" class="w-full h-full object-cover">
+            <% } }) %>
+        </div>
+        <% } %>
+        <div class="container mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center relative z-10">
+            <div class="z-10">
+                <% const heroBanner = (typeof banners !== 'undefined' && banners && banners[0]) ? banners[0] : null; %>
+                <span class="inline-block px-3 py-1 bg-white border border-slate-200 rounded-full text-[10px] font-black uppercase tracking-[0.2em] mb-6 text-primary shadow-sm">
+                    <%= heroBanner && heroBanner.excerpt ? heroBanner.excerpt : 'Trải nghiệm Thể hình Đỉnh cao' %>
+                </span>
+                <h1 class="text-6xl md:text-8xl font-black leading-[0.9] mb-8 tracking-tighter text-slate-900">
+                    <% if (heroBanner && heroBanner.title) { %>
+                        <%= heroBanner.title %>
+                    <% } else { %>
+                        THÁCH THỨC <br> <span class="text-primary">GIỚI HẠN.</span>
+                    <% } %>
+                </h1>
+                <p class="text-slate-600 text-lg mb-10 max-w-lg leading-relaxed">
+                    <%= heroBanner && heroBanner.body ? heroBanner.body : 'Hệ thống phòng tập 5 sao với thiết bị nhập khẩu 100%, đội ngũ PT chuyên nghiệp và lộ trình dinh dưỡng cá nhân hóa dựa trên AI.' %>
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <a href="#trial" class="px-8 py-4 bg-primary text-white font-black rounded-xl text-center shadow-xl shadow-primary/30 hover:scale-105 transition-all uppercase tracking-tight">Bắt đầu ngay hôm nay</a>
+                    <div class="flex items-center gap-3 px-6 py-4 border border-slate-200 rounded-xl glass">
+                        <div class="flex -space-x-3">
+                            <div class="w-8 h-8 rounded-full border-2 border-white bg-slate-300"></div>
+                            <div class="w-8 h-8 rounded-full border-2 border-white bg-slate-400"></div>
+                            <div class="w-8 h-8 rounded-full border-2 border-white bg-slate-500"></div>
+                        </div>
+                        <span class="text-xs font-bold text-slate-600">2,500+ Hội viên hài lòng</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Lead Form -->
+            <div id="trial" class="glass p-8 md:p-10 rounded-3xl relative overflow-hidden group shadow-2xl">
+                <div class="absolute -right-20 -top-20 w-40 h-40 bg-primary/10 rounded-full blur-3xl group-hover:bg-primary/20 transition-all"></div>
+                
+                <h2 class="text-2xl font-black mb-2 italic text-slate-900">NHẬN 03 NGÀY TẬP THỬ <span class="text-primary">MIỄN PHÍ</span></h2>
+                <p class="text-slate-600 text-sm mb-2 font-medium">Để lại thông tin — nhân viên FitCity sẽ liên hệ trong 24h. Đây là <strong>form Lead</strong> (không tạo tài khoản).</p>
+                <p class="text-slate-600 text-sm mb-8 font-medium">Muốn có tài khoản hội viên ngay? <a href="/auth/login?view=register" class="text-primary font-bold underline hover:no-underline">Đăng ký tại đây</a>.</p>
+
+                <% if (success_msg.length > 0) { %>
+                    <div class="mb-6 p-4 bg-primary/10 border border-primary/20 rounded-xl text-primary text-sm font-bold flex items-center gap-2">
+                        <span class="material-symbols-outlined text-sm">check_circle</span>
+                        <%= success_msg %>
+                    </div>
+                <% } %>
+
+                <form action="/register-lead" method="POST" class="space-y-4">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Họ và tên</label>
+                        <input type="text" name="name" required placeholder="Nguyễn Văn A" 
+                            class="w-full bg-white border border-slate-200 rounded-xl px-5 py-4 text-slate-900 focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-slate-400 shadow-sm">
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Số điện thoại</label>
+                            <input type="tel" name="phone" required placeholder="090..." 
+                                class="w-full bg-white border border-slate-200 rounded-xl px-5 py-4 text-slate-900 focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all shadow-sm placeholder:text-slate-400">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Email (nếu có)</label>
+                            <input type="email" name="email" placeholder="email@gmail.com" 
+                                class="w-full bg-white border border-slate-200 rounded-xl px-5 py-4 text-slate-900 focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-slate-400 shadow-sm">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Chi nhánh quan tâm</label>
+                        <select name="branchId" required class="w-full bg-white border border-slate-200 rounded-xl px-5 py-4 text-slate-900 appearance-none focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all shadow-sm">
+                            <% if (typeof branches !== 'undefined' && branches.length > 0) { %>
+                                <% branches.forEach(branch => { %>
+                                    <option value="<%= branch._id %>"><%= branch.name %></option>
+                                <% }) %>
+                            <% } else { %>
+                                <option disabled italic>Dữ liệu chi nhánh đang cập nhật...</option>
+                            <% } %>
+                        </select>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Cân nặng (kg)</label>
+                            <input type="number" name="weight" step="0.1" min="0" placeholder="65" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Chiều cao (cm)</label>
+                            <input type="number" name="height" step="1" min="0" placeholder="170" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">% Mỡ cơ thể</label>
+                            <input type="number" name="bodyFat" step="0.1" min="0" max="60" placeholder="20" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Mục tiêu</label>
+                            <select name="targetGoal" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm">
+                                <option value="">— Chọn —</option>
+                                <option value="Weight Loss">Giảm cân</option>
+                                <option value="Muscle Gain">Tăng cơ</option>
+                                <option value="Maintenance">Duy trì</option>
+                                <option value="Endurance">Sức bền</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Gói tập mục tiêu</label>
+                        <div class="flex flex-wrap gap-2 mt-2">
+                            <label class="cursor-pointer">
+                                <input type="radio" name="interestedPackage" value="Gym" checked class="hidden peer">
+                                <span class="px-4 py-2 rounded-lg bg-white border border-slate-200 text-xs font-bold text-slate-600 peer-checked:bg-slate-900 peer-checked:text-white peer-checked:border-slate-900 shadow-sm transition-all">GYM</span>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="interestedPackage" value="Gym Kids" class="hidden peer">
+                                <span class="px-4 py-2 rounded-lg bg-white border border-slate-200 text-xs font-bold text-slate-600 peer-checked:bg-slate-900 peer-checked:text-white peer-checked:border-slate-900 shadow-sm transition-all">GYM KIDS</span>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="interestedPackage" value="Pilates" class="hidden peer">
+                                <span class="px-4 py-2 rounded-lg bg-white border border-slate-200 text-xs font-bold text-slate-600 peer-checked:bg-slate-900 peer-checked:text-white peer-checked:border-slate-900 shadow-sm transition-all">PILATES</span>
+                            </label>
+                        </div>
+                    </div>
+                    <button type="submit" class="w-full py-5 bg-primary text-white font-black rounded-xl uppercase tracking-tighter shadow-lg shadow-primary/30 hover:brightness-110 active:scale-95 transition-all mt-4">
+                        Gửi yêu cầu đăng ký
+                    </button>
+                    <p class="text-[10px] text-slate-500 text-center mt-4">Bằng cách bấm đăng ký, bạn đồng ý với Điều khoản dịch vụ của FitCity.</p>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- Branding Footer (Mini) -->
+    <footer class="py-12 border-t border-slate-200 bg-white">
+        <div class="container mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-8">
+            <div class="text-xl font-black text-primary opacity-80">FITCITY</div>
+            <div class="flex gap-12 text-xs font-bold text-slate-600 uppercase tracking-widest">
+                <span class="hover:text-primary cursor-pointer transition-colors">Facebook</span>
+                <span class="hover:text-primary cursor-pointer transition-colors">Instagram</span>
+                <span class="hover:text-primary cursor-pointer transition-colors">TikTok</span>
+            </div>
+            <div class="text-[10px] text-slate-500 italic">© 2026 FitCity. Toàn quyền bảo lưu.</div>
+        </div>
+    </footer>
+</body>
+</html>

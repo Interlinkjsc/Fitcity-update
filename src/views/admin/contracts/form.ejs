@@ -1,0 +1,872 @@
+<%- include('../../partials/header', { title: isEdit ? 'Chỉnh sửa Hoá đơn' : 'Tạo lập Hợp Đồng', activePage: 'contracts' }) %>
+
+<div class="mb-6 flex flex-col sm:flex-row justify-between items-start gap-4">
+    <div>
+        <h2 class="text-2xl font-bold text-slate-800"><%= isEdit ? 'Cập nhật Thanh toán' : 'Thiết lập Hợp đồng Mới' %></h2>
+        <p class="text-slate-500 text-sm mt-1">Hệ thống Wizard hỗ trợ khởi tạo dịch vụ chuyên nghiệp.</p>
+    </div>
+    <a href="<%= typeof backUrl !== 'undefined' ? backUrl : '/admin/contracts/list' %>" class="flex items-center gap-2 text-slate-500 hover:text-green-600 font-semibold transition-colors text-sm">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+        Quay lại
+    </a>
+</div>
+
+<!-- WIZARD STEPPER -->
+<div class="max-w-4xl mx-auto mb-8">
+    <div class="flex items-center">
+        <!-- Step 1 -->
+        <div class="flex-1 flex items-center relative">
+            <div id="stepCircle-1" class="w-8 h-8 rounded-lg bg-green-600 text-white flex items-center justify-center font-bold z-10">1</div>
+            <div class="ml-3 hidden sm:block">
+                <p class="text-[10px] font-bold text-green-600 uppercase tracking-wider">Bước 1</p>
+                <p class="text-xs font-bold text-slate-700">Thông tin chung</p>
+            </div>
+            <div class="flex-1 h-0.5 bg-slate-200 mx-4 hidden sm:block">
+                <div id="progressLine-1" class="h-full bg-green-600 transition-all duration-500" style="width: 0%"></div>
+            </div>
+        </div>
+        <!-- Step 2 -->
+        <div class="flex-1 flex items-center relative">
+            <div id="stepCircle-2" class="w-8 h-8 rounded-lg bg-white border border-slate-300 text-slate-400 flex items-center justify-center font-bold z-10">2</div>
+            <div class="ml-3 hidden sm:block">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Bước 2</p>
+                <p class="text-xs font-bold text-slate-400" id="stepText-2">Dịch vụ</p>
+            </div>
+            <div class="flex-1 h-0.5 bg-slate-200 mx-4 hidden sm:block">
+                <div id="progressLine-2" class="h-full bg-green-600 transition-all duration-500" style="width: 0%"></div>
+            </div>
+        </div>
+        <!-- Step 3 -->
+        <div class="flex-1 flex items-center relative">
+            <div id="stepCircle-3" class="w-8 h-8 rounded-lg bg-white border border-slate-300 text-slate-400 flex items-center justify-center font-bold z-10">3</div>
+            <div class="ml-3 hidden sm:block">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Bước 3</p>
+                <p class="text-xs font-bold text-slate-400" id="stepText-3">Thanh toán</p>
+            </div>
+            <div class="flex-1 h-0.5 bg-slate-200 mx-4 hidden sm:block">
+                <div id="progressLine-3" class="h-full bg-green-600 transition-all duration-500" style="width: 0%"></div>
+            </div>
+        </div>
+        <!-- Step 4 -->
+        <div class="flex items-center relative">
+            <div id="stepCircle-4" class="w-8 h-8 rounded-lg bg-white border border-slate-300 text-slate-400 flex items-center justify-center font-bold z-10">4</div>
+            <div class="ml-3 hidden sm:block">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Bước 4</p>
+                <p class="text-xs font-bold text-slate-400" id="stepText-4">Hoàn tất</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="bg-white rounded-xl border border-slate-200 shadow-sm max-w-4xl mx-auto overflow-hidden">
+    <form id="contractWizardForm" action="<%= typeof formAction !== 'undefined' ? formAction : ('/admin/contracts/' + (isEdit ? 'update/' + contract._id : 'store')) %>" method="POST">
+        
+        <!-- STEP 1: BASIC INFO -->
+        <div id="stepContent-1" class="step-content p-6 md:p-8 space-y-6">
+            <div class="flex items-center gap-3 pb-4 border-b border-slate-100">
+                <div class="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                </div>
+                <h3 class="font-bold text-slate-800 uppercase tracking-tight">Thông tin Khách hàng & Cơ sở</h3>
+            </div>
+
+            <% 
+                const _salesList = typeof salesStaff !== 'undefined' ? salesStaff : [];
+                let _defaultSalesId = '';
+                if (typeof user !== 'undefined' && user && user.id) {
+                    const _m = _salesList.find(s => s._id.toString() === user.id.toString());
+                    if (_m) _defaultSalesId = String(_m._id);
+                }
+                if (!_defaultSalesId && _salesList.length) _defaultSalesId = String(_salesList[0]._id);
+                const _defaultBranchId = (typeof contract !== 'undefined' && contract.branch) ? String(contract.branch) : (typeof branches !== 'undefined' && branches[0] ? String(branches[0]._id) : '');
+            %>
+            <% if (!isEdit) { %>
+                <script type="application/json" id="contract-step1-json"><%- JSON.stringify({
+                    clients: (typeof clients !== 'undefined' ? clients : []).map(c => ({ _id: String(c._id), name: c.name || '', phone: (c.phone != null ? String(c.phone) : ''), email: (c.email != null ? String(c.email) : ''), branchId: (c.branch != null ? String(c.branch) : '') })),
+                    branches: (typeof branches !== 'undefined' ? branches : []).map(b => ({ _id: String(b._id), name: b.name || '' })),
+                    sales: _salesList.map(s => ({ _id: String(s._id), name: s.name || '', role: s.role || '' }))
+                }) %></script>
+                <script type="application/json" id="contract-step1-meta"><%- JSON.stringify({ defaultBranchId: _defaultBranchId, defaultSalesId: _defaultSalesId }) %></script>
+            <% } %>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <% if (isEdit) { %>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Khách Hàng *</label>
+                    <div class="bg-slate-50 border border-slate-200 rounded-lg p-3 text-sm font-bold text-slate-700"><%= contract.client ? contract.client.name : 'Unknown' %></div>
+                    <input type="hidden" name="client" id="client" value="<%= contract.client ? contract.client._id : '' %>">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Chi nhánh thực hiện *</label>
+                    <select id="branch" name="branch" required class="w-full border border-slate-300 rounded-lg text-sm py-2.5 px-3 focus:ring-2 focus:ring-green-500 outline-none transition-all">
+                        <% if(typeof branches !== 'undefined') { %>
+                            <% branches.forEach(br => { %>
+                                <option value="<%= br._id %>" <%= (typeof contract !== 'undefined' && contract.branch && contract.branch.toString() === br._id.toString()) ? 'selected' : '' %>>
+                                    <%= br.name %>
+                                </option>
+                            <% }) %>
+                        <% } %>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Nhân viên Sales *</label>
+                    <select id="sales" name="sales" required class="w-full border border-slate-300 rounded-lg text-sm py-2.5 px-3 focus:ring-2 focus:ring-green-500 outline-none transition-all">
+                        <% if(typeof salesStaff !== 'undefined') { %>
+                            <% salesStaff.forEach(s => { %>
+                                <option value="<%= s._id %>" <%= (typeof contract !== 'undefined' && contract.sales && contract.sales.toString() === s._id.toString()) || (typeof user !== 'undefined' && user && user.id && user.id.toString() === s._id.toString()) ? 'selected' : '' %>>
+                                    <%= s.name %>
+                                </option>
+                            <% }) %>
+                        <% } %>
+                    </select>
+                </div>
+                <% } else { %>
+                <div class="contents" x-data="contractStep1Combos()" x-init="init()">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Khách Hàng *</label>
+                        <input type="hidden" name="client" id="client" :value="clientId">
+                        <div class="relative" @click.outside="clientOpen = false">
+                            <input
+                                id="clientSearchField"
+                                type="text"
+                                autocomplete="off"
+                                x-model="clientSearch"
+                                @focus="clientOpen = true"
+                                @click="clientOpen = true"
+                                @input="onClientSearchInput()"
+                                @keydown.escape.prevent="clientOpen = false"
+                                placeholder="Gõ tên, SĐT hoặc email để tìm..."
+                                class="w-full border border-slate-300 rounded-lg text-sm py-2.5 pl-3 pr-10 focus:ring-2 focus:ring-green-500 outline-none transition-all"
+                            >
+                            <span class="material-symbols-outlined pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]">search</span>
+                            <div
+                                x-show="clientOpen"
+                                x-transition
+                                class="absolute left-0 right-0 top-full z-30 mt-1 max-h-52 overflow-y-auto rounded-lg border border-slate-200 bg-white py-1 shadow-lg"
+                                style="display: none;"
+                            >
+                                <div x-show="filteredClients.length === 0" class="px-3 py-2.5 text-sm text-slate-500">Không tìm thấy khách hàng.</div>
+                                <template x-for="c in filteredClients" :key="c._id">
+                                    <button
+                                        type="button"
+                                        class="w-full px-3 py-2 text-left text-sm hover:bg-green-50 text-slate-800 border-b border-slate-50 last:border-0"
+                                        @click="pickClient(c)"
+                                    >
+                                        <span class="font-semibold" x-text="c.name"></span>
+                                        <span class="block text-xs text-slate-500" x-text="(c.phone || c.email || '—')"></span>
+                                    </button>
+                                </template>
+                            </div>
+                        </div>
+                        <p class="text-[10px] text-slate-400 mt-1">Chọn một dòng trong danh sách sau khi tìm.</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Chi nhánh thực hiện *</label>
+                        <input type="hidden" name="branch" id="branch" :value="branchId">
+                        <div class="relative" @click.outside="branchOpen = false">
+                            <input
+                                id="branchSearchField"
+                                type="text"
+                                autocomplete="off"
+                                x-model="branchSearch"
+                                @focus="branchOpen = true"
+                                @click="branchOpen = true"
+                                @input="onBranchSearchInput()"
+                                @keydown.escape.prevent="branchOpen = false"
+                                placeholder="Gõ tên chi nhánh..."
+                                :disabled="branchLocked"
+                                :class="branchLocked ? 'w-full border border-slate-200 bg-slate-50 rounded-lg text-sm py-2.5 pl-3 pr-10 outline-none cursor-not-allowed' : 'w-full border border-slate-300 rounded-lg text-sm py-2.5 pl-3 pr-10 focus:ring-2 focus:ring-green-500 outline-none transition-all'"
+                            >
+                            <span class="material-symbols-outlined pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]">search</span>
+                            <div
+                                x-show="branchOpen"
+                                x-transition
+                                class="absolute left-0 right-0 top-full z-30 mt-1 max-h-52 overflow-y-auto rounded-lg border border-slate-200 bg-white py-1 shadow-lg"
+                                style="display: none;"
+                            >
+                                <div x-show="filteredBranches.length === 0" class="px-3 py-2.5 text-sm text-slate-500">Không tìm thấy chi nhánh.</div>
+                                <template x-for="b in filteredBranches" :key="b._id">
+                                    <button type="button" class="w-full px-3 py-2.5 text-left text-sm font-medium hover:bg-green-50" @click="pickBranch(b)" x-text="b.name"></button>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Nhân viên Sales *</label>
+                        <input type="hidden" name="sales" id="sales" :value="salesId">
+                        <div class="relative" @click.outside="salesOpen = false">
+                            <input
+                                id="salesSearchField"
+                                type="text"
+                                autocomplete="off"
+                                x-model="salesSearch"
+                                @focus="salesOpen = true"
+                                @click="salesOpen = true"
+                                @input="onSalesSearchInput()"
+                                @keydown.escape.prevent="salesOpen = false"
+                                placeholder="Gõ tên nhân viên sales..."
+                                class="w-full border border-slate-300 rounded-lg text-sm py-2.5 pl-3 pr-10 focus:ring-2 focus:ring-green-500 outline-none transition-all"
+                            >
+                            <span class="material-symbols-outlined pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]">search</span>
+                            <div
+                                x-show="salesOpen"
+                                x-transition
+                                class="absolute left-0 right-0 top-full z-30 mt-1 max-h-52 overflow-y-auto rounded-lg border border-slate-200 bg-white py-1 shadow-lg"
+                                style="display: none;"
+                            >
+                                <div x-show="filteredSalesPeople.length === 0" class="px-3 py-2.5 text-sm text-slate-500">Không tìm thấy nhân viên.</div>
+                                <template x-for="s in filteredSalesPeople" :key="s._id">
+                                    <button type="button" class="w-full px-3 py-2 text-left text-sm hover:bg-green-50 border-b border-slate-50 last:border-0" @click="pickSales(s)">
+                                        <span class="font-semibold text-slate-800" x-text="s.name"></span>
+                                        <span class="block text-[10px] text-slate-500 uppercase" x-text="s.role"></span>
+                                    </button>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <% } %>
+            </div>
+        </div>
+
+        <!-- STEP 2: SERVICE -->
+        <div id="stepContent-2" class="step-content p-6 md:p-8 space-y-6 hidden">
+            <div class="flex items-center gap-3 pb-4 border-b border-slate-100">
+                <div class="w-10 h-10 rounded-lg bg-green-50 text-green-600 flex items-center justify-center">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                </div>
+                <h3 class="font-bold text-slate-800 uppercase tracking-tight">Chi tiết Dịch vụ & Gói tập</h3>
+            </div>
+
+            <% if (!isEdit) { %>
+            <div class="space-y-6">
+                <!-- Mode Switch Tabs style -->
+                <div class="flex gap-4 border-b border-slate-100">
+                    <button type="button" id="btnTemplateMode" class="pb-2 text-xs font-bold uppercase tracking-widest transition-all border-b-2 border-green-500 text-green-600" onclick="switchPackageMode('template')">Gói Thư Viện</button>
+                    <button type="button" id="btnCustomMode" class="pb-2 text-xs font-bold uppercase tracking-widest transition-all text-slate-400" onclick="switchPackageMode('custom')">Tùy Chỉnh Linh Hoạt</button>
+                </div>
+
+                <!-- Template Mode -->
+                <div id="templateModeContainer" class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Chọn Gói *</label>
+                        <select id="servicePackage" name="servicePackage" class="w-full border border-slate-300 rounded-lg text-sm py-2.5 px-3 focus:ring-2 focus:ring-green-500 outline-none transition-all">
+                            <option value="">-- Chọn gói từ danh sách --</option>
+                            <% if(typeof packages !== 'undefined') { %>
+                                <% packages.forEach(pkg => { %>
+                                    <option value="<%= pkg._id %>" data-price="<%= pkg.price %>" data-duration-months="<%= pkg.durationMonths || Math.max(1, Math.round((pkg.duration || 30) / 30)) %>" data-sessions="<%= pkg.sessions %>" data-type="<%= pkg.type %>" data-name="<%= pkg.name %>">
+                                        <%= pkg.name %> (<%= pkg.type %>)
+                                    </option>
+                                <% }) %>
+                            <% } %>
+                        </select>
+                    </div>
+                    <div id="templatePreviewCard" class="hidden bg-slate-50 rounded-xl p-4 border border-slate-200">
+                        <h4 class="font-bold text-slate-800 mb-2" id="dispName">-</h4>
+                        <div class="grid grid-cols-2 gap-y-2 text-xs">
+                            <span class="text-slate-500">Hình thức:</span> <span class="font-bold text-slate-700" id="dispType">-</span>
+                            <span class="text-slate-500">Thời hạn:</span> <span class="font-bold text-slate-700" id="dispDuration">-</span>
+                            <span class="text-slate-500">Tổng số buổi HĐ:</span> <span class="font-bold text-green-600 flex items-center gap-1"><span id="dispSessions">-</span> <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"></path></svg></span>
+                            <span class="text-slate-500">Giá / buổi:</span> <span class="font-bold text-slate-700" id="dispUnitPrice">-</span>
+                            <span class="text-slate-500 font-bold">Tạm tính (trước VAT):</span> <span class="font-bold text-slate-900" id="dispPrice">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Custom Mode -->
+                <div id="customModeContainer" class="hidden grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Tên gói tự tạo *</label>
+                            <input type="text" name="customPkgName" id="customPkgName" minlength="2" maxlength="120" class="w-full border border-slate-300 rounded-lg text-sm py-2 px-3 focus:ring-2 focus:ring-green-500 outline-none" placeholder="VD: Gói tập riêng ưu đãi">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Loại hình</label>
+                        <select name="customPkgType" id="customPkgType" class="w-full border border-slate-300 rounded-lg text-sm py-2 px-3 outline-none">
+                            <option value="Gym">Gym</option>
+                            <option value="Gym Kids">Gym Kids</option>
+                            <option value="Pilates">Pilates</option>
+                            <option value="Boxing">Boxing</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Thời hạn (tháng)</label>
+                        <input type="number" name="customPkgDuration" id="customPkgDuration" min="1" max="36" class="w-full border border-slate-300 rounded-lg text-sm py-2 px-3 outline-none" placeholder="3">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Tổng số buổi HĐ *</label>
+                        <input type="number" name="customPkgSessions" id="customPkgSessions" min="1" max="500" class="w-full border border-slate-300 rounded-lg text-sm py-2 px-3 outline-none" value="10">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Giá / buổi (VNĐ) *</label>
+                        <input type="number" name="customPkgPrice" id="customPkgPrice" min="1" max="1000000000" class="w-full border border-slate-300 rounded-lg text-sm py-2 px-3 font-bold text-green-600 outline-none" placeholder="0">
+                    </div>
+                </div>
+            </div>
+            <% } %>
+
+            <div class="pt-6 border-t border-slate-100">
+                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Huấn luyện viên (PT)</label>
+                <select id="pt" name="pt" class="w-full border border-slate-300 rounded-lg text-sm py-2.5 px-3 focus:ring-2 focus:ring-green-500 outline-none transition-all">
+                    <option value="">-- Không sử dụng PT --</option>
+                    <% if(typeof pts !== 'undefined') { %>
+                        <% pts.forEach(p => { %>
+                            <option value="<%= p._id %>" <%= (typeof contract !== 'undefined' && contract.pt && contract.pt.toString() === p._id.toString()) || (typeof user !== 'undefined' && user && user.id && user.id.toString() === p._id.toString()) ? 'selected' : '' %>>
+                                <%= p.name %>
+                            </option>
+                        <% }) %>
+                    <% } %>
+                </select>
+            </div>
+        </div>
+
+        <!-- STEP 3: FINANCE -->
+        <div id="stepContent-3" class="step-content p-6 md:p-8 space-y-6 hidden">
+            <div class="flex items-center gap-3 pb-4 border-b border-slate-100">
+                <div class="w-10 h-10 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </div>
+                <h3 class="font-bold text-slate-800 uppercase tracking-tight">Điều khoản Tài chính</h3>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Mã Giảm Giá</label>
+                            <input type="text" id="couponCode" name="couponCode" maxlength="32" pattern="^[A-Za-z0-9_-]{2,32}$" class="w-full border border-slate-300 rounded-lg text-sm py-2 px-3 font-mono uppercase" placeholder="FITCITY20">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Chiết khấu (VNĐ)</label>
+                            <input type="number" id="discount" name="discount" min="0" max="1000000000" class="w-full border border-slate-300 rounded-lg text-sm py-2 px-3 text-green-600 font-bold" value="0">
+                        </div>
+                    </div>
+
+                    <div class="p-5 bg-slate-50 rounded-xl border border-slate-200 shadow-sm space-y-2">
+                        <div class="flex justify-between text-xs text-slate-500"><span>Tạm tính:</span> <span id="summaryBasePrice">0 VNĐ</span></div>
+                        <div class="flex justify-between text-xs text-green-600"><span>Giảm giá:</span> <span id="summaryDiscount">- 0 VNĐ</span></div>
+                        <div class="flex justify-between text-sm font-bold text-slate-800 pt-2 border-t border-slate-200 mt-2">
+                            <span>TỔNG CỘNG (VAT):</span> <span class="text-green-600" id="summaryTotal">0 VNĐ</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Trạng thái Bill *</label>
+                        <select id="paymentStatus" name="paymentStatus" required class="w-full border-2 border-slate-800 rounded-lg text-sm py-2.5 px-3 font-bold">
+                            <option value="Unpaid">Chưa Thanh Toán</option>
+                            <option value="Deposit">Đặt Cọc / Một Phần</option>
+                            <option value="Paid">Đã Thanh Toán Toàn Bộ</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Nguồn thu (báo cáo)</label>
+                        <select name="revenueSource" class="w-full border border-slate-300 rounded-lg text-sm py-2 px-3">
+                            <option value="">Tự động (theo gói/PT)</option>
+                            <option value="PT_Contract">Hợp đồng PT</option>
+                            <option value="Other">Khác</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Phương thức TT</label>
+                        <select id="paymentMethods" name="paymentMethods" required class="w-full border border-slate-300 rounded-lg text-sm py-2 px-3">
+                            <option value="Transfer">Chuyển khoản</option>
+                            <option value="Cash">Tiền mặt</option>
+                            <option value="Card">Quẹt thẻ</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- STEP 4: REVIEW -->
+        <div id="stepContent-4" class="step-content p-6 md:p-8 space-y-6 hidden text-center">
+            <div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            </div>
+            <h3 class="text-xl font-bold text-slate-800">Kiểm tra & Xác nhận</h3>
+            <p class="text-slate-500 text-sm max-w-md mx-auto">Vui lòng rà soát lại thông tin trước khi phát hành hóa đơn chính thức trên hệ thống.</p>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-left mt-8">
+                <div class="p-4 bg-slate-50 rounded-xl border border-slate-200">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">Khách hàng</p>
+                    <p class="font-bold text-slate-800" id="finalClient">-</p>
+                    <p class="text-[10px] text-slate-500" id="finalBranch">-</p>
+                </div>
+                <div class="p-4 bg-slate-50 rounded-xl border border-slate-200">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">Dịch vụ</p>
+                    <p class="font-bold text-slate-800" id="finalPackage">-</p>
+                    <p class="text-[10px] text-green-600 font-bold" id="finalDetails">-</p>
+                </div>
+                <div class="p-4 bg-slate-800 rounded-xl border border-slate-800 text-white">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">Thanh toán</p>
+                    <p class="font-bold text-xl text-green-500" id="finalTotal">-</p>
+                    <p class="text-[10px] uppercase font-bold text-slate-300" id="finalStatus">-</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- FOOTER NAV -->
+        <div class="px-6 py-4 bg-slate-50 border-t border-slate-200 flex justify-between items-center">
+            <button type="button" id="prevBtn" class="invisible px-4 py-2 bg-white border border-slate-300 text-slate-700 text-sm font-bold rounded-lg hover:bg-slate-50 transition-colors flex items-center gap-2" onclick="changeStep(-1)">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                Quay lại
+            </button>
+            <button type="button" id="nextBtn" class="px-6 py-2 bg-slate-800 text-white text-sm font-bold rounded-lg hover:bg-slate-900 transition-colors flex items-center gap-2" onclick="changeStep(1)">
+                Tiếp tục
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('contractStep1Combos', () => ({
+            clients: [],
+            branches: [],
+            salesPeople: [],
+            meta: {},
+            clientId: '',
+            branchId: '',
+            salesId: '',
+            clientSearch: '',
+            branchSearch: '',
+            salesSearch: '',
+            clientOpen: false,
+            branchOpen: false,
+            salesOpen: false,
+            branchLocked: false,
+
+            init() {
+                const el = document.getElementById('contract-step1-json');
+                if (!el) return;
+                try {
+                    const data = JSON.parse(el.textContent || '{}');
+                    this.clients = data.clients || [];
+                    this.branches = data.branches || [];
+                    this.salesPeople = data.sales || [];
+                } catch (e) { /* ignore */ }
+                const m = document.getElementById('contract-step1-meta');
+                if (m) {
+                    try {
+                        this.meta = JSON.parse(m.textContent || '{}');
+                    } catch (e) {
+                        this.meta = {};
+                    }
+                }
+                if (this.meta.defaultBranchId) {
+                    const b = this.branches.find((x) => x._id === this.meta.defaultBranchId);
+                    if (b) {
+                        this.branchId = b._id;
+                        this.branchSearch = b.name;
+                    }
+                }
+                if (this.meta.defaultSalesId) {
+                    const s = this.salesPeople.find((x) => x._id === this.meta.defaultSalesId);
+                    if (s) {
+                        this.salesId = s._id;
+                        this.salesSearch = s.name;
+                    }
+                }
+            },
+
+            get filteredClients() {
+                const q = (this.clientSearch || '').trim().toLowerCase();
+                if (!q) return this.clients.slice(0, 50);
+                return this.clients
+                    .filter(
+                        (c) =>
+                            (c.name || '').toLowerCase().includes(q) ||
+                            (c.phone || '').toLowerCase().includes(q) ||
+                            (c.email || '').toLowerCase().includes(q)
+                    )
+                    .slice(0, 80);
+            },
+
+            get filteredBranches() {
+                const q = (this.branchSearch || '').trim().toLowerCase();
+                if (!q) return this.branches;
+                return this.branches.filter((b) => (b.name || '').toLowerCase().includes(q));
+            },
+
+            get filteredSalesPeople() {
+                const q = (this.salesSearch || '').trim().toLowerCase();
+                if (!q) return this.salesPeople;
+                return this.salesPeople.filter(
+                    (s) =>
+                        (s.name || '').toLowerCase().includes(q) ||
+                        (s.role || '').toLowerCase().includes(q)
+                );
+            },
+
+            pickClient(c) {
+                this.clientId = c._id;
+                this.clientSearch = `${c.name} — ${c.phone || c.email || ''}`;
+                this.clientOpen = false;
+
+                // Lock branch to the client's assigned branch (R4)
+                if (c.branchId) {
+                    const b = this.branches.find((x) => x._id === c.branchId);
+                    if (b) {
+                        this.branchId = b._id;
+                        this.branchSearch = b.name;
+                        this.branchLocked = true;
+                        this.branchOpen = false;
+                        return;
+                    }
+                }
+                // No client branch => unlock to let staff pick (server will still guard)
+                this.branchLocked = false;
+            },
+
+            onClientSearchInput() {
+                const match = this.clients.find((c) => c._id === this.clientId);
+                const expected = match ? `${match.name} — ${match.phone || match.email || ''}` : '';
+                if (this.clientSearch !== expected) {
+                    this.clientId = '';
+                    // Restore default branch when client cleared
+                    this.branchLocked = false;
+                    if (this.meta.defaultBranchId) {
+                        const b = this.branches.find((x) => x._id === this.meta.defaultBranchId);
+                        if (b) {
+                            this.branchId = b._id;
+                            this.branchSearch = b.name;
+                        } else {
+                            this.branchId = '';
+                            this.branchSearch = '';
+                        }
+                    } else {
+                        this.branchId = '';
+                        this.branchSearch = '';
+                    }
+                }
+            },
+
+            pickBranch(b) {
+                if (this.branchLocked) return;
+                this.branchId = b._id;
+                this.branchSearch = b.name;
+                this.branchOpen = false;
+            },
+
+            onBranchSearchInput() {
+                if (this.branchLocked) return;
+                const match = this.branches.find((b) => b._id === this.branchId);
+                const expected = match ? match.name : '';
+                if (this.branchSearch !== expected) this.branchId = '';
+            },
+
+            pickSales(s) {
+                this.salesId = s._id;
+                this.salesSearch = s.name;
+                this.salesOpen = false;
+            },
+
+            onSalesSearchInput() {
+                const match = this.salesPeople.find((s) => s._id === this.salesId);
+                const expected = match ? match.name : '';
+                if (this.salesSearch !== expected) this.salesId = '';
+            },
+        }));
+    });
+
+    let currentStep = 1;
+    const totalSteps = 4;
+    let pkgMode = 'template';
+
+    function switchPackageMode(mode) {
+        pkgMode = mode;
+        const templateCont = document.getElementById('templateModeContainer');
+        const customCont = document.getElementById('customModeContainer');
+        const btnTemplate = document.getElementById('btnTemplateMode');
+        const btnCustom = document.getElementById('btnCustomMode');
+        if (!templateCont || !customCont || !btnTemplate || !btnCustom) return;
+
+        if (mode === 'template') {
+            templateCont.classList.remove('hidden');
+            customCont.classList.add('hidden');
+            btnTemplate.className = 'pb-2 text-xs font-bold uppercase tracking-widest transition-all border-b-2 border-green-500 text-green-600';
+            btnCustom.className = 'pb-2 text-xs font-bold uppercase tracking-widest transition-all text-slate-400';
+            document.getElementById('customPkgName').value = '';
+        } else {
+            templateCont.classList.add('hidden');
+            customCont.classList.remove('hidden');
+            btnCustom.className = 'pb-2 text-xs font-bold uppercase tracking-widest transition-all border-b-2 border-green-500 text-green-600';
+            btnTemplate.className = 'pb-2 text-xs font-bold uppercase tracking-widest transition-all text-slate-400';
+            document.getElementById('servicePackage').value = '';
+            document.getElementById('templatePreviewCard').classList.add('hidden');
+        }
+        updateFinanceSummary();
+    }
+
+    const pkgSelect = document.getElementById('servicePackage');
+    if (pkgSelect) {
+        pkgSelect.addEventListener('change', function() {
+            const opt = this.options[this.selectedIndex];
+            const card = document.getElementById('templatePreviewCard');
+            if (!this.value) { card.classList.add('hidden'); return; }
+            card.classList.remove('hidden');
+            document.getElementById('dispName').textContent = opt.dataset.name;
+            document.getElementById('dispType').textContent = opt.dataset.type;
+            document.getElementById('dispDuration').textContent = (opt.dataset.durationMonths || '1') + ' tháng';
+            document.getElementById('dispSessions').textContent = opt.dataset.sessions;
+            const unit = parseInt(opt.dataset.price || 0, 10);
+            const sessions = parseInt(opt.dataset.sessions || 0, 10);
+            document.getElementById('dispUnitPrice').textContent = new Intl.NumberFormat('vi-VN').format(unit) + ' đ/buổi';
+            document.getElementById('dispPrice').textContent = new Intl.NumberFormat('vi-VN').format(unit * sessions) + ' đ';
+            updateFinanceSummary();
+        });
+    }
+
+    ['customPkgPrice', 'customPkgSessions', 'discount'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('input', updateFinanceSummary);
+    });
+
+    function contractBasePrice() {
+        if (pkgMode === 'template') {
+            if (!pkgSelect || !pkgSelect.value) return 0;
+            const opt = pkgSelect.options[pkgSelect.selectedIndex];
+            const unit = parseInt(opt.dataset.price || 0, 10);
+            const sessions = parseInt(opt.dataset.sessions || 0, 10);
+            return unit * sessions;
+        }
+        const unit = parseInt(document.getElementById('customPkgPrice')?.value || 0, 10);
+        const sessions = parseInt(document.getElementById('customPkgSessions')?.value || 0, 10);
+        return unit * sessions;
+    }
+
+    function updateFinanceSummary() {
+        const basePrice = contractBasePrice();
+        if (pkgMode !== 'template' && !document.getElementById('customPkgPrice')) return;
+        const discEl = document.getElementById('discount');
+        const discount = parseInt((discEl && discEl.value) || 0);
+        const total = Math.max(0, Math.round((basePrice - discount) * 1.1));
+        document.getElementById('summaryBasePrice').textContent = new Intl.NumberFormat('vi-VN').format(basePrice) + ' VNĐ';
+        document.getElementById('summaryDiscount').textContent = '- ' + new Intl.NumberFormat('vi-VN').format(discount) + ' VNĐ';
+        document.getElementById('summaryTotal').textContent = new Intl.NumberFormat('vi-VN').format(total) + ' VNĐ';
+        document.getElementById('finalTotal').textContent = new Intl.NumberFormat('vi-VN').format(total) + ' VNĐ';
+    }
+
+    function changeStep(n) {
+        if (n === 1 && !validateStep(currentStep)) return;
+        document.getElementById(`stepContent-${currentStep}`).classList.add('hidden');
+        currentStep += n;
+        if (currentStep > totalSteps) { document.getElementById('contractWizardForm').submit(); return; }
+        document.getElementById(`stepContent-${currentStep}`).classList.remove('hidden');
+        updateStepperUI();
+        if (currentStep === 4) prepareConfirmation();
+    }
+
+    function getErrorAnchor(fieldId) {
+        const map = {
+            client: 'clientSearchField',
+            branch: 'branchSearchField',
+            sales: 'salesSearchField'
+        };
+        return document.getElementById(map[fieldId] || fieldId);
+    }
+
+    function clearFieldError(fieldId) {
+        const anchor = getErrorAnchor(fieldId);
+        if (!anchor) return;
+        anchor.classList.remove('border-red-500', 'ring-red-200');
+        anchor.removeAttribute('aria-invalid');
+        const holder = anchor.parentElement;
+        if (!holder) return;
+        const old = holder.querySelector(`.field-error[data-for="${fieldId}"]`);
+        if (old) old.remove();
+    }
+
+    function setFieldError(fieldId, message) {
+        const anchor = getErrorAnchor(fieldId);
+        if (!anchor) return;
+        clearFieldError(fieldId);
+        anchor.classList.add('border-red-500', 'ring-red-200');
+        anchor.setAttribute('aria-invalid', 'true');
+
+        const holder = anchor.parentElement;
+        if (!holder) return;
+        const err = document.createElement('p');
+        err.className = 'field-error mt-1 text-xs font-medium text-red-600';
+        err.dataset.for = fieldId;
+        err.textContent = message;
+        holder.appendChild(err);
+    }
+
+    function clearStepErrors(step) {
+        const stepRoot = document.getElementById(`stepContent-${step}`);
+        if (!stepRoot) return;
+        stepRoot.querySelectorAll('.field-error').forEach((n) => n.remove());
+        stepRoot
+            .querySelectorAll('[aria-invalid="true"]')
+            .forEach((el) => {
+                el.classList.remove('border-red-500', 'ring-red-200');
+                el.removeAttribute('aria-invalid');
+            });
+    }
+
+    function validateStep(step) {
+        clearStepErrors(step);
+        let ok = true;
+
+        if (step === 1) {
+            const clientEl = document.getElementById('client');
+            if (!clientEl || !clientEl.value) {
+                setFieldError('client', 'Vui lòng chọn khách hàng từ danh sách.');
+                ok = false;
+            }
+            const branchEl = document.getElementById('branch');
+            if (branchEl && !branchEl.value) {
+                setFieldError('branch', 'Vui lòng chọn chi nhánh hợp lệ.');
+                ok = false;
+            }
+            const salesEl = document.getElementById('sales');
+            if (salesEl && !salesEl.value) {
+                setFieldError('sales', 'Vui lòng chọn nhân viên Sales.');
+                ok = false;
+            }
+        }
+        if (step === 2 && pkgSelect) {
+            if (pkgMode === 'template' && !pkgSelect.value) {
+                setFieldError('servicePackage', 'Vui lòng chọn gói tập.');
+                ok = false;
+            }
+            if (pkgMode === 'template' && pkgSelect.value) {
+                const opt = pkgSelect.options[pkgSelect.selectedIndex];
+                const sessions = parseInt(opt.dataset.sessions || 0, 10);
+                if (sessions < 1) {
+                    setFieldError('servicePackage', 'Gói tập phải có tổng số buổi lớn hơn 0.');
+                    ok = false;
+                }
+            }
+            if (pkgMode === 'custom') {
+                const sessions = parseInt(document.getElementById('customPkgSessions')?.value || 0, 10);
+                const customName = document.getElementById('customPkgName');
+                const customDuration = document.getElementById('customPkgDuration');
+                const customPrice = document.getElementById('customPkgPrice');
+                if (!customName?.value?.trim()) {
+                    setFieldError('customPkgName', 'Vui lòng nhập tên gói tùy chỉnh.');
+                    ok = false;
+                }
+                if (!customDuration?.value) {
+                    setFieldError('customPkgDuration', 'Vui lòng nhập thời hạn (tháng).');
+                    ok = false;
+                }
+                if (!customPrice?.value) {
+                    setFieldError('customPkgPrice', 'Vui lòng nhập giá / buổi.');
+                    ok = false;
+                }
+                if (sessions < 1) {
+                    setFieldError('customPkgSessions', 'Tổng số buổi hợp đồng phải lớn hơn 0.');
+                    ok = false;
+                }
+            }
+        }
+        if (step === 3) {
+            const discountEl = document.getElementById('discount');
+            const discountNum = Number(discountEl?.value || 0);
+            if (!Number.isFinite(discountNum) || discountNum < 0) {
+                setFieldError('discount', 'Chiết khấu phải là số không âm.');
+                ok = false;
+            }
+            const paymentStatusEl = document.getElementById('paymentStatus');
+            const allowedStatus = ['Unpaid', 'Deposit', 'Paid'];
+            if (!paymentStatusEl || !allowedStatus.includes(paymentStatusEl.value)) {
+                setFieldError('paymentStatus', 'Trạng thái bill không hợp lệ.');
+                ok = false;
+            }
+            const paymentMethodsEl = document.getElementById('paymentMethods');
+            const allowedMethods = ['Cash', 'Transfer', 'Card', 'Installment'];
+            if (!paymentMethodsEl || !allowedMethods.includes(paymentMethodsEl.value)) {
+                setFieldError('paymentMethods', 'Vui lòng chọn phương thức thanh toán hợp lệ.');
+                ok = false;
+            }
+            const couponEl = document.getElementById('couponCode');
+            if (couponEl && couponEl.value && !/^[A-Za-z0-9_-]{2,32}$/.test(couponEl.value.trim())) {
+                setFieldError('couponCode', 'Mã giảm giá không hợp lệ.');
+                ok = false;
+            }
+        }
+        return ok;
+    }
+
+    function updateStepperUI() {
+        for (let i = 1; i <= totalSteps; i++) {
+            const circle = document.getElementById(`stepCircle-${i}`);
+            const text = document.getElementById(`stepText-${i}`);
+            const line = document.getElementById(`progressLine-${i}`);
+
+            if (i < currentStep) {
+                circle.className = 'w-8 h-8 rounded-lg bg-green-500 text-white flex items-center justify-center font-bold z-10';
+                circle.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>';
+                if (line) line.style.width = '100%';
+            } else if (i === currentStep) {
+                circle.className = 'w-8 h-8 rounded-lg bg-green-600 text-white flex items-center justify-center font-bold z-10 shadow-md ring-4 ring-green-50';
+                circle.innerHTML = i;
+                if (text) text.classList.replace('text-slate-400', 'text-slate-800');
+                if (line) line.style.width = '0%';
+            } else {
+                circle.className = 'w-8 h-8 rounded-lg bg-white border border-slate-300 text-slate-400 flex items-center justify-center font-bold z-10';
+                circle.innerHTML = i;
+                if (text) text.classList.replace('text-slate-800', 'text-slate-400');
+                if (line) line.style.width = '0%';
+            }
+        }
+        document.getElementById('prevBtn').style.visibility = (currentStep === 1) ? 'hidden' : 'visible';
+        const nextBtn = document.getElementById('nextBtn');
+        if (currentStep === totalSteps) {
+            nextBtn.innerHTML = 'Phát hành Hợp đồng <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>';
+            nextBtn.className = 'px-6 py-2 bg-green-600 text-white text-sm font-bold rounded-lg hover:bg-green-700 transition-colors flex items-center shadow-lg shadow-green-100';
+        } else {
+            nextBtn.innerHTML = 'Tiếp tục <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>';
+            nextBtn.className = 'px-6 py-2 bg-slate-800 text-white text-sm font-bold rounded-lg hover:bg-slate-900 transition-colors flex items-center';
+        }
+    }
+
+    function prepareConfirmation() {
+        const cSel = document.getElementById('client');
+        let clientText = '';
+        if (cSel && cSel.tagName === 'SELECT') {
+            clientText = cSel.options[cSel.selectedIndex].text.split('(')[0].trim();
+        } else {
+            const inp = document.getElementById('clientSearchField');
+            clientText = inp ? inp.value.trim().split('—')[0].trim() : '';
+        }
+        document.getElementById('finalClient').textContent = clientText || '—';
+
+        const bSel = document.getElementById('branch');
+        let branchText = '';
+        if (bSel && bSel.tagName === 'SELECT') {
+            branchText = bSel.options[bSel.selectedIndex].text;
+        } else {
+            const inp = document.getElementById('branchSearchField');
+            branchText = inp ? inp.value.trim() : '';
+        }
+        document.getElementById('finalBranch').textContent = 'Tại: ' + (branchText || '—');
+
+        if (pkgMode === 'template' && pkgSelect) {
+            const opt = pkgSelect.options[pkgSelect.selectedIndex];
+            document.getElementById('finalPackage').textContent = opt.dataset.name || '—';
+            const unit = parseInt(opt.dataset.price || 0, 10);
+            const sessions = parseInt(opt.dataset.sessions || 0, 10);
+            document.getElementById('finalDetails').textContent = `${opt.dataset.durationMonths} tháng | ${sessions} buổi | ${new Intl.NumberFormat('vi-VN').format(unit)} đ/buổi`;
+        } else if (document.getElementById('customPkgName')) {
+            document.getElementById('finalPackage').textContent = document.getElementById('customPkgName').value;
+            const unit = parseInt(document.getElementById('customPkgPrice').value || 0, 10);
+            const sessions = parseInt(document.getElementById('customPkgSessions').value || 0, 10);
+            document.getElementById('finalDetails').textContent = `${document.getElementById('customPkgDuration').value} tháng | ${sessions} buổi | ${new Intl.NumberFormat('vi-VN').format(unit)} đ/buổi`;
+        }
+
+        const sSel = document.getElementById('paymentStatus');
+        const map = { 'Unpaid': 'Chưa Thanh Toán', 'Deposit': 'Đặt Cọc', 'Paid': 'Đã Thu Đủ' };
+        document.getElementById('finalStatus').textContent = map[sSel.value];
+    }
+</script>
+
+<%- include('../../partials/footer') %>

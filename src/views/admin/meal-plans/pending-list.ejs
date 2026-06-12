@@ -1,0 +1,167 @@
+<%- include('../../partials/header', { title: 'Kế hoạch dinh dưỡng chờ duyệt', activePage: 'meal-plan-approval' }) %>
+
+<div class="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div>
+        <h2 class="text-2xl font-bold text-slate-800">Kế hoạch dinh dưỡng chờ duyệt</h2>
+        <p class="text-slate-500 text-sm mt-1">Xem xét và phê duyệt các kế hoạch dinh dưỡng do PT tạo</p>
+    </div>
+    <span class="inline-flex items-center gap-2 px-3 py-1.5 bg-amber-100 text-amber-800 text-sm font-semibold rounded-full border border-amber-200">
+        <span class="w-2 h-2 bg-amber-500 rounded-full"></span>
+        <%= mealPlans.length %> chờ duyệt
+    </span>
+</div>
+
+<div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+    <% if (mealPlans.length === 0) { %>
+    <div class="flex flex-col items-center justify-center py-20 text-slate-400">
+        <svg class="w-14 h-14 mb-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+        </svg>
+        <p class="text-base font-medium">Không có kế hoạch nào đang chờ duyệt</p>
+        <p class="text-sm mt-1">Tất cả kế hoạch dinh dưỡng đã được xử lý</p>
+    </div>
+    <% } else { %>
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead class="bg-slate-50 border-b border-slate-200">
+                <tr>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider w-10">STT</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Khách hàng</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Huấn luyện viên</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Mục tiêu</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Calories/ngày</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Ngày tạo</th>
+                    <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">Hành động</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+                <% mealPlans.forEach((plan, index) => { %>
+                <tr class="hover:bg-slate-50 transition-colors">
+                    <td class="px-4 py-3 text-slate-500 font-medium"><%= index + 1 %></td>
+
+                    <!-- Khách hàng -->
+                    <td class="px-4 py-3">
+                        <div class="flex items-center gap-2.5">
+                            <% if (plan.client && plan.client.avatar) { %>
+                            <img src="<%= plan.client.avatar %>" class="w-8 h-8 rounded-full object-cover border border-slate-200" alt="">
+                            <% } else { %>
+                            <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-xs border border-blue-200">
+                                <%= plan.client ? plan.client.name.charAt(0).toUpperCase() : '?' %>
+                            </div>
+                            <% } %>
+                            <div>
+                                <p class="font-medium text-slate-800"><%= plan.client ? plan.client.name : 'N/A' %></p>
+                                <p class="text-xs text-slate-400"><%= plan.client ? plan.client.email : '' %></p>
+                            </div>
+                        </div>
+                    </td>
+
+                    <!-- PT -->
+                    <td class="px-4 py-3">
+                        <div class="flex items-center gap-2">
+                            <% if (plan.pt && plan.pt.avatar) { %>
+                            <img src="<%= plan.pt.avatar %>" class="w-7 h-7 rounded-full object-cover border border-slate-200" alt="">
+                            <% } else { %>
+                            <div class="w-7 h-7 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 font-bold text-xs border border-emerald-200">
+                                <%= plan.pt ? plan.pt.name.charAt(0).toUpperCase() : 'P' %>
+                            </div>
+                            <% } %>
+                            <span class="text-slate-700"><%= plan.pt ? plan.pt.name : 'N/A' %></span>
+                        </div>
+                    </td>
+
+                    <!-- Mục tiêu -->
+                    <td class="px-4 py-3">
+                        <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100">
+                            <%= plan.goal || '—' %>
+                        </span>
+                    </td>
+
+                    <!-- Calories -->
+                    <td class="px-4 py-3 font-semibold text-slate-700">
+                        <%= plan.dailyCalories ? plan.dailyCalories.toLocaleString('vi-VN') + ' kcal' : '—' %>
+                    </td>
+
+                    <!-- Ngày tạo -->
+                    <td class="px-4 py-3 text-slate-500 text-xs">
+                        <%= plan.createdAt ? new Date(plan.createdAt).toLocaleDateString('vi-VN') : '—' %>
+                    </td>
+
+                    <!-- Hành động -->
+                    <td class="px-4 py-3">
+                        <div class="flex items-center justify-center gap-2 flex-wrap">
+                            <a href="/admin/meal-plans/pending/<%= plan._id %>"
+                               class="inline-flex items-center gap-1 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition-colors">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                </svg>
+                                Chi tiết
+                            </a>
+
+                            <form action="/admin/meal-plans/<%= plan._id %>/approve" method="POST"
+                                  onsubmit="return confirm('Xác nhận phê duyệt kế hoạch dinh dưỡng này?')">
+                                <button type="submit"
+                                        class="inline-flex items-center gap-1 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold rounded-lg transition-colors shadow-sm">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                    </svg>
+                                    Duyệt nhanh
+                                </button>
+                            </form>
+
+                            <button type="button" onclick="openRejectModal('<%= plan._id %>')"
+                                    class="inline-flex items-center gap-1 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-lg transition-colors shadow-sm">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                                Từ chối
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                <% }) %>
+            </tbody>
+        </table>
+    </div>
+    <% } %>
+</div>
+
+<!-- Modal Từ chối -->
+<div id="modal-reject" class="fixed inset-0 z-50 flex items-center justify-center p-4 hidden" role="dialog" aria-modal="true">
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeRejectModal()"></div>
+    <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+        <button onclick="closeRejectModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+        </button>
+        <h3 class="text-lg font-bold text-slate-800 mb-2">Từ chối kế hoạch dinh dưỡng</h3>
+        <p class="text-sm text-slate-500 mb-5">Lý do sẽ được gửi đến PT và khách hàng.</p>
+        <form id="form-reject" method="POST" action="">
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Lý do từ chối</label>
+                <textarea name="reason" rows="4"
+                          class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-400 focus:border-transparent outline-none resize-none"
+                          placeholder="Nhập lý do từ chối (tùy chọn)"></textarea>
+            </div>
+            <div class="flex gap-3 mt-5">
+                <button type="button" onclick="closeRejectModal()"
+                        class="flex-1 px-4 py-2 border border-slate-300 text-slate-700 text-sm font-semibold rounded-lg hover:bg-slate-50">Huỷ</button>
+                <button type="submit"
+                        class="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-bold rounded-lg shadow-sm">Xác nhận từ chối</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function openRejectModal(id) {
+    document.getElementById('form-reject').action = '/admin/meal-plans/' + id + '/reject';
+    document.getElementById('modal-reject').classList.remove('hidden');
+}
+function closeRejectModal() {
+    document.getElementById('modal-reject').classList.add('hidden');
+}
+</script>
+
+<%- include('../../partials/footer') %>

@@ -1,0 +1,60 @@
+<%- include('../../partials/header', { title: 'Gán phần thưởng', activePage: 'rewards' }) %>
+
+<div class="container mt-4">
+    <h1><i class="fas fa-gift"></i> Gán Reward cho Khách hàng</h1>
+    <hr>
+
+    <form action="/admin/rewards/store" method="POST" class="row g-3">
+        <div class="col-md-6">
+            <label for="clientId" class="form-label">Khách hàng <span class="text-danger">*</span></label>
+            <select name="clientId" id="clientId" class="form-select" required>
+                <option value="">-- Chọn khách hàng --</option>
+                <% clients.forEach(c => { %>
+                    <option value="<%= c._id %>"><%= c.name %> (<%= c.email %>)</option>
+                <% }) %>
+            </select>
+        </div>
+
+        <div class="col-md-6">
+            <label for="type" class="form-label">Loại Reward <span class="text-danger">*</span></label>
+            <select name="type" id="type" class="form-select" required>
+                <option value="Voucher">Voucher</option>
+                <option value="FreeSession">Buổi tập miễn phí</option>
+                <option value="Discount">Giảm giá</option>
+                <option value="Gift">Quà tặng</option>
+            </select>
+        </div>
+
+        <div class="col-md-6">
+            <label for="title" class="form-label">Tiêu đề <span class="text-danger">*</span></label>
+            <input type="text" name="title" id="title" class="form-control" placeholder="VD: Giảm 20% gói Gym" required>
+        </div>
+
+        <div class="col-md-6">
+            <label for="value" class="form-label">Giá trị (VNĐ)</label>
+            <input type="number" name="value" id="value" class="form-control" min="0" value="0">
+        </div>
+
+        <div class="col-md-6">
+            <label for="expiresAt" class="form-label">Hết hạn <span class="text-danger">*</span></label>
+            <input type="date" name="expiresAt" id="expiresAt" class="form-control" required>
+        </div>
+
+        <div class="col-md-6">
+            <label for="description" class="form-label">Mô tả</label>
+            <input type="text" name="description" id="description" class="form-control" placeholder="Chi tiết reward">
+        </div>
+
+        <div class="col-12">
+            <label for="notes" class="form-label">Ghi chú nội bộ</label>
+            <textarea name="notes" id="notes" class="form-control" rows="2" placeholder="Ghi chú cho Admin"></textarea>
+        </div>
+
+        <div class="col-12 d-flex gap-2">
+            <button type="submit" class="btn btn-success"><i class="fas fa-check"></i> Gán Reward</button>
+            <a href="/admin/rewards" class="btn btn-secondary">Hủy</a>
+        </div>
+    </form>
+</div>
+
+<%- include('../../partials/footer') %>

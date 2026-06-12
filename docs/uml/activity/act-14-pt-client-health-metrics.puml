@@ -1,0 +1,70 @@
+@startuml ACT_PT_Client_Health_Metrics
+title Activity — Luồng Tương tác Dinh dưỡng (Meal Plan) & Chỉ số Cơ thể (Inbody) giữa PT và Client
+skinparam activityStyle rectangle
+skinparam backgroundColor #FAFAFA
+
+|Client (Khách hàng)|
+|PT (Huấn luyện viên)|
+|System (Hệ thống)|
+
+|PT (Huấn luyện viên)|
+start
+if (Hoạt động chuyên môn?) then (1. Chu kỳ Dinh dưỡng (Meal Plan))
+  |PT (Huấn luyện viên)|
+  :Phân tích thể trạng, dị ứng & mục tiêu của Client;
+  :Thiết kế Lộ trình Dinh dưỡng chi tiết (Meal Plan mẫu);\n(Bao gồm mục tiêu Calo, Carb, Protein, Fat hàng ngày);
+  :POST /pt/meal-plans/store\n(UC-PRG10);
+  
+  |System (Hệ thống)|
+  :Lưu Meal Plan của Client vào database;
+  :Gửi Push Notification thông báo "Lộ trình dinh dưỡng mới" cho Client;
+  
+  |Client (Khách hàng)|
+  :Xem chi tiết Meal Plan mẫu trên App cá nhân;\n(Hiển thị thực đơn gợi ý sáng, trưa, tối);
+  
+  repeat
+    :Hội viên ăn uống thực tế;
+    :Ghi nhật ký ăn uống hàng ngày (Meal Log)\n(Nhập tên món ăn, lượng calo ước lượng, ảnh chụp bữa ăn);\n:POST /client/meal-log\n(UC-CLI10);
+    
+    |System (Hệ thống)|
+    :Tự động tổng hợp lượng Calo & Macro thực tế đã nạp trong ngày;\n:So sánh với chỉ tiêu mục tiêu trong Meal Plan;
+    :Vẽ biểu đồ so sánh Calo Target vs. Actual;
+    
+    |PT (Huấn luyện viên)|
+    :Vào chi tiết Client trên App PT;\n:Xem nhật ký ăn uống thực tế & biểu đồ so sánh của Client;
+    :Gửi lời khuyên, nhận xét hoặc phê duyệt nhật ký (Meal Feedback);\n(Động viên hoặc điều chỉnh thói quen ăn uống);
+  backward: Tiếp tục chu trình ăn uống ngày tiếp theo;
+  repeat while (Còn trong thời gian hợp đồng?) is (Có)
+  
+else (2. Chu kỳ Đo chỉ số (Inbody Metrics))
+  |PT (Huấn luyện viên)|
+  :Hẹn lịch đo chỉ số Inbody định kỳ với Client\n(Thường là 2 tuần/lần hoặc đầu tháng);
+  
+  |Client (Khách hàng)|
+  :Đến phòng tập thực hiện đo Inbody trên máy chuyên dụng;
+  
+  |PT (Huấn luyện viên)|
+  :Thu thập bản in chỉ số từ máy Inbody;
+  :Nhập các chỉ số Inbody vào hồ sơ sức khỏe Client:\n- Cân nặng (Weight), Tỷ lệ mỡ (Body Fat %)\n- Khối lượng cơ (Skeletal Muscle Mass), Chỉ số BMI\n- Điểm số Inbody, số đo các vòng (Ngực, Eo, Mông);\n:POST /pt/metrics/store\n(UC-PRG20);
+  
+  |System (Hệ thống)|
+  :Lưu record Body Metrics mới;
+  :Tự động tính toán tỷ lệ % tăng/giảm so với các lần đo trước;
+  :Vẽ biểu đồ đường xu hướng tiến trình (Body Progress Charts);
+  :Gửi Push Notification "Đã có chỉ số đo cơ thể mới" cho Client;
+  
+  |Client (Khách hàng)|
+  :Mở App cá nhân truy cập tab Progress;\n:Xem biểu đồ thay đổi trực quan (Cơ tăng, mỡ giảm);\n:Xem đánh giá tổng quát từ hệ thống;
+  
+  |PT (Huấn luyện viên)|
+  :Xem biểu đồ tiến trình thay đổi để đánh giá hiệu quả tập luyện;
+  if (Đạt mục tiêu tiến độ?) then (Đạt mục tiêu)
+    :Giữ nguyên lộ trình tập luyện và dinh dưỡng;
+  else (Không đạt mục tiêu)
+    :Phân tích nguyên nhân (do ăn uống sai lệch hay tập thiếu cường độ);
+    :Điều chỉnh Lộ trình dinh dưỡng hoặc bài tập mới;
+  endif
+endif
+
+stop
+@enduml

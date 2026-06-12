@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <title>Yêu cầu lịch - FitCity PT</title>
+    <%- include('../partials/pt-head') %>
+</head>
+<body class="bg-[#F8FAF7] text-slate-900 min-h-screen pb-32">
+    <header class="p-6 pb-3">
+        <div class="flex items-start justify-between gap-4">
+            <div>
+                <h1 class="screen-title"><span class="text-primary tracking-normal">Yêu cầu</span> chờ duyệt</h1>
+                <p class="text-slate-500 text-sm mt-2">Xử lý yêu cầu hủy buổi tập từ Client.</p>
+            </div>
+            <div class="flex gap-2">
+                <a href="/pt/schedule" class="px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 transition-all shadow-sm">Lịch dạy</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="px-6 space-y-4">
+        <% if (typeof success_msg !== 'undefined' && success_msg.length) { %>
+            <div class="rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-700 font-medium"><%= success_msg %></div>
+        <% } %>
+        <% if (typeof error_msg !== 'undefined' && error_msg.length) { %>
+            <div class="rounded-xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-700 font-medium"><%= error_msg %></div>
+        <% } %>
+
+        <% if (cancelRequestedSessions && cancelRequestedSessions.length > 0) { %>
+            <div class="space-y-3">
+                <h2 class="text-[10px] font-black uppercase tracking-widest text-slate-500">Yêu cầu hủy buổi tập</h2>
+                <% cancelRequestedSessions.forEach(session => { %>
+                    <div class="glass rounded-[32px] border border-rose-200 p-5 shadow-sm">
+                        <div class="flex items-start justify-between gap-4">
+                            <div class="flex items-center gap-3">
+                                <div class="h-10 w-10 rounded-xl overflow-hidden border border-white/10 bg-black/20">
+                                    <img src="<%= (session.client && session.client.avatar) ? session.client.avatar : 'https://ui-avatars.com/api/?name=Client&background=333&color=fff' %>" class="w-full h-full object-cover">
+                                </div>
+                                <div>
+                                    <p class="text-slate-900 font-extrabold"><%= session.client ? session.client.name : 'Client' %></p>
+                                    <p class="text-slate-600 text-xs mt-0.5">
+                                        <%= new Date(session.scheduledTime).toLocaleString('vi-VN') %> • <span class="font-bold">Yêu cầu hủy</span>
+                                    </p>
+                                    <% if (session.workoutPlan) { %>
+                                        <p class="text-slate-500 text-xs mt-1"><%= session.workoutPlan %></p>
+                                    <% } %>
+                                </div>
+                            </div>
+                            <span class="inline-flex items-center px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest bg-rose-100 border border-rose-200 text-rose-700">
+                                Cancel Requested
+                            </span>
+                        </div>
+
+                        <div class="mt-4 flex flex-col md:flex-row gap-2 md:items-center md:justify-end">
+                            <form action="/pt/sessions/<%= session._id %>/accept-cancel" method="POST" class="m-0">
+                                <button type="submit" class="w-full md:w-auto px-4 py-2.5 bg-rose-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:brightness-110 transition-all">
+                                    Accept-Cancel
+                                </button>
+                            </form>
+                            <form action="/pt/sessions/<%= session._id %>/reject-cancel" method="POST" class="m-0">
+                                <button type="submit" class="w-full md:w-auto px-4 py-2.5 bg-white border border-slate-200 rounded-2xl text-xs font-black uppercase tracking-widest text-slate-700 hover:bg-slate-50 transition-all">
+                                    Reject-Cancel
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                <% }) %>
+            </div>
+        <% } %>
+
+        <% if (!cancelRequestedSessions || cancelRequestedSessions.length === 0) { %>
+            <div class="glass rounded-[32px] border border-slate-200 p-10 text-center">
+                <p class="text-slate-500 text-sm">Không có yêu cầu hủy nào đang chờ duyệt.</p>
+            </div>
+        <% } %>
+    </main>
+
+    <%- include('../partials/nav_pt', { activePage: 'pt-requests' }) %>
+</body>
+</html>
+

@@ -1,0 +1,61 @@
+<%- include('../../partials/header', { title: 'Yêu cầu bảo lưu', activePage: 'contracts' }) %>
+
+<div class="mb-6">
+    <h2 class="text-2xl font-bold text-slate-800">Yêu cầu bảo lưu hợp đồng</h2>
+    <p class="text-slate-500 text-sm mt-1">Phê duyệt hoặc từ chối các yêu cầu bảo lưu từ khách hàng.</p>
+</div>
+
+<div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead class="bg-slate-50 border-b border-slate-200">
+                <tr class="text-xs uppercase tracking-wider text-slate-500">
+                    <th class="px-4 py-3 text-left">Khách hàng</th>
+                    <th class="px-4 py-3 text-left">Hợp đồng</th>
+                    <th class="px-4 py-3 text-center">Số ngày</th>
+                    <th class="px-4 py-3 text-left">Lý do</th>
+                    <th class="px-4 py-3 text-center">Ngày gửi</th>
+                    <th class="px-4 py-3 text-center">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+                <% if (requests && requests.length > 0) { %>
+                    <% requests.forEach(request => { %>
+                        <tr class="hover:bg-slate-50/70">
+                            <td class="px-4 py-3">
+                                <p class="font-semibold text-slate-800"><%= request.client ? request.client.name : 'N/A' %></p>
+                                <p class="text-xs text-slate-500"><%= request.client ? request.client.email : '' %></p>
+                            </td>
+                            <td class="px-4 py-3 font-mono text-slate-700"><%= request.contract ? request.contract.contractCode : 'N/A' %></td>
+                            <td class="px-4 py-3 text-center font-bold text-lime-600"><%= request.durationDays %> ngày</td>
+                            <td class="px-4 py-3 text-slate-600"><%= request.reason || '-' %></td>
+                            <td class="px-4 py-3 text-center text-slate-500"><%= new Date(request.createdAt).toLocaleDateString('vi-VN') %></td>
+                            <td class="px-4 py-3">
+                                <div class="flex items-center justify-center gap-2">
+                                    <form action="/admin/contracts/requests/approve/<%= request._id %>" method="POST">
+                                        <button type="submit" class="px-3 py-1.5 rounded-lg bg-emerald-500 text-white text-xs font-semibold hover:bg-emerald-600">
+                                            Duyệt
+                                        </button>
+                                    </form>
+                                    <form action="/admin/contracts/requests/reject/<%= request._id %>" method="POST">
+                                        <button type="submit" class="px-3 py-1.5 rounded-lg bg-rose-500 text-white text-xs font-semibold hover:bg-rose-600">
+                                            Từ chối
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    <% }) %>
+                <% } else { %>
+                    <tr>
+                        <td colspan="6" class="px-6 py-12 text-center text-slate-500">
+                            Hiện không có yêu cầu bảo lưu nào đang chờ xử lý.
+                        </td>
+                    </tr>
+                <% } %>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<%- include('../../partials/footer') %>

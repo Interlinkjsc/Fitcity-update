@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <title>Khách hàng của tôi - FitCity PT</title>
+    <%- include('../partials/pt-head') %>
+</head>
+<body class="bg-[#F8FAF7] text-slate-900 min-h-screen pb-32">
+    <%- include('../partials/flash') %>
+    <header class="flex justify-between items-start p-6 mb-2">
+        <div>
+            <h1 class="screen-title"><span class="text-primary tracking-normal">Khách hàng</span> của tôi</h1>
+            <p class="text-slate-500 text-sm mt-2">Danh sách khách hàng có hợp đồng PT đang hoạt động.</p>
+        </div>
+        <a href="/pt" aria-label="Về dashboard PT" class="w-12 h-12 glass rounded-full flex items-center justify-center hover:bg-slate-50 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60">
+            <span class="material-symbols-outlined">close</span>
+        </a>
+    </header>
+
+    <main class="px-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            <% if (contracts && contracts.length > 0) { %>
+                <% contracts.forEach(c => { %>
+                <div class="glass border border-slate-200 rounded-[32px] overflow-hidden hover:border-primary/20 transition-all shadow-sm">
+                    <div class="p-6">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="w-12 h-12 rounded-2xl bg-primary/15 flex items-center justify-center">
+                                <span class="text-primary font-bold text-lg"><%= c.client ? c.client.name[0] : '?' %></span>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-slate-900"><%= c.client ? c.client.name : 'N/A' %></h4>
+                                <p class="text-xs text-slate-500"><%= c.client ? c.client.phone : '' %></p>
+                            </div>
+                        </div>
+                        <div class="space-y-2 text-sm">
+                            <div class="flex justify-between"><span class="text-slate-500">Gói tập</span><span class="font-semibold text-slate-700"><%= c.servicePackage ? c.servicePackage.name : 'N/A' %></span></div>
+                            <div class="flex justify-between"><span class="text-slate-500">Hình thức</span><span class="px-2 py-0.5 bg-orange-100 text-orange-700 text-xs font-bold rounded"><%= c.servicePackage ? (c.servicePackage.sessionType || '1-1') : '1-1' %></span></div>
+                            <div class="flex justify-between"><span class="text-slate-500">Buổi còn lại</span><span class="font-bold text-primary"><%= c.remainingSessions != null ? c.remainingSessions : (c.servicePackage ? c.servicePackage.sessions : '∞') %></span></div>
+                            <div class="flex justify-between"><span class="text-slate-500">Hạn hợp đồng</span><span class="text-slate-700"><%= c.endDate ? new Date(c.endDate).toLocaleDateString('vi-VN') : 'N/A' %></span></div>
+                        </div>
+                    </div>
+                    <div class="px-6 py-3 bg-slate-50 border-t border-slate-200 flex justify-between items-center">
+                        <span class="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">Active</span>
+                        <a href="mailto:<%= c.client ? c.client.email : '' %>" class="text-xs text-primary hover:underline font-medium">Liên hệ</a>
+                    </div>
+                </div>
+                <% }) %>
+            <% } else { %>
+                <div class="col-span-full bg-white border border-dashed border-slate-300 rounded-2xl p-12 text-center text-slate-500">
+                    Bạn chưa được phân phối khách hàng nào.
+                </div>
+            <% } %>
+        </div>
+    </main>
+
+    <%- include('../partials/nav_pt', { activePage: 'dashboard' }) %>
+</body>
+</html>

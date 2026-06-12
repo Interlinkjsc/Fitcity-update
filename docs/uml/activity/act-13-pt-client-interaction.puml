@@ -1,0 +1,78 @@
+@startuml ACT_PT_Client_Interaction
+title Activity — Luồng Tương tác giữa PT và Khách hàng (Workout Session & Timesheet)
+skinparam activityStyle rectangle
+skinparam backgroundColor #FAFAFA
+
+|Client (Khách hàng)|
+|PT (Huấn luyện viên)|
+|System (Hệ thống)|
+
+|PT (Huấn luyện viên)|
+start
+:Chọn khách hàng từ Hợp đồng được gán (Active Contract);
+:Thiết lập lịch tập cho khách hàng (Ngày, giờ, thời lượng);
+
+|System (Hệ thống)|
+:Tạo record **WorkoutSession** mới;\n:Trạng thái mặc định là **Scheduled** (Đã lên lịch);\n:Gửi Push Notification thông báo lịch tập mới cho Client;
+
+|Client (Khách hàng)|
+:Mở App xem lịch tập trên giao diện cá nhân;
+if (Khách hàng muốn hủy lịch tập này?) then (Không)
+  :Giữ nguyên lịch tập;
+else (Có)
+  if (Buổi tập đã bắt đầu (Check-in)?) then (Có)
+    :Không thể hủy lịch (Nút Hủy bị ẩn/khóa);
+  else (Chưa)
+    :Bấm nút **Yêu cầu hủy** trên App;
+    |System (Hệ thống)|
+    :Chuyển trạng thái WorkoutSession sang **Cancel_Requested**;\n:Thông báo cho PT biết hội viên yêu cầu hủy;
+    |PT (Huấn luyện viên)|
+    :Liên hệ với khách hàng (gọi điện/Zalo...) khi nhận yêu cầu hủy;
+    |Client (Khách hàng)|
+    :Thảo luận offline với PT để thống nhất phương án;
+    |PT (Huấn luyện viên)|
+    if (PT quyết định thế nào?) then (Đồng ý hủy (Accept))
+      :Bấm nút **Accept-Cancel** trên App PT;
+      |System (Hệ thống)|
+      :Chuyển trạng thái WorkoutSession sang **Cancelled**;\n:Gửi thông báo hủy thành công cho Client;
+      |PT (Huấn luyện viên)|
+      :Thực hiện tạo lịch tập mới trên hệ thống;
+      stop
+    else (Từ chối hủy (Cancel request))
+      :Bấm nút **Reject-Cancel** trên App PT;
+      |System (Hệ thống)|
+      :Khôi phục trạng thái WorkoutSession về **Scheduled**;\n:Gửi thông báo từ chối hủy cho Client;
+      |Client (Khách hàng)|
+      :Buổi tập giữ nguyên lịch đã đặt;
+    endif
+  endif
+endif
+
+|System (Hệ thống)|
+:Đến ngày tập (Hệ thống tự gửi thông báo nhắc lịch);
+
+|Client (Khách hàng)|
+:Đến phòng tập;\n:Mở App cá nhân để hiển thị mã QR Code buổi tập;
+
+|PT (Huấn luyện viên)|
+:Mở App quét QR Code của Client (Check-in);
+
+|System (Hệ thống)|
+:Ghi nhận giờ bắt đầu (Timestamp 1);\n:Chuyển trạng thái Session sang **In_Progress**;
+
+|PT (Huấn luyện viên)|
+:Thực hiện hướng dẫn và giám sát Client tập luyện;\n:Kết thúc buổi tập, quét QR Code của Client lần 2 (Check-out);
+
+|System (Hệ thống)|
+:Ghi nhận giờ kết thúc (Timestamp 2);\n:Chuyển trạng thái Session sang **Completed**;\n:Gửi thông báo đẩy (Push Notification) yêu cầu Client xác nhận;
+
+|Client (Khách hàng)|
+:Nhận thông báo và mở App điện thoại;\n:Xem chi tiết buổi tập và bấm **Xác nhận (Confirm)**;
+
+|System (Hệ thống)|
+:Ghi nhận trạng thái Session sang **Confirmed**;\n:Trừ 1 buổi dạy trong Hợp đồng (Session Remaining = Session Remaining - 1);
+:Ghi nhận buổi dạy hoàn thành vào lịch sử dạy của PT\n(Thống kê hiệu suất dạy học, KHÔNG tính thêm hoa hồng/lương theo buổi);
+
+stop
+
+@enduml

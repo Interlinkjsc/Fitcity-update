@@ -1,0 +1,69 @@
+<%
+    const successList = Array.isArray(success_msg)
+        ? success_msg.filter(Boolean)
+        : (success_msg && String(success_msg).trim() ? [success_msg] : []);
+    const errorList = Array.isArray(error_msg)
+        ? error_msg.filter(Boolean)
+        : (error_msg && String(error_msg).trim() ? [error_msg] : []);
+    const hasFlash = successList.length > 0 || errorList.length > 0;
+%>
+<% if (hasFlash) { %>
+<style>
+    @keyframes fitFlashIn {
+        from { transform: translate3d(110%, 0, 0); opacity: 0; }
+        to { transform: translate3d(0, 0, 0); opacity: 1; }
+    }
+    @keyframes fitFlashOut {
+        to { transform: translate3d(110%, 0, 0); opacity: 0; }
+    }
+    .fit-flash-toast {
+        animation: fitFlashIn 0.42s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        box-shadow: 0 10px 40px -10px rgba(15, 23, 42, 0.25);
+    }
+    .fit-flash-toast.fit-flash-leaving {
+        animation: fitFlashOut 0.28s ease-in forwards;
+    }
+    @keyframes fitFlashShrink {
+        from { width: 100%; }
+        to { width: 0%; }
+    }
+</style>
+<div id="fit-flash-stack" class="fixed top-20 right-3 sm:right-5 z-[9998] flex flex-col gap-2 w-[min(22rem,calc(100vw-1.5rem))] pointer-events-none" aria-live="polite">
+    <% successList.forEach(function (msg) { %>
+    <div class="fit-flash-toast pointer-events-auto relative overflow-hidden rounded-xl border border-emerald-200/80 bg-white pl-4 pr-10 py-3 text-sm text-emerald-800 shadow-lg" data-fit-flash-toast data-tone="success" role="status">
+        <span class="material-symbols-outlined absolute left-3 top-3 text-[20px] text-emerald-600">check_circle</span>
+        <p class="pl-8 leading-snug font-medium"><%= msg %></p>
+        <button type="button" class="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-lg text-emerald-600/70 hover:bg-emerald-50 hover:text-emerald-800" onclick="window.fitDismissFlashToast(this)" aria-label="Đóng">&times;</button>
+        <div class="fit-flash-progress pointer-events-none absolute bottom-0 left-0 h-0.5 bg-emerald-400/90" style="animation: fitFlashShrink 5.5s linear forwards;"></div>
+    </div>
+    <% }) %>
+    <% errorList.forEach(function (msg) { %>
+    <div class="fit-flash-toast pointer-events-auto relative overflow-hidden rounded-xl border border-rose-200/80 bg-white pl-4 pr-10 py-3 text-sm text-rose-800 shadow-lg" data-fit-flash-toast data-tone="error" role="alert">
+        <span class="material-symbols-outlined absolute left-3 top-3 text-[20px] text-rose-600">error</span>
+        <p class="pl-8 leading-snug font-medium"><%= msg %></p>
+        <button type="button" class="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-lg text-rose-600/70 hover:bg-rose-50 hover:text-rose-900" onclick="window.fitDismissFlashToast(this)" aria-label="Đóng">&times;</button>
+        <div class="fit-flash-progress pointer-events-none absolute bottom-0 left-0 h-0.5 bg-rose-400/90" style="animation: fitFlashShrink 7s linear forwards;"></div>
+    </div>
+    <% }) %>
+</div>
+<script>
+(function () {
+    window.fitDismissFlashToast = function (btn) {
+        var el = btn && btn.closest ? btn.closest('[data-fit-flash-toast]') : btn;
+        if (!el || el.dataset.dismissed === '1') return;
+        el.dataset.dismissed = '1';
+        if (el._fitFlashT) clearTimeout(el._fitFlashT);
+        el.classList.add('fit-flash-leaving');
+        setTimeout(function () {
+            el.remove();
+            var stack = document.getElementById('fit-flash-stack');
+            if (stack && !stack.querySelector('[data-fit-flash-toast]')) stack.remove();
+        }, 300);
+    };
+    document.querySelectorAll('#fit-flash-stack [data-fit-flash-toast]').forEach(function (el) {
+        var ms = el.getAttribute('data-tone') === 'error' ? 7000 : 5500;
+        el._fitFlashT = setTimeout(function () { window.fitDismissFlashToast(el); }, ms);
+    });
+})();
+</script>
+<% } %>

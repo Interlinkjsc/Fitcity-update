@@ -1,0 +1,31 @@
+@startuml UC_API_Health_Full
+title Module: API & Health (đầy đủ)
+left to right direction
+skinparam actorStyle awesome
+
+actor PT
+actor Client
+actor "Mobile/Calendar\nconsumer" as App
+
+package "/api/calendar" {
+  usecase "UC-API01\nGET sessions\n(JSON events)" as A01
+  usecase "UC-API02\nPATCH cancel session" as A02
+  usecase "UC-API03\nPOST scan-qr" as A03
+}
+
+package "/health" {
+  usecase "UC-API10\nHealth check" as A10
+}
+
+PT --> A01
+PT --> A02
+PT --> A03
+Client --> A01
+App --> A01
+
+note bottom of A03
+  Same logic as POST /pt/sessions/scan-qr
+  workoutService.processQrScan
+end note
+
+@enduml

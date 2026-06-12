@@ -1,0 +1,290 @@
+<%- include('../../partials/header', { title: 'Quản lý Leads', activePage: 'leads' }) %>
+
+<div class="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div>
+        <h2 class="text-2xl font-bold text-slate-800">Quản lý Leads (Marketing)</h2>
+        <p class="text-slate-500 text-sm mt-1">Quản lý danh sách khách hàng tiềm năng đăng ký qua Website.</p>
+    </div>
+    <div class="flex gap-3">
+        <button id="btn-toggle-filter" class="inline-flex items-center justify-center px-4 py-2 bg-white border border-slate-300 text-slate-700 font-semibold rounded-lg transition-colors shadow-sm hover:bg-slate-50">
+            <svg class="h-5 w-5 mr-2 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+            </svg>
+            Bộ lọc
+        </button>
+        <a id="btn-export-excel" href="/admin/leads/export?status=<%= currentFilter.status %>&interestedPackage=<%= currentFilter.interestedPackage %>&source=<%= currentFilter.source %><%= currentFilter.dateFrom ? '&dateFrom=' + encodeURIComponent(currentFilter.dateFrom) : '' %><%= currentFilter.dateTo ? '&dateTo=' + encodeURIComponent(currentFilter.dateTo) : '' %>" 
+           class="inline-flex items-center justify-center px-4 py-2 bg-lime-500 hover:bg-lime-600 text-slate-900 font-semibold rounded-lg transition-colors shadow-sm">
+            <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+            Xuất Excel
+        </a>
+    </div>
+</div>
+
+<!-- Filter Panel (ẩn mặc định, toggle bằng JS) -->
+<div id="filter-panel" class="mb-6 bg-white rounded-xl border border-slate-200 shadow-sm p-5 <%= (currentFilter.status !== 'all' || currentFilter.interestedPackage !== 'all' || currentFilter.source !== 'all' || (currentFilter.dateFrom && String(currentFilter.dateFrom).trim() !== '') || (currentFilter.dateTo && String(currentFilter.dateTo).trim() !== '')) ? '' : 'hidden' %>">
+    <form method="GET" action="/admin/leads" class="flex flex-wrap items-end gap-4">
+        <div class="flex-1 min-w-[140px] max-w-[200px]">
+            <label class="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">Từ ngày</label>
+            <input type="date" name="dateFrom" value="<%= currentFilter.dateFrom || '' %>" class="w-full border border-slate-300 rounded-lg text-sm py-2 px-3 focus:ring-2 focus:ring-lime-500 focus:border-lime-500 outline-none">
+        </div>
+        <div class="flex-1 min-w-[140px] max-w-[200px]">
+            <label class="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">Đến ngày</label>
+            <input type="date" name="dateTo" value="<%= currentFilter.dateTo || '' %>" class="w-full border border-slate-300 rounded-lg text-sm py-2 px-3 focus:ring-2 focus:ring-lime-500 focus:border-lime-500 outline-none">
+        </div>
+        <div class="flex-1 min-w-[160px]">
+            <label class="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">Trạng thái</label>
+            <select name="status" class="w-full border border-slate-300 rounded-lg text-sm py-2 px-3 focus:ring-2 focus:ring-lime-500 focus:border-lime-500 outline-none">
+                <option value="all" <%= currentFilter.status === 'all' ? 'selected' : '' %>>Tất cả</option>
+                <option value="F" <%= currentFilter.status === 'F' ? 'selected' : '' %>>Khách F</option>
+                <option value="Contacted" <%= currentFilter.status === 'Contacted' ? 'selected' : '' %>>Đã liên hệ</option>
+                <option value="Signed" <%= currentFilter.status === 'Signed' ? 'selected' : '' %>>Đã ký HĐ</option>
+                <option value="Converted" <%= currentFilter.status === 'Converted' ? 'selected' : '' %>>Đã chuyển hội viên</option>
+            </select>
+        </div>
+        <div class="flex-1 min-w-[160px]">
+            <label class="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">Gói quan tâm</label>
+            <select name="interestedPackage" class="w-full border border-slate-300 rounded-lg text-sm py-2 px-3 focus:ring-2 focus:ring-lime-500 focus:border-lime-500 outline-none">
+                <option value="all" <%= currentFilter.interestedPackage === 'all' ? 'selected' : '' %>>Tất cả</option>
+                <option value="Gym" <%= currentFilter.interestedPackage === 'Gym' ? 'selected' : '' %>>Gym</option>
+                <option value="Yoga" <%= currentFilter.interestedPackage === 'Yoga' ? 'selected' : '' %>>Yoga</option>
+                <option value="PT" <%= currentFilter.interestedPackage === 'PT' ? 'selected' : '' %>>PT</option>
+                <option value="Kickfit" <%= currentFilter.interestedPackage === 'Kickfit' ? 'selected' : '' %>>Kickfit</option>
+                <option value="Pilates" <%= currentFilter.interestedPackage === 'Pilates' ? 'selected' : '' %>>Pilates</option>
+            </select>
+        </div>
+        <div class="flex-1 min-w-[160px]">
+            <label class="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">Nguồn</label>
+            <select name="source" class="w-full border border-slate-300 rounded-lg text-sm py-2 px-3 focus:ring-2 focus:ring-lime-500 focus:border-lime-500 outline-none">
+                <option value="all" <%= currentFilter.source === 'all' ? 'selected' : '' %>>Tất cả</option>
+                <option value="Website" <%= currentFilter.source === 'Website' ? 'selected' : '' %>>Website</option>
+                <option value="Contact" <%= currentFilter.source === 'Contact' ? 'selected' : '' %>>Contact</option>
+                <option value="Facebook" <%= currentFilter.source === 'Facebook' ? 'selected' : '' %>>Facebook</option>
+                <option value="Referral" <%= currentFilter.source === 'Referral' ? 'selected' : '' %>>Giới thiệu</option>
+                <option value="Walk-in" <%= currentFilter.source === 'Walk-in' ? 'selected' : '' %>>Tự đến</option>
+            </select>
+        </div>
+        <div class="flex gap-2">
+            <button type="submit" class="inline-flex items-center px-4 py-2 bg-slate-800 text-white font-semibold rounded-lg hover:bg-slate-900 transition-colors text-sm">
+                <svg class="h-4 w-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+                Lọc
+            </button>
+            <a href="/admin/leads" class="inline-flex items-center px-4 py-2 bg-white border border-slate-300 text-slate-600 font-semibold rounded-lg hover:bg-slate-50 transition-colors text-sm">
+                Xoá bộ lọc
+            </a>
+        </div>
+    </form>
+</div>
+
+<!-- Lead funnel -->
+<% if (typeof funnel !== 'undefined' && funnel && funnel.stages) { %>
+<div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 mb-8">
+    <h3 class="text-sm font-bold text-slate-700 uppercase tracking-wider mb-4">Phễu chuyển đổi (theo bộ lọc)</h3>
+    <div class="flex flex-col md:flex-row gap-3 items-stretch">
+        <% funnel.stages.forEach((stage, idx) => {
+            const pct = funnel.total > 0 ? Math.round((stage.count / funnel.total) * 100) : 0;
+        %>
+        <div class="flex-1 rounded-lg border border-slate-200 p-4 bg-slate-50/50">
+            <p class="text-xs text-slate-500 font-semibold uppercase"><%= stage.label %></p>
+            <p class="text-2xl font-bold text-slate-800 mt-1"><%= stage.count %></p>
+            <div class="mt-2 h-2 bg-slate-200 rounded-full overflow-hidden">
+                <div class="h-full bg-lime-500 rounded-full" style="width: <%= pct %>%"></div>
+            </div>
+            <p class="text-[10px] text-slate-400 mt-1"><%= pct %>% tổng phễu</p>
+        </div>
+        <% if (idx < funnel.stages.length - 1) { %>
+        <div class="hidden md:flex items-center text-slate-300 text-xl px-1">→</div>
+        <% } %>
+        <% }) %>
+    </div>
+</div>
+<% } %>
+
+<!-- Stats Overview -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm border-l-4 border-l-blue-500">
+        <p class="text-slate-500 text-sm font-medium mb-1">Số lượng khách đăng ký (hôm nay)</p>
+        <h3 class="text-2xl font-bold text-blue-600"><%= typeof leadsToday !== 'undefined' ? leadsToday : 0 %></h3>
+    </div>
+    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+        <p class="text-slate-500 text-sm font-medium mb-1">Khách F (Chưa liên hệ)</p>
+        <h3 class="text-2xl font-bold text-slate-800"><%= leads.filter(l => l.status === 'F').length %></h3>
+    </div>
+    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm border-l-4 border-l-lime-500">
+        <p class="text-slate-500 text-sm font-medium mb-1">Tỷ lệ HĐ Active / Paid (trên tổng Lead)</p>
+        <h3 class="text-2xl font-bold text-lime-600"><%= typeof signRate !== 'undefined' ? signRate : 0 %>%</h3>
+        <p class="text-[10px] text-slate-400 mt-1">R3/R7: theo hợp đồng thực tế, không theo trạng thái Lead</p>
+    </div>
+    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm border-l-4 border-l-emerald-500">
+        <p class="text-slate-500 text-sm font-medium mb-1">Hợp đồng đã thanh toán (Active + Paid)</p>
+        <h3 class="text-2xl font-bold text-emerald-600"><%= typeof totalSigned !== 'undefined' ? totalSigned : 0 %></h3>
+        <% if (typeof totalLeadPipelineSigned !== 'undefined') { %>
+        <p class="text-[10px] text-slate-400 mt-1">Lead trạng thái “Đã ký HĐ” (pipeline): <%= totalLeadPipelineSigned %></p>
+        <% } %>
+    </div>
+</div>
+
+<!-- Leads Table -->
+<div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+    <div class="p-5 border-b border-slate-200 bg-slate-50/50 flex justify-between items-center">
+        <div class="w-full max-w-sm relative">
+            <svg class="h-5 w-5 absolute left-3 top-2.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            </svg>
+            <input type="text" id="search-leads" placeholder="Tìm kiếm leads..." class="pl-10 pr-4 py-2 w-full border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-lime-500 focus:border-lime-500 outline-none transition-all">
+        </div>
+        <div class="hidden sm:block text-sm text-slate-500">
+            Tổng số: <span class="font-bold text-slate-800"><%= leads.length %></span> leads
+        </div>
+    </div>
+
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="bg-slate-50 text-slate-500 text-sm uppercase tracking-wider border-b border-slate-200">
+                    <th class="p-4 font-semibold">Ngày đăng ký</th>
+                    <th class="p-4 font-semibold">Khách hàng</th>
+                    <th class="p-4 font-semibold">Gói quan tâm</th>
+                    <th class="p-4 font-semibold">Chi nhánh</th>
+                    <th class="p-4 font-semibold text-center">Trạng thái</th>
+                    <th class="p-4 font-semibold text-center">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100" id="leads-tbody">
+                <% if (leads && leads.length > 0) { %>
+                    <% leads.forEach(lead => { %>
+                        <tr class="hover:bg-slate-50/70 transition-colors lead-row">
+                            <td class="p-4 text-sm text-slate-600">
+                                <%= new Date(lead.createdAt).toLocaleDateString('vi-VN') %><br>
+                                <span class="text-xs text-slate-400"><%= new Date(lead.createdAt).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit', hour12: false}) %></span>
+                            </td>
+                            <td class="p-4">
+                                <div class="font-bold text-slate-800"><%= lead.name %></div>
+                                <div class="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
+                                    <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
+                                    </svg>
+                                    <%= lead.phone %>
+                                </div>
+                            </td>
+                            <td class="p-4">
+                                <span class="px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-lime-100 text-lime-800">
+                                    <%= lead.interestedPackage %>
+                                </span>
+                            </td>
+                            <td class="p-4 text-sm font-medium text-slate-700">
+                                <%= lead.branch ? lead.branch.name : 'N/A' %>
+                            </td>
+                            <td class="p-4 text-center">
+                                <%
+                                    let statusClass = "bg-blue-100 text-blue-800";
+                                    let statusText = lead.status;
+                                    if(lead.status === 'F') { statusClass = "bg-blue-100 text-blue-800"; statusText = "Khách F"; }
+                                    if(lead.status === 'Contacted') { statusClass = "bg-orange-100 text-orange-800"; statusText = "Đã liên hệ"; }
+                                    if(lead.status === 'Signed') { statusClass = "bg-emerald-100 text-emerald-800"; statusText = "Đã ký HĐ"; }
+                                    if(lead.status === 'Converted') { statusClass = "bg-violet-100 text-violet-800"; statusText = "Hội viên"; }
+                                %>
+                                <span class="px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full <%= statusClass %>">
+                                    <%= statusText %>
+                                </span>
+                            </td>
+                            <td class="p-4 text-center">
+                                <div class="flex items-center justify-center gap-2">
+                                    <a href="/admin/leads/detail/<%= lead._id %>" title="Xem chi tiết" class="text-slate-400 hover:text-emerald-600 transition-colors">
+                                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                        </svg>
+                                    </a>
+                                    <button title="Gọi điện" class="text-slate-400 hover:text-lime-600 transition-colors">
+                                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
+                                        </svg>
+                                    </button>
+                                    <button title="Ghi chú" class="text-slate-400 hover:text-blue-600 transition-colors">
+                                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    <% }) %>
+                <% } else { %>
+                    <tr>
+                        <td colspan="6" class="p-8 text-center text-slate-500">
+                            Chưa có khách đăng ký mới từ Website.
+                        </td>
+                    </tr>
+                <% } %>
+            </tbody>
+        </table>
+    </div>
+</div>
+<%- include('../../partials/pagination') %>
+
+<!-- Signed Leads Detail Table -->
+<% const signedLeads = leads.filter(l => l.status === 'Signed'); %>
+<% if (signedLeads.length > 0) { %>
+<div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden mt-8">
+    <div class="p-5 border-b border-slate-200 bg-emerald-50/50 flex justify-between items-center">
+        <h4 class="text-lg font-bold text-emerald-800 flex items-center gap-2">
+            <svg class="h-5 w-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            Khách đã ký Hợp đồng (<%= signedLeads.length %>)
+        </h4>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider border-b border-slate-200">
+                    <th class="p-4 font-semibold">Tên khách</th>
+                    <th class="p-4 font-semibold">SĐT</th>
+                    <th class="p-4 font-semibold">Gói quan tâm</th>
+                    <th class="p-4 font-semibold">Chi nhánh</th>
+                    <th class="p-4 font-semibold">Nguồn</th>
+                    <th class="p-4 font-semibold">Ngày chuyển đổi</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+                <% signedLeads.forEach(lead => { %>
+                <tr class="hover:bg-emerald-50/30 transition-colors">
+                    <td class="p-4">
+                        <p class="text-sm font-bold text-slate-800"><%= lead.name %></p>
+                        <p class="text-[11px] text-slate-400"><%= lead.email || '' %></p>
+                    </td>
+                    <td class="p-4 text-sm text-slate-600"><%= lead.phone %></td>
+                    <td class="p-4"><span class="px-2 py-0.5 bg-lime-100 text-lime-800 text-xs font-bold rounded"><%= lead.interestedPackage || 'N/A' %></span></td>
+                    <td class="p-4 text-sm text-slate-600"><%= lead.branch ? lead.branch.name : 'N/A' %></td>
+                    <td class="p-4 text-xs text-slate-500"><%= lead.source || 'N/A' %></td>
+                    <td class="p-4 text-sm text-slate-600"><%= new Date(lead.updatedAt).toLocaleDateString('vi-VN') %></td>
+                </tr>
+                <% }) %>
+            </tbody>
+        </table>
+    </div>
+</div>
+<% } %>
+
+<script>
+    // Toggle filter panel
+    document.getElementById('btn-toggle-filter').addEventListener('click', function() {
+        const panel = document.getElementById('filter-panel');
+        panel.classList.toggle('hidden');
+    });
+
+    // Client-side search (instant filter by name/phone)
+    document.getElementById('search-leads').addEventListener('input', function() {
+        const keyword = this.value.toLowerCase();
+        document.querySelectorAll('.lead-row').forEach(row => {
+            const text = row.textContent.toLowerCase();
+            row.style.display = text.includes(keyword) ? '' : 'none';
+        });
+    });
+</script>
+
+<%- include('../../partials/footer') %>

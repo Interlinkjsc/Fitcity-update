@@ -1,0 +1,65 @@
+@startuml UC_Cross_Module_Flows
+title Cross-Module Activity — End-to-End FitCity FMS
+skinparam activityStyle rectangle
+
+|Guest|
+start
+:Landing / Blog (CMS)\nContact;
+:POST /register-lead (đường A)\nhoặc /auth/register (đường D);
+
+|Marketing|
+:Noti lead mới;
+:Funnel F → Contacted → Qualified;
+:<<planned>> Convert → Client;
+:CMS + Content library;
+
+|Sales|
+:Tạo HĐ Draft;
+:Gán PT, package, branch;
+
+|Accountant|
+:Ghi nhận payment;
+if (Đủ tiền?) then (yes)
+  :HĐ Paid / Active;
+  |System|
+  if (Client có referrer?) then (yes)
+    :Gift 200k/90d → /client/rewards;
+  endif
+else (chưa)
+  :Deposit / Draft;
+endif
+
+|Client|
+:/client dashboard;
+:Đặt slot → chờ PT;
+:QR session;
+:Meal log + workouts + progress;
+:Affiliate link profile;
+
+|PT|
+:Duyệt slot / scan QR;
+:Timesheet in-out;
+:Meal plan + workout assignment;
+:Nộp daily report;
+if (Xin nghỉ?) then (yes)
+  |Manager|
+  :Approve leave + reassign HĐ;
+endif
+
+|Manager|
+:Duyệt timesheet;
+:Duyệt daily report;
+:Checklist + CSAT dashboard;
+:Payroll tháng (hybrid);
+
+|CEO|
+:Work report export\nmulti-branch;
+
+stop
+
+note right
+  Tham chiếu: SEQ-01..09
+  UC catalog: UC-MASTER-CATALOG.md
+end note
+
+@enduml

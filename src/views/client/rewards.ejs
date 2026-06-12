@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <title>Ưu đãi - FitCity</title>
+    <%- include('../partials/client-head') %>
+</head>
+<body class="bg-[#F8FAF7] text-slate-900 min-h-screen pb-32 overflow-x-hidden">
+    <%- include('../partials/flash') %>
+
+    <header class="px-6 md:px-12 pt-6 md:pt-12 pb-3 mb-4 flex items-start justify-between gap-4">
+        <div>
+            <h1 class="text-4xl font-black italic tracking-tighter uppercase leading-none"><span class="text-primary tracking-normal">ƯU</span> ĐÃI</h1>
+            <p class="text-slate-500 text-sm mt-2">Voucher và phần thưởng được gán cho bạn.</p>
+        </div>
+        <a href="/client" aria-label="Về trang chủ" class="w-11 h-11 bg-white/90 backdrop-blur-xl border border-slate-200 rounded-full flex items-center justify-center hover:bg-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60">
+            <span class="material-symbols-outlined">close</span>
+        </a>
+    </header>
+
+    <main class="px-6 md:px-12 space-y-6">
+        <% if (rewards && rewards.length > 0) { %>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <% rewards.forEach(r => { %>
+                    <% const isGift = r.type === 'Gift'; %>
+                    <div class="bg-white border border-slate-200 rounded-[28px] p-6 shadow-sm <%= isGift ? 'ring-2 ring-amber-400/40' : '' %>">
+                        <% if (isGift) { %>
+                        <div class="flex justify-center mb-3">
+                            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
+                                <span class="material-symbols-outlined text-white text-3xl">redeem</span>
+                            </div>
+                        </div>
+                        <% } %>
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="min-w-0">
+                                <p class="text-[10px] font-black uppercase tracking-widest text-slate-500"><%= isGift ? 'Hộp quà' : (r.type || 'Voucher') %></p>
+                                <h2 class="text-lg font-black text-slate-900 mt-1 truncate"><%= r.title %></h2>
+                                <% if (r.description) { %>
+                                    <p class="text-sm text-slate-600 mt-2 leading-relaxed"><%= r.description %></p>
+                                <% } %>
+                            </div>
+                            <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest <%= r.status === 'Active' ? 'bg-primary/15 text-primary' : (r.status === 'Used' ? 'bg-slate-200 text-slate-600' : 'bg-amber-500/15 text-amber-700') %>">
+                                <%= r.status === 'Active' ? 'Còn hiệu lực' : (r.status === 'Used' ? 'Đã dùng' : 'Hết hạn') %>
+                            </span>
+                        </div>
+
+                        <div class="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between gap-3">
+                            <div class="text-xs text-slate-600">
+                                <% if (r.coupon && r.coupon.code) { %>
+                                    <p class="font-black uppercase tracking-widest text-[10px] text-slate-500">Mã</p>
+                                    <p class="font-mono font-bold text-slate-800 mt-1"><%= r.coupon.code %></p>
+                                <% } else { %>
+                                    <p class="font-black uppercase tracking-widest text-[10px] text-slate-500">Giá trị</p>
+                                    <p class="font-bold text-slate-800 mt-1"><%= (r.value || 0).toLocaleString('vi-VN') %>đ</p>
+                                <% } %>
+                            </div>
+                            <div class="text-right text-xs text-slate-600">
+                                <p class="font-black uppercase tracking-widest text-[10px] text-slate-500">Hết hạn</p>
+                                <p class="font-bold text-slate-800 mt-1"><%= r.expiresAt ? new Date(r.expiresAt).toLocaleDateString('vi-VN') : '—' %></p>
+                            </div>
+                        </div>
+                    </div>
+                <% }) %>
+            </div>
+        <% } else { %>
+            <div class="bg-white border border-slate-200 rounded-[32px] p-10 text-center shadow-sm">
+                <p class="text-slate-500 font-bold uppercase tracking-widest text-sm">Bạn chưa có ưu đãi nào.</p>
+                <p class="text-slate-400 text-xs mt-2">Khi được gán voucher, chúng sẽ hiển thị tại đây.</p>
+            </div>
+        <% } %>
+    </main>
+
+    <% const activePage = 'dashboard'; %>
+    <%- include('../partials/client-bottom-nav', { activePage }) %>
+</body>
+</html>
+

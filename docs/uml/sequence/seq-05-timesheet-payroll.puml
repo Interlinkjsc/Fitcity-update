@@ -1,0 +1,39 @@
+@startuml SEQ_Timesheet_Payroll
+title SEQ-05: Timesheet → Payroll PT (hybrid)
+autonumber
+
+actor PT
+participant "timesheetController" as TC
+database "Timesheet" as TS
+actor Manager
+participant "payrollController" as PC
+participant "payrollService" as PS
+database "SystemSettings" as SS
+database "Contract" as C
+
+== Chấm công ==
+PT -> TC : POST /pt/attendance/check-in
+TC -> TS : create Pending_Approval
+PT -> TC : POST /pt/attendance/check-out
+TC -> TS : set checkOut
+
+Manager -> TC : POST /admin/timesheets/approve/:id
+TC -> TS : status = Approved
+
+== Tính lương tháng ==
+Manager -> PC : GET /admin/payroll?month=&year=
+PC -> PS : calculatePayroll()
+PS -> SS : read ptPayrollMode
+alt mode = contract
+  PS -> C : sum ptCommission (Paid HĐ)
+else mode = timesheet
+  PS -> TS : count Approved × rate
+else hybrid
+  PS -> C : contract portion
+  PS -> TS : timesheet portion
+  PS -> PS : average
+end
+PS --> PC : payroll rows
+PC --> Manager : summary.ejs
+
+@enduml

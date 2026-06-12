@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <%- include('../../partials/pt-head', { title: 'Phác đồ Dinh dưỡng - FitCity PT' }) %>
+</head>
+<body class="bg-[#F8FAF7] text-slate-900 min-h-screen pb-32">
+    <header class="p-8 pb-4 flex items-center gap-4">
+        <a href="/pt/meal-plans" class="size-10 bg-white border border-slate-200 rounded-xl flex items-center justify-center text-slate-500 hover:text-slate-900 transition-all shadow-sm">
+            <span class="material-symbols-outlined text-sm">arrow_back</span>
+        </a>
+        <div>
+            <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight leading-none">Phác đồ Mới</h1>
+            <p class="text-slate-500 text-xs mt-1 uppercase tracking-widest font-bold">Thiết kế lộ trình ăn uống cho hội viên</p>
+        </div>
+    </header>
+
+    <main class="px-8 mt-6">
+        <form action="/pt/meal-plans/store" method="POST" id="mealPlanForm" class="space-y-6">
+            <!-- Basic Settings Card -->
+            <section class="glass p-8 rounded-3xl space-y-6 shadow-sm">
+                <div class="space-y-2" x-data="{ 
+                    open: false, 
+                    selectedId: '<%= contracts.length > 0 ? contracts[0]._id : '' %>',
+                    selectedLabel: '<%= contracts.length > 0 ? (contracts[0].client.name + ' • ' + contracts[0].servicePackage.name) : 'Chọn hội viên' %>',
+                    contracts: [
+                        <% contracts.forEach(c => { %>
+                            { id: '<%= c._id %>', label: '<%= c.client.name %> • <%= c.servicePackage.name %>' },
+                        <% }) %>
+                    ]
+                }" @click.away="open = false">
+                    <label class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Chọn Hội Viên</label>
+                    <div class="relative">
+                        <input type="hidden" name="contractId" :value="selectedId" required>
+                        
+                        <button type="button" @click="open = !open" 
+                            class="w-full bg-slate-50 border border-slate-200 rounded-2xl py-4 px-6 text-slate-900 text-left flex justify-between items-center focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all">
+                            <span class="font-bold truncate mr-4" x-text="selectedLabel"></span>
+                            <span class="material-symbols-outlined text-slate-400 transition-transform duration-300" :class="open ? 'rotate-180' : ''">expand_more</span>
+                        </button>
+
+                        <!-- Custom Dropdown Menu -->
+                        <div x-show="open" 
+                            x-transition:enter="transition ease-out duration-200"
+                            x-transition:enter-start="opacity-0 scale-95 translate-y-2"
+                            x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                            class="absolute left-0 w-full mt-2 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 overflow-hidden py-1 glass"
+                            style="display: none;">
+                            <div class="max-h-60 overflow-y-auto">
+                                <template x-for="c in contracts" :key="c.id">
+                                    <button type="button" @click="selectedId = c.id; selectedLabel = c.label; open = false"
+                                        class="w-full text-left px-6 py-3 text-sm font-bold hover:bg-slate-50 transition-colors flex items-center justify-between"
+                                        :class="selectedId === c.id ? 'text-primary' : 'text-slate-600'">
+                                        <span x-text="c.label"></span>
+                                        <span x-show="selectedId === c.id" class="material-symbols-outlined text-sm">check_circle</span>
+                                    </button>
+                                </template>
+                                <% if (contracts.length === 0) { %>
+                                    <div class="px-6 py-4 text-xs text-slate-400 text-center italic">Không tìm thấy hội viên đang hoạt động</div>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-2" x-data="{ 
+                        open: false, 
+                        selected: 'Weight Loss',
+                        options: {
+                            'Weight Loss': 'Giảm cân',
+                            'Weight Gain': 'Tăng cân',
+                            'Muscle Gain': 'Tăng cơ',
+                            'Maintenance': 'Duy trì',
+                            'Endurance': 'Sức bền',
+                            'Other': 'Khác'
+                        },
+                        get label() { return this.options[this.selected] }
+                    }" @click.away="open = false">
+                        <label class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Mục tiêu</label>
+                        <div class="relative">
+                            <!-- Hidden Input for Form Submission -->
+                            <input type="hidden" name="goal" :value="selected">
+                            
+                            <!-- Trigger Button -->
+                            <button type="button" @click="open = !open" 
+                                class="w-full bg-slate-50 border border-slate-200 rounded-2xl py-4 px-6 text-slate-900 text-left flex justify-between items-center focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all">
+                                <span class="font-bold" x-text="label"></span>
+                                <span class="material-symbols-outlined text-slate-400 transition-transform duration-300" :class="open ? 'rotate-180' : ''">expand_more</span>
+                            </button>
+
+                            <!-- Custom Dropdown Menu -->
+                            <div x-show="open" 
+                                x-transition:enter="transition ease-out duration-200"
+                                x-transition:enter-start="opacity-0 scale-95 translate-y-2"
+                                x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                                class="absolute left-0 w-full mt-2 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 overflow-hidden py-1 glass"
+                                style="display: none;">
+                                <template x-for="(display, value) in options" :key="value">
+                                    <button type="button" @click="selected = value; open = false; $dispatch('goal-changed', value)"
+                                        class="w-full text-left px-6 py-3 text-sm font-bold hover:bg-slate-50 transition-colors flex items-center justify-between"
+                                        :class="selected === value ? 'text-primary' : 'text-slate-600'">
+                                        <span x-text="display"></span>
+                                        <span x-show="selected === value" class="material-symbols-outlined text-sm">check_circle</span>
+                                    </button>
+                                </template>
+                            </div>
+                        </div>
+
+                        <!-- Custom Goal Input (Text) -->
+                        <div x-show="selected === 'Other'" 
+                            x-transition:enter="transition ease-out duration-200"
+                            x-transition:enter-start="opacity-0 -translate-y-2"
+                            x-transition:enter-end="opacity-100 translate-y-0"
+                            class="mt-2" style="display: none;">
+                            <input type="text" name="customGoal" id="customGoal" placeholder="Điền mục tiêu cụ thể..." 
+                                class="w-full bg-white border-2 border-primary/20 rounded-2xl py-4 px-6 text-sm font-bold text-primary outline-none shadow-sm shadow-primary/5 placeholder:text-primary/30">
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Kcal mỗi ngày</label>
+                        <input type="number" name="calories" value="2000" class="w-full bg-slate-50 border border-slate-200 rounded-2xl py-4 px-6 text-slate-900 focus:border-primary outline-none font-black text-xl">
+                    </div>
+                </div>
+
+                <!-- Macros Section -->
+                <div class="space-y-4 pt-4 border-t border-slate-100 mt-4">
+                    <label class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] block mb-2">Tỷ lệ dinh dưỡng (%)</label>
+                    <div class="grid grid-cols-4 gap-3">
+                        <div class="bg-slate-50 p-4 border border-slate-200 rounded-3xl text-center">
+                            <label class="text-[9px] font-bold text-slate-500 block mb-1">🥩 ĐẠM</label>
+                            <input type="number" name="protein" value="30" min="0" max="100" class="w-full bg-transparent text-center font-black text-primary text-xl outline-none">
+                        </div>
+                        <div class="bg-slate-50 p-4 border border-slate-200 rounded-3xl text-center">
+                            <label class="text-[9px] font-bold text-slate-500 block mb-1">🍚 T.BỘT</label>
+                            <input type="number" name="carbs" value="35" min="0" max="100" class="w-full bg-transparent text-center font-black text-primary text-xl outline-none">
+                        </div>
+                        <div class="bg-slate-50 p-4 border border-slate-200 rounded-3xl text-center">
+                            <label class="text-[9px] font-bold text-slate-500 block mb-1">🧈 BÉO</label>
+                            <input type="number" name="fat" value="25" min="0" max="100" class="w-full bg-transparent text-center font-black text-primary text-xl outline-none">
+                        </div>
+                        <div class="bg-slate-50 p-4 border border-slate-200 rounded-3xl text-center">
+                            <label class="text-[9px] font-bold text-slate-500 block mb-1">🥬 XƠ</label>
+                            <input type="number" name="fiber" value="10" min="0" max="100" class="w-full bg-transparent text-center font-black text-primary text-xl outline-none">
+                        </div>
+                    </div>
+                    <p class="text-[10px] text-slate-400 text-center">* Tổng tỷ lệ nên bằng 100%</p>
+                </div>
+            </section>
+
+            <!-- Meals Schedule Card — Timeline 24h -->
+            <section class="glass p-8 rounded-3xl space-y-6 shadow-sm">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h3 class="font-extrabold text-lg text-slate-900">Lịch trình bữa ăn 24h</h3>
+                        <p class="text-[10px] text-slate-500 mt-1">Chọn giờ cố định cho từng bữa trong ngày</p>
+                    </div>
+                    <button type="button" onclick="addMealRow()" class="text-[10px] font-black text-primary uppercase border border-primary/30 px-3 py-1.5 rounded-full hover:bg-primary/10 bg-white transition-all">+ Thêm bữa</button>
+                </div>
+                <div id="mealsContainer" class="space-y-4">
+                    <!-- Bữa sáng -->
+                    <div class="meal-row bg-slate-50 border border-slate-200 p-6 rounded-3xl relative group">
+                        <div class="flex gap-4 mb-3 items-center">
+                            <input type="time" value="07:00" class="meal-time bg-primary/10 border border-primary/30 text-primary font-black text-sm rounded-xl px-3 py-2 outline-none w-28">
+                            <input type="text" placeholder="Tên bữa (VD: Bữa sáng)" class="meal-name flex-1 bg-transparent border-b border-slate-200 focus:border-primary outline-none py-1 text-sm font-bold text-slate-900 tracking-tight" value="Bữa sáng">
+                        </div>
+                        <textarea placeholder="Thành phần, định lượng..." class="meal-foods w-full bg-transparent text-slate-600 text-xs py-2 outline-none h-16 resize-none">2 Quả trứng luộc, 1 Lát bánh mì đen, 1/2 Quả bơ</textarea>
+                    </div>
+                    <!-- Bữa trưa -->
+                    <div class="meal-row bg-slate-50 border border-slate-200 p-6 rounded-3xl relative group">
+                        <div class="flex gap-4 mb-3 items-center">
+                            <input type="time" value="12:00" class="meal-time bg-primary/10 border border-primary/30 text-primary font-black text-sm rounded-xl px-3 py-2 outline-none w-28">
+                            <input type="text" placeholder="Tên bữa" class="meal-name flex-1 bg-transparent border-b border-slate-200 focus:border-primary outline-none py-1 text-sm font-bold text-slate-900 tracking-tight" value="Bữa trưa">
+                        </div>
+                        <textarea placeholder="Thành phần, định lượng..." class="meal-foods w-full bg-transparent text-slate-600 text-xs py-2 outline-none h-16 resize-none">200g Ức gà nướng, 150g Cơm gạo lứt, Rau xanh luộc</textarea>
+                    </div>
+                    <!-- Bữa tối -->
+                    <div class="meal-row bg-slate-50 border border-slate-200 p-6 rounded-3xl relative group">
+                        <div class="flex gap-4 mb-3 items-center">
+                            <input type="time" value="18:30" class="meal-time bg-primary/10 border border-primary/30 text-primary font-black text-sm rounded-xl px-3 py-2 outline-none w-28">
+                            <input type="text" placeholder="Tên bữa" class="meal-name flex-1 bg-transparent border-b border-slate-200 focus:border-primary outline-none py-1 text-sm font-bold text-slate-900 tracking-tight" value="Bữa tối">
+                        </div>
+                        <textarea placeholder="Thành phần, định lượng..." class="meal-foods w-full bg-transparent text-slate-600 text-xs py-2 outline-none h-16 resize-none">200g Cá hồi áp chảo, Salad rau củ, Khoai lang</textarea>
+                    </div>
+                </div>
+            </section>
+
+            <button type="submit" class="w-full bg-primary text-white py-5 rounded-3xl font-black text-lg shadow-xl shadow-primary/20 hover:brightness-110 active:scale-95 transition-all">LƯU PHÁC ĐỒ</button>
+            <input type="hidden" name="mealsJson" id="mealsJson">
+        </form>
+    </main>
+
+    <script>
+        function addMealRow() {
+            const container = document.getElementById('mealsContainer');
+            const row = document.createElement('div');
+            row.className = 'meal-row bg-slate-50 border border-slate-200 p-6 rounded-3xl relative group';
+            row.innerHTML = `
+                <div class="flex gap-4 mb-3 items-center">
+                    <input type="time" class="meal-time bg-primary/10 border border-primary/30 text-primary font-black text-sm rounded-xl px-3 py-2 outline-none w-28" value="15:00">
+                    <input type="text" placeholder="Tên bữa (VD: Snack chiều)" class="meal-name flex-1 bg-transparent border-b border-slate-200 focus:border-primary outline-none py-1 text-sm font-bold text-slate-900 tracking-tight">
+                </div>
+                <textarea placeholder="Thành phần, định lượng..." class="meal-foods w-full bg-transparent text-slate-600 text-xs py-2 outline-none h-16 resize-none"></textarea>
+                <button type="button" onclick="this.parentElement.remove()" class="absolute -top-2 -right-2 size-7 bg-red-500 rounded-full flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-all shadow-lg">
+                    <span class="material-symbols-outlined text-[14px]">close</span>
+                </button>
+            `;
+            container.appendChild(row);
+        }
+
+        document.getElementById('mealPlanForm').addEventListener('submit', function(e) {
+            const mealRows = document.querySelectorAll('.meal-row');
+            const meals = Array.from(mealRows).map(row => ({
+                time: row.querySelector('.meal-time').value,
+                notes: row.querySelector('.meal-name').value + ': ' + row.querySelector('.meal-foods').value,
+                foodItems: []
+            }));
+            document.getElementById('mealsJson').value = JSON.stringify(meals);
+        });
+    </script>
+
+    <%- include('../../partials/nav_pt', { activePage: 'meal-plans' }) %>
+</body>
+</html>

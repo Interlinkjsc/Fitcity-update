@@ -1,0 +1,152 @@
+<%- include('../../partials/header', { title: isEdit ? 'Chỉnh sửa Mã Giảm Giá' : 'Tạo Mã Giảm Giá Mới', activePage: 'coupons' }) %>
+
+<div class="mb-10 flex flex-col sm:flex-row justify-between items-start gap-4">
+    <div>
+        <h2 class="text-3xl font-extrabold text-slate-800 tracking-tight"><%= isEdit ? 'Chỉnh sửa khuyến mãi' : 'Cấu hình khuyến mãi' %></h2>
+        <p class="text-slate-500 font-medium">Thiết lập các tham số kỹ thuật cho chiến dịch Affiliate/Marketing.</p>
+    </div>
+    <a href="/admin/coupons" class="bg-slate-50 border border-slate-200 text-slate-600 px-6 py-3 rounded-xl font-bold hover:bg-slate-100 transition-all flex items-center gap-2">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+        </svg>
+        Về danh sách
+    </a>
+</div>
+
+<form action="<%= isEdit ? '/admin/coupons/update/' + coupon._id : '/admin/coupons/store' %>" method="POST" class="max-w-4xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8 pb-20">
+    <!-- Cột trái: Thông tin chính -->
+    <div class="lg:col-span-2 space-y-6">
+        <div class="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm space-y-5">
+            <div class="grid grid-cols-2 gap-6">
+                <div class="space-y-1">
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Mã Code (Affiliate)</label>
+                    <input type="text" name="code" required value="<%= coupon.code || '' %>" class="w-full bg-slate-50 border border-slate-200 px-5 py-4 rounded-2xl focus:ring-4 focus:ring-lime-100 focus:border-lime-500 outline-none transition-all font-mono font-black text-xl uppercase" placeholder="VD: FITCITY50" <%= isEdit ? 'readonly' : '' %>>
+                </div>
+                
+                <div class="space-y-1">
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Loại giảm giá</label>
+                    <select name="type" id="couponTypeSelect" class="w-full bg-slate-50 border border-slate-200 px-5 py-4 rounded-2xl focus:ring-4 focus:ring-lime-100 focus:border-lime-500 outline-none transition-all font-bold">
+                        <option value="Percentage" <%= coupon.type === 'Percentage' ? 'selected' : '' %>>Tính theo phần trăm (%)</option>
+                        <option value="Fixed" <%= coupon.type === 'Fixed' ? 'selected' : '' %>>Trừ số tiền cố định (VNĐ)</option>
+                        <option value="FreeSessions" <%= coupon.type === 'FreeSessions' ? 'selected' : '' %>>Tặng buổi tập</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-6 pt-4">
+                <div class="space-y-1">
+                    <label id="valueFieldLabel" class="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Giá trị giảm</label>
+                    <input type="number" name="value" id="couponValue" required value="<%= coupon.value || '' %>" 
+                        class="w-full bg-slate-50 border border-slate-200 px-5 py-4 rounded-2xl focus:ring-4 focus:ring-lime-100 focus:border-lime-500 outline-none transition-all font-black text-2xl text-lime-600" 
+                        placeholder="VD: 10 hoặc 500000 hoặc 5 buổi"
+                        <%= coupon.type === 'Percentage' ? 'max="100"' : '' %>>
+                    <p id="valueHint" class="text-[10px] text-slate-500 font-medium pl-1 mt-1 hidden"></p>
+                    <p id="valueWarning" class="text-[10px] text-rose-500 font-bold hidden pl-1 mt-1">Lưu ý: Giảm giá theo % không quá 100%</p>
+                </div>
+                
+                <div id="maxDiscountRow" class="space-y-1">
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Giảm tối đa (Nếu chọn %)</label>
+                    <input type="number" name="maxDiscount" value="<%= coupon.maxDiscount || '' %>" class="w-full bg-slate-50 border border-slate-200 px-5 py-4 rounded-2xl focus:ring-4 focus:ring-lime-100 focus:border-lime-500 outline-none transition-all font-bold" placeholder="VD: 2000000">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cột phải: Ràng buộc & Thời hạn -->
+    <div class="lg:col-span-1 space-y-6">
+        <div class="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm space-y-5">
+            <h3 class="font-bold text-slate-800 border-b border-slate-50 pb-3">Ràng buộc & Hiệu lực</h3>
+            
+            <div class="space-y-1">
+                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Ngày bắt đầu</label>
+                <input type="date" name="startDate" value="<%= coupon.startDate ? new Date(coupon.startDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0] %>" class="w-full bg-slate-50 border border-slate-200 px-5 py-4 rounded-2xl focus:ring-4 focus:ring-lime-100 focus:border-lime-500 outline-none transition-all font-bold">
+            </div>
+
+            <div class="space-y-1">
+                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Ngày hết hạn</label>
+                <input type="date" name="endDate" required value="<%= coupon.endDate ? new Date(coupon.endDate).toISOString().split('T')[0] : '' %>" class="w-full bg-slate-50 border border-slate-200 px-5 py-4 rounded-2xl focus:ring-4 focus:ring-lime-100 focus:border-lime-500 outline-none transition-all font-bold">
+            </div>
+
+            <div class="space-y-1 pt-4">
+                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Giới hạn lượt dùng</label>
+                <input type="number" name="usageLimit" value="<%= coupon.usageLimit != null ? coupon.usageLimit : 100 %>" class="w-full bg-slate-50 border border-slate-200 px-5 py-4 rounded-2xl focus:ring-4 focus:ring-lime-100 focus:border-lime-500 outline-none transition-all font-black" placeholder="VD: 100">
+            </div>
+        </div>
+
+        <button type="submit" class="w-full bg-slate-900 text-white py-5 rounded-3xl font-black text-lg shadow-xl shadow-slate-200 hover:brightness-110 active:scale-95 transition-all">
+            <%= isEdit ? 'CẬP NHẬT MÃ' : 'PHÁT HÀNH MÃ' %>
+        </button>
+    </div>
+</form>
+
+<script>
+    const typeSelect = document.getElementById('couponTypeSelect') || document.querySelector('select[name="type"]');
+    const valueInput = document.getElementById('couponValue');
+    const warning = document.getElementById('valueWarning');
+    const valueLabel = document.getElementById('valueFieldLabel');
+    const valueHint = document.getElementById('valueHint');
+    const maxDiscountRow = document.getElementById('maxDiscountRow');
+
+    function validateValue() {
+        const t = typeSelect.value;
+        if (t === 'Percentage') {
+            valueInput.setAttribute('max', '100');
+            valueInput.removeAttribute('min');
+            valueInput.removeAttribute('step');
+            if (valueLabel) valueLabel.textContent = 'Giá trị giảm';
+            if (valueHint) { valueHint.classList.add('hidden'); valueHint.textContent = ''; }
+            if (maxDiscountRow) maxDiscountRow.classList.remove('hidden');
+            if (parseInt(valueInput.value, 10) > 100) {
+                valueInput.classList.add('border-rose-500', 'ring-rose-100');
+                warning.classList.remove('hidden');
+            } else {
+                valueInput.classList.remove('border-rose-500', 'ring-rose-100');
+                warning.classList.add('hidden');
+            }
+        } else if (t === 'FreeSessions') {
+            valueInput.removeAttribute('max');
+            valueInput.setAttribute('min', '1');
+            valueInput.setAttribute('step', '1');
+            if (valueLabel) valueLabel.textContent = 'Số buổi tặng';
+            if (valueHint) {
+                valueHint.textContent = 'Nhập số nguyên từ 1 đến 500 buổi.';
+                valueHint.classList.remove('hidden');
+            }
+            if (maxDiscountRow) maxDiscountRow.classList.add('hidden');
+            valueInput.classList.remove('border-rose-500', 'ring-rose-100');
+            warning.classList.add('hidden');
+        } else {
+            valueInput.removeAttribute('max');
+            valueInput.removeAttribute('min');
+            valueInput.removeAttribute('step');
+            if (valueLabel) valueLabel.textContent = 'Giá trị giảm';
+            if (valueHint) { valueHint.classList.add('hidden'); valueHint.textContent = ''; }
+            if (maxDiscountRow) maxDiscountRow.classList.remove('hidden');
+            valueInput.classList.remove('border-rose-500', 'ring-rose-100');
+            warning.classList.add('hidden');
+        }
+    }
+
+    typeSelect.addEventListener('change', validateValue);
+    valueInput.addEventListener('input', validateValue);
+
+    document.querySelector('form').addEventListener('submit', function(e) {
+        if (typeSelect.value === 'Percentage' && parseInt(valueInput.value, 10) > 100) {
+            e.preventDefault();
+            alert('Giá trị giảm theo phần trăm không được vượt quá 100%');
+            valueInput.focus();
+        }
+        if (typeSelect.value === 'FreeSessions') {
+            const n = parseInt(valueInput.value, 10);
+            if (!Number.isFinite(n) || n < 1 || n > 500) {
+                e.preventDefault();
+                alert('Số buổi tặng phải là số nguyên từ 1 đến 500.');
+                valueInput.focus();
+            }
+        }
+    });
+
+    validateValue();
+</script>
+
+<%- include('../../partials/footer') %>

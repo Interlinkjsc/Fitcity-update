@@ -1,0 +1,29 @@
+@startuml SEQ_Meal_Nutrition
+title SEQ-08: Meal Plan + Meal Log
+autonumber
+
+actor PT
+participant "mealPlanController" as MPC
+database "MealPlan" as MP
+actor Client
+participant "mealLogService" as MLS
+database "MealLog" as ML
+participant "homeController" as HC
+
+== PT tạo thực đơn ==
+PT -> MPC : POST /pt/meal-plans/store
+MPC -> MP : deactivate old active
+MPC -> MP : create (macros, meals[])
+MPC --> PT : redirect list
+
+== Client xem & ghi log ==
+Client -> HC : GET /client/nutrition
+HC -> MP : find active meal plan
+HC -> MLS : getLogsForDate()
+HC --> Client : nutrition.ejs
+
+Client -> Client : POST /client/meal-log
+Client -> MLS : logMeal (upsert by mealType)
+MLS -> ML : findOneAndUpdate
+
+@enduml

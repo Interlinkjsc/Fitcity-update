@@ -1,0 +1,68 @@
+# Dependencies
+node_modules/
+
+# Environment
+.env
+.env.production
+.env.staging
+deploy/env/.env.production
+deploy/env/.env.staging
+
+# Secrets (never commit)
+config/google-credentials.json
+**/google-credentials.json
+
+# Coverage
+coverage/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Images & Media
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+*.ico
+images/
+
+# PDFs
+*.pdf
+
+# Test output files
+*.txt
+!README.txt
+*.log
+test-results.json
+test_output*.log
+
+# Playwright
+playwright-report/
+
+# Scratch / Temporary
+scratch/
+tmp/
+temp/
+
+# Tool directories
+.agent/
+.rtk/
+
+# Heavy Assets in FitcityFE
+FitcityFE/assets/downloaded/
+FitcityFE/resources/dumps/
+FitcityFE/
+
+# Archives
+*.zip
+*.tar.gz
+*.rar
+
+# CLAUDE
+CLAUDE.md

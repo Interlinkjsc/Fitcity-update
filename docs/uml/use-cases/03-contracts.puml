@@ -1,0 +1,86 @@
+@startuml UC_Contracts_Full
+title Module: Contracts (đầy đủ)
+left to right direction
+skinparam actorStyle awesome
+
+actor Client
+actor PT
+actor Sales
+actor Manager as MGR
+actor Accountant as ACC
+actor Admin as ADM
+actor CEO
+actor System
+
+package "Admin /admin/contracts" {
+  usecase "UC-CTR01\nList (scope)" as C01
+  usecase "UC-CTR02\nCreate + Store" as C02
+  usecase "UC-CTR03\nDetail" as C03
+  usecase "UC-CTR04\nEdit + Update" as C04
+  usecase "UC-CTR05\nDelete" as C05
+  usecase "UC-CTR06\nDownload PDF" as C06
+  usecase "UC-CTR07\nPreview contract" as C07
+  usecase "UC-CTR08\nStore payment" as C08
+  usecase "UC-CTR09\nPreview receipt" as C09
+  usecase "UC-CTR10\nPause contract" as C10
+  usecase "UC-CTR11\nUnpause" as C11
+  usecase "UC-CTR12\nPause requests list" as C12
+  usecase "UC-CTR13\nApprove pause" as C13
+  usecase "UC-CTR14\nReject pause" as C14
+  usecase "UC-CTR15\nrevenueSource" as C15
+}
+
+package "PT /pt/contracts" {
+  usecase "UC-CTR20\nPT create HĐ" as C20
+}
+
+package "Client /client/contracts" {
+  usecase "UC-CTR30\nMy contracts" as C30
+  usecase "UC-CTR31\nPreview HĐ" as C31
+  usecase "UC-CTR32\nPreview receipt" as C32
+  usecase "UC-CTR33\nRequest pause" as C33
+}
+
+package "Affiliate" {
+  usecase "UC-CTR40\nF1 reward on Paid" as C40
+}
+
+PT --> C20
+Sales --> C02
+MGR --> C01
+MGR --> C04
+MGR --> C12
+MGR --> C13
+MGR --> C14
+ACC --> C01
+ACC --> C03
+ACC --> C08
+ADM --> C01
+ACC --> C10
+ADM --> C05
+CEO --> C01
+Client --> C30
+Client --> C31
+Client --> C32
+Client --> C33
+
+C02 ..> C15
+C08 ..> C40
+C04 ..> C40 : paymentStatus=Paid
+System --> C40
+
+note bottom of C01
+  **Contract scope**
+  SA/Admin/CEO/Accountant: all
+  Manager: branch | sales | pt
+  Sales: sales=self
+  PT: pt=self | sales=self
+  Client: client=self
+end note
+
+note bottom of C08
+  paymentService.createPayment
+  → Paid → affiliateService
+end note
+
+@enduml

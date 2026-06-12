@@ -1,0 +1,154 @@
+<%- include('../../partials/header', { title: 'Chi tiết khách hàng tiềm năng', activePage: 'leads' }) %>
+
+<div class="max-w-4xl mx-auto">
+    <!-- Header Page -->
+    <div class="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+            <a href="/admin/leads" class="text-sm text-slate-500 hover:text-lime-600 transition-colors flex items-center gap-1 mb-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                Quay lại danh sách Leads
+            </a>
+            <h2 class="text-2xl font-bold text-slate-800">Chi tiết Khách Hàng - <%= lead.name %></h2>
+        </div>
+        <div>
+            <%
+                let statusClass = "bg-blue-100 text-blue-800";
+                let statusText = lead.status;
+                if(lead.status === 'F') { statusClass = "bg-blue-100 text-blue-800"; statusText = "Khách F (Chưa liên hệ)"; }
+                if(lead.status === 'Contacted') { statusClass = "bg-orange-100 text-orange-800"; statusText = "Đã liên hệ"; }
+                if(lead.status === 'Signed') { statusClass = "bg-emerald-100 text-emerald-800"; statusText = "Đã ký Hợp Đồng"; }
+                if(lead.status === 'Converted') { statusClass = "bg-violet-100 text-violet-800"; statusText = "Đã chuyển hội viên"; }
+            %>
+            <span class="px-4 py-2 inline-flex text-sm font-bold rounded-lg <%= statusClass %> border border-current shadow-sm">
+                Trạng thái: <%= statusText %>
+            </span>
+        </div>
+    </div>
+
+    <!-- Main Detail Section -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-6">
+        <div class="md:flex">
+            <!-- Left Info Panel -->
+            <div class="md:w-1/3 bg-slate-50 p-6 border-r border-slate-200">
+                <div class="text-center mb-6">
+                    <img src="https://ui-avatars.com/api/?name=<%= encodeURIComponent(lead.name) %>&background=e2e8f0&color=475569&size=128" 
+                         alt="<%= lead.name %>" 
+                         class="w-24 h-24 mx-auto rounded-full border-4 border-white shadow-md mb-4">
+                    <h3 class="text-xl font-bold text-slate-800"><%= lead.name %></h3>
+                    <p class="text-sm text-slate-500 mt-1"><%= lead.phone %></p>
+                    <p class="text-sm text-slate-500"><%= lead.email || 'Chưa có email' %></p>
+                </div>
+
+                <hr class="border-slate-200 my-6">
+
+                <div class="space-y-4">
+                    <div>
+                        <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider mb-1">Nguồn đăng ký</p>
+                        <p class="font-medium text-slate-800 flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-lime-500"></span>
+                            <%= lead.source || 'Website' %>
+                        </p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider mb-1">Ngày tiếp nhận</p>
+                        <p class="font-medium text-slate-800">
+                            <%= new Date(lead.createdAt).toLocaleDateString('vi-VN') %> 
+                            <span class="text-slate-500 text-sm"><%= new Date(lead.createdAt).toLocaleTimeString('vi-VN', {hour:'2-digit', minute:'2-digit', hour12:false}) %></span>
+                        </p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider mb-1">Chi nhánh</p>
+                        <p class="font-medium text-slate-800"><%= lead.branch ? lead.branch.name : 'Chưa chọn' %></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Detail Panel -->
+            <div class="md:w-2/3 p-6 md:p-8">
+                <h4 class="text-lg font-bold text-slate-800 border-b border-slate-100 pb-3 mb-6">Nhu cầu & Thể trạng</h4>
+                
+                <div class="bg-blue-50/50 rounded-xl p-5 border border-blue-100 mb-8">
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                        <div>
+                            <p class="text-sm text-slate-500 mb-1">Cân nặng (kg)</p>
+                            <p class="text-xl font-bold text-slate-800"><%= lead.weight || '--' %></p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-slate-500 mb-1">Chiều cao (cm)</p>
+                            <p class="text-xl font-bold text-slate-800"><%= lead.height || '--' %></p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-slate-500 mb-1">Mỡ (%)</p>
+                            <p class="text-xl font-bold text-slate-800"><%= lead.bodyFat || '--' %></p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-slate-500 mb-1">Gói KH quan tâm</p>
+                            <p class="text-lg font-bold text-blue-700 mt-1"><%= lead.interestedPackage %></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-6">
+                    <div>
+                        <h5 class="text-sm font-bold text-slate-700 mb-2 flex items-center gap-2">
+                            <svg class="w-5 h-5 text-lime-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                            Mục tiêu tập luyện
+                        </h5>
+                        <div class="bg-slate-50 border border-slate-200 rounded-lg p-4">
+                            <p class="text-slate-700 min-h-[40px]"><%= lead.targetGoal || 'Chưa cung cấp mục tiêu cụ thể' %></p>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h5 class="text-sm font-bold text-slate-700 mb-2 flex items-center gap-2">
+                            <svg class="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                            Ghi chú (Note từ Sale/Marketing)
+                        </h5>
+                        <div class="bg-slate-50 border border-slate-200 rounded-lg p-4">
+                            <p class="text-slate-700 min-h-[60px] whitespace-pre-line"><%= lead.notes || 'Chưa có ghi chú nào.' %></p>
+                        </div>
+                    </div>
+
+                    <% if (lead.status === 'Converted' && lead.convertedClientId) { %>
+                    <div class="border-t border-slate-100 pt-6">
+                        <h5 class="text-sm font-bold text-slate-700 mb-3">Hội viên đã liên kết</h5>
+                        <a href="/admin/clients/detail/<%= lead.convertedClientId._id %>" class="inline-flex px-4 py-2 bg-violet-600 text-white text-sm font-bold rounded-lg hover:bg-violet-700">Mở hồ sơ Client</a>
+                    </div>
+                    <% } else { %>
+                    <% if (lead.email) { %>
+                    <div class="border-t border-slate-100 pt-6">
+                        <h5 class="text-sm font-bold text-violet-800 mb-2">Chuyển thành hội viên</h5>
+                        <p class="text-xs text-slate-500 mb-3">Email: <strong><%= lead.email %></strong></p>
+                        <form action="/admin/leads/detail/<%= lead._id %>/convert" method="POST" class="space-y-3 max-w-md">
+                            <input type="password" name="password" required minlength="6" autocomplete="new-password" placeholder="Mật khẩu (≥6 ký tự)" class="w-full border border-slate-300 rounded-lg py-2 px-3 text-sm">
+                            <input type="password" name="confirmPassword" required minlength="6" autocomplete="new-password" placeholder="Xác nhận mật khẩu" class="w-full border border-slate-300 rounded-lg py-2 px-3 text-sm">
+                            <button type="submit" class="px-4 py-2 bg-violet-600 text-white text-sm font-bold rounded-lg hover:bg-violet-700">Tạo tài khoản &amp; liên kết</button>
+                        </form>
+                    </div>
+                    <% } else { %>
+                    <div class="border-t border-slate-100 pt-6">
+                        <p class="text-sm text-amber-700">Cần email trên lead để chuyển thành hội viên.</p>
+                    </div>
+                    <% } %>
+
+                    <div class="border-t border-slate-100 pt-6">
+                        <h5 class="text-sm font-bold text-slate-700 mb-3">Cập nhật trạng thái</h5>
+                        <form action="/admin/leads/detail/<%= lead._id %>/status" method="POST" class="space-y-3 max-w-md">
+                            <select name="status" class="w-full border border-slate-300 rounded-lg py-2 px-3 text-sm">
+                                <option value="F" <%= lead.status === 'F' ? 'selected' : '' %>>Khách F</option>
+                                <option value="Contacted" <%= lead.status === 'Contacted' ? 'selected' : '' %>>Đã liên hệ</option>
+                                <option value="Signed" <%= lead.status === 'Signed' ? 'selected' : '' %>>Đã ký HĐ</option>
+                            </select>
+                            <textarea name="notes" rows="3" placeholder="Ghi chú (ghi đè nếu nhập)" class="w-full border border-slate-300 rounded-lg py-2 px-3 text-sm"><%= lead.notes || '' %></textarea>
+                            <button type="submit" class="px-4 py-2 bg-lime-600 text-white text-sm font-bold rounded-lg hover:bg-lime-700">Lưu trạng thái</button>
+                        </form>
+                    </div>
+                    <% } %>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- include('../../partials/footer') %>

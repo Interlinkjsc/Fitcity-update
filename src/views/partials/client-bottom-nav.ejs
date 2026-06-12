@@ -1,0 +1,75 @@
+<%# Expects: activePage = 'dashboard' | 'workouts' | 'schedule' | 'notifications' %>
+<style>
+    @keyframes client-nav-logo-float {
+        0%, 100% { transform: translateY(-16px) scale(1); }
+        50% { transform: translateY(-20px) scale(1.02); }
+    }
+    .client-nav-logo {
+        animation: client-nav-logo-float 2.8s ease-in-out infinite;
+        transform: translateY(-16px);
+        box-shadow:
+            0 5px 0 #15803D,
+            0 10px 22px rgba(22, 163, 74, 0.4),
+            0 4px 8px rgba(15, 23, 42, 0.12),
+            inset 0 2px 0 rgba(255, 255, 255, 0.45),
+            inset 0 -3px 0 rgba(0, 0, 0, 0.08);
+        transition: transform 0.22s cubic-bezier(0.34, 1.45, 0.64, 1), box-shadow 0.22s ease;
+        will-change: transform;
+    }
+    .client-nav-logo:hover {
+        box-shadow:
+            0 6px 0 #15803D,
+            0 14px 26px rgba(22, 163, 74, 0.45),
+            0 6px 10px rgba(15, 23, 42, 0.14),
+            inset 0 2px 0 rgba(255, 255, 255, 0.5),
+            inset 0 -3px 0 rgba(0, 0, 0, 0.08);
+    }
+    .client-nav-logo:active,
+    .client-nav-logo.client-nav-logo--pressed {
+        animation: none;
+        transform: translateY(-10px) scale(1.14);
+        box-shadow:
+            0 3px 0 #15803D,
+            0 8px 16px rgba(22, 163, 74, 0.35),
+            0 2px 6px rgba(15, 23, 42, 0.1),
+            inset 0 1px 0 rgba(255, 255, 255, 0.35);
+    }
+</style>
+<nav class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[95%] max-w-lg z-50" aria-label="Điều hướng chính">
+    <div class="bg-white/95 backdrop-blur-xl border border-slate-200 rounded-full px-2 pt-3 pb-3.5 grid grid-cols-5 items-end shadow-xl relative">
+        <!-- 1: Lịch (đổi chỗ với logo cũ) -->
+        <a class="flex flex-col items-center justify-center pb-0.5 <%= activePage === 'schedule' ? 'text-primary' : 'text-slate-500 hover:text-primary' %> transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 rounded-xl py-1" href="/client/schedule" aria-label="Lịch buổi tập">
+            <span class="material-symbols-outlined text-[32px] <%= activePage === 'schedule' ? 'fill-[1]' : '' %>">calendar_month</span>
+        </a>
+
+        <!-- 2: Chương trình tập -->
+        <a class="flex flex-col items-center justify-center pb-0.5 <%= activePage === 'workouts' ? 'text-primary' : 'text-slate-500 hover:text-primary' %> transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 rounded-xl py-1" href="/client/workouts" aria-label="Chương trình tập">
+            <span class="material-symbols-outlined text-[32px] <%= activePage === 'workouts' ? 'fill-[1]' : '' %>">fitness_center</span>
+        </a>
+
+        <!-- 3: Logo giữa — nổi 3D -->
+        <div class="flex justify-center items-end relative z-10">
+            <a href="/client"
+               aria-label="Trang chủ"
+               class="client-nav-logo w-[3.25rem] h-[3.25rem] rounded-full flex items-center justify-center font-black text-[7px] leading-tight tracking-[0.06em] text-white border-2 border-white/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 <%= activePage === 'dashboard' ? 'ring-2 ring-primary/50' : '' %>"
+               style="background: linear-gradient(145deg, #fb923c 0%, #f97316 48%, #22c55e 52%, #16a34a 100%);"
+               onclick="var el=this;el.classList.add('client-nav-logo--pressed');setTimeout(function(){el.classList.remove('client-nav-logo--pressed');},220);">
+                FIT<br>CITY
+            </a>
+        </div>
+
+        <!-- 4: Thông báo -->
+        <button type="button" onclick="openNotifications()" class="relative flex flex-col items-center justify-center pb-0.5 <%= activePage === 'notifications' ? 'text-primary' : 'text-slate-500 hover:text-primary' %> transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 rounded-xl py-1" aria-label="Thông báo">
+            <span class="material-symbols-outlined text-[32px] <%= activePage === 'notifications' ? 'fill-[1]' : '' %>">notifications</span>
+            <span id="unreadBadge" class="absolute top-0 right-4 flex h-2.5 w-2.5 rounded-full bg-accent border-2 border-white hidden"></span>
+        </button>
+
+        <!-- 5: Menu -->
+        <button type="button" onclick="openClientMoreMenu()" class="flex flex-col items-center justify-center pb-0.5 text-slate-500 hover:text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 rounded-xl py-1" aria-label="Mở menu">
+            <span class="material-symbols-outlined text-[32px]">menu</span>
+        </button>
+    </div>
+</nav>
+
+<%- include('./client-more-menu') %>
+<%- include('./client-notifications-drawer') %>

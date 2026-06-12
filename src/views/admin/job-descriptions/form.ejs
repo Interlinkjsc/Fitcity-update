@@ -1,0 +1,55 @@
+<%- include('../../partials/header', { title: isEdit ? 'Sửa JD' : 'Tạo JD', activePage: 'job-descriptions' }) %>
+<% const itemList = (template.items && template.items.length) ? template.items : ['']; %>
+
+<div class="mb-6">
+    <h2 class="text-2xl font-bold text-slate-800"><%= isEdit ? 'Sửa mẫu JD' : 'Tạo mẫu JD' %></h2>
+    <a href="/admin/job-descriptions" class="text-sm text-blue-600 hover:underline">Quay lại</a>
+</div>
+
+<div class="bg-white rounded-xl border border-slate-200 shadow-sm max-w-2xl p-6">
+    <form action="<%= isEdit ? '/admin/job-descriptions/update/' + template._id : '/admin/job-descriptions/store' %>" method="POST" class="space-y-5" id="jd-form">
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <label class="block text-sm font-medium mb-1">Vai trò</label>
+                <select name="role" required class="w-full border rounded-lg py-2 px-3 text-sm">
+                    <% roles.forEach(r => { %>
+                    <option value="<%= r %>" <%= template.role === r ? 'selected' : '' %>><%= roleLabels[r] || r %></option>
+                    <% }) %>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-1">Tên mẫu</label>
+                <input type="text" name="title" required value="<%= template.title || '' %>" class="w-full border rounded-lg py-2 px-3 text-sm">
+            </div>
+        </div>
+        <div>
+            <label class="flex items-center gap-2 text-sm">
+                <input type="checkbox" name="active" <%= template.active !== false ? 'checked' : '' %>> Đang sử dụng
+            </label>
+        </div>
+        <div>
+            <label class="block text-sm font-medium mb-2">Nội dung công việc</label>
+            <div id="jd-items">
+                <% itemList.forEach((item, idx) => { %>
+                <div class="flex gap-2 mb-2 jd-row">
+                    <input type="text" name="items" value="<%= item %>" class="flex-1 border rounded-lg py-2 px-3 text-sm" placeholder="Mục công việc">
+                </div>
+                <% }) %>
+            </div>
+            <button type="button" id="add-jd-item" class="text-sm text-blue-600 font-bold mt-1">+ Thêm mục</button>
+        </div>
+        <button type="submit" class="px-6 py-2 bg-green-600 text-white font-bold rounded-lg text-sm">Lưu</button>
+    </form>
+</div>
+
+<script>
+document.getElementById('add-jd-item')?.addEventListener('click', () => {
+    const wrap = document.getElementById('jd-items');
+    const row = document.createElement('div');
+    row.className = 'flex gap-2 mb-2 jd-row';
+    row.innerHTML = '<input type="text" name="items" class="flex-1 border rounded-lg py-2 px-3 text-sm" placeholder="Mục công việc">';
+    wrap.appendChild(row);
+});
+</script>
+
+<%- include('../../partials/footer') %>

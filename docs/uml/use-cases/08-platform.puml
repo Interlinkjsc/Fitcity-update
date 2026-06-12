@@ -1,0 +1,100 @@
+@startuml UC_Platform_Full
+title Module: Platform (đầy đủ)
+left to right direction
+skinparam actorStyle awesome
+
+actor CEO
+actor Admin as ADM
+actor Manager as MGR
+actor PT
+actor Sales
+actor Marketing as MKT
+actor Client
+actor SA
+
+package "Dashboards" {
+  usecase "UC-PLT01\nAdmin dashboard" as P01
+  usecase "UC-PLT02\nCSAT widget" as P02
+  usecase "UC-PLT03\nDaily report %" as P03
+  usecase "UC-PLT04\nPT dashboard" as P04
+  usecase "UC-PLT05\nClient dashboard" as P05
+}
+
+package "Settings /admin/settings" {
+  usecase "UC-PLT10\nView settings" as P10
+  usecase "UC-PLT11\nUpdate VAT default" as P11
+  usecase "UC-PLT12\nPT commission default" as P12
+  usecase "UC-PLT13\nptPayrollMode" as P13
+  usecase "UC-PLT14\ntimesheetRatePerShift" as P14
+}
+
+package "Checklist /admin/checklists" {
+  usecase "UC-PLT20\nList tasks" as P20
+  usecase "UC-PLT21\nCreate task" as P21
+  usecase "UC-PLT22\nEdit/Delete task" as P22
+}
+
+package "Daily Report" {
+  usecase "UC-PLT30\nSubmit (PT/Sales/...)" as P30
+  usecase "UC-PLT31\nAdmin list" as P31
+  usecase "UC-PLT32\nApprove" as P32
+  usecase "UC-PLT33\nReject" as P33
+}
+
+package "Exports" {
+  usecase "UC-PLT40\nFinancial export" as P40
+  usecase "UC-PLT41\nWork report Excel" as P41
+}
+
+package "Job Description" {
+  usecase "UC-PLT50\nJD list" as P50
+  usecase "UC-PLT51\nJD CRUD" as P51
+  usecase "UC-PLT52\nJD API by role" as P52
+}
+
+package "RBAC SA" {
+  usecase "UC-PLT70\nPermission manager" as P70
+  usecase "UC-PLT71\nSave role perms" as P71
+  usecase "UC-PLT72\nReset suggested" as P72
+}
+
+package "Quality" {
+  usecase "UC-PLT60\nSession feedback" as P60
+}
+
+CEO --> P01
+CEO --> P10
+CEO --> P11
+CEO --> P20
+CEO --> P40
+CEO --> P41
+ADM --> P01
+ADM --> P10
+ADM --> P20
+ADM --> P50
+ADM --> P51
+MGR --> P01
+MGR --> P20
+MGR --> P31
+MGR --> P32
+MGR --> P33
+PT --> P04
+PT --> P30
+Sales --> P01
+Sales --> P30
+MKT --> P30
+Client --> P05
+Client --> P60
+SA --> P70
+SA --> P71
+SA --> P72
+
+P60 ..> P02
+
+note bottom of P41
+  Excel: Checklist sheet
+  + Daily Report sheet
+  GET /admin/export-work-report
+end note
+
+@enduml

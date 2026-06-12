@@ -1,0 +1,90 @@
+@startuml UC_Clients_Full
+title Module: Clients — Portal + Admin (đầy đủ)
+left to right direction
+skinparam actorStyle awesome
+
+actor Client
+actor PT
+actor Manager as MGR
+actor Admin as ADM
+
+package "Portal /client" {
+  usecase "UC-CLI01\nDashboard" as C01
+  usecase "UC-CLI02\nConfirm session" as C02
+  usecase "UC-CLI03\nSession feedback" as C03
+  usecase "UC-CLI04\nSession QR" as C04
+  usecase "UC-CLI05\nSchedule view" as C05
+  usecase "UC-CLI06\nRequest cancellation\n(before start)" as C06
+  usecase "UC-CLI08\nWorkouts + week plan" as C08
+  usecase "UC-CLI09\nRewards" as C09
+  usecase "UC-CLI10\nMeal log POST" as C10
+  usecase "UC-CLI11\nNutrition view" as C11
+  usecase "UC-CLI12\nProgress 30/60/90" as C12
+  usecase "UC-CLI13\nNotifications" as C13
+  usecase "UC-CLI14\nMark noti read" as C14
+  usecase "UC-CLI15\nMy contracts" as C15
+  usecase "UC-CLI16\nPreview contract/receipt" as C16
+  usecase "UC-CLI17\nRequest contract pause" as C17
+  usecase "UC-CLI18\nPT change request" as C18
+  usecase "UC-CLI19\nAffiliate profile" as C19
+}
+
+package "Admin /admin/clients" {
+  usecase "UC-CLI20\nClient list" as C20
+  usecase "UC-CLI21\nCreate client\n(Staff walk-in)" as C21
+  usecase "UC-CLI22\nEdit/Delete" as C22
+  usecase "UC-CLI23\nClient detail\n(metrics, meals)" as C23
+}
+
+package "Auth (đường D)" {
+  usecase "UC-A02\nRegister Client\n<<include>> branch" as A02
+}
+
+Client --> C01
+Client --> C02
+Client --> C03
+Client --> C04
+Client --> C05
+Client --> C06
+Client --> C08
+Client --> C09
+Client --> C10
+Client --> C11
+Client --> C12
+Client --> C13
+Client --> C14
+Client --> C15
+Client --> C16
+Client --> C17
+Client --> C18
+Client --> C19
+
+C02 ..> C03 : after Completed
+
+ADM --> C20
+ADM --> C21
+ADM --> C22
+ADM --> C23
+MGR --> C20
+MGR --> C23
+Guest --> A02
+
+note bottom of C21
+  POST /admin/clients/store
+  <<implemented>> name, email, password
+  <<planned>> branch (R4), phone dup warn (R6)
+  Ưu tiên UC-CRM15 Convert Lead (R2)
+  HĐ chỉ trên User Client (R7)
+end note
+
+note bottom of C01
+  GET /client
+  mealPlan, nextSession, QR,
+  pendingConfirmation, CSAT
+end note
+
+note bottom of C12
+  GET /client/progress?days=30|60|90
+end note
+
+@enduml

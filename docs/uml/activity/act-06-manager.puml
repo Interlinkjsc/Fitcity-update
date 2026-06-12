@@ -1,0 +1,30 @@
+@startuml ACT_Manager
+title Activity — Manager (Chi nhánh)
+skinparam activityStyle rectangle
+
+start
+:Đăng nhập /admin;
+partition "Vận hành CN" {
+  :Dashboard branch KPI;
+  :Duyệt timesheets;
+  :Duyệt PT leave + chọn PT thay;
+  :Duyệt daily reports;
+  :Checklist tasks;
+}
+partition "Nhân sự & chất lượng" {
+  :Xem users PT/Sales scope;
+  :CSAT widget dashboard;
+  :Violations (nếu có quyền);
+}
+partition "Tài chính (xem)" {
+  :Payroll summary (approve export);
+  :Expenses list (scope);
+}
+stop
+
+note right
+  UC-PLT*, UC-PT20+, UC-FIN10
+  SEQ-05,06,07
+end note
+
+@enduml

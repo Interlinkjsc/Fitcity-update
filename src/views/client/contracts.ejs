@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <title>Hợp đồng của tôi - FitCity</title>
+    <%- include('../partials/client-head') %>
+</head>
+<body class="p-6 md:p-12 mb-32 overflow-x-hidden">
+    <header class="flex justify-between items-start mb-12">
+        <div>
+            <h1 class="text-4xl font-black italic tracking-tighter uppercase leading-none"><span class="text-primary tracking-normal">HỢP ĐỒNG</span> CỦA TÔI</h1>
+            <p class="text-slate-500 text-sm mt-2">Xem thông tin hợp đồng và phiếu thu thanh toán.</p>
+        </div>
+        <a href="/client" aria-label="Về trang chủ" class="w-12 h-12 glass rounded-full flex items-center justify-center hover:bg-slate-50 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60">
+            <span class="material-symbols-outlined">close</span>
+        </a>
+    </header>
+
+    <main class="space-y-6">
+        <% if (contracts && contracts.length > 0) { %>
+            <% contracts.forEach(function(contract) { %>
+            <div class="glass rounded-[32px] p-6 md:p-8 relative overflow-hidden group hover:border-primary/10 transition-all">
+                <div class="absolute -right-16 -top-16 w-48 h-48 bg-accent/5 rounded-full blur-3xl group-hover:bg-accent/10 transition-all duration-700"></div>
+
+                <!-- Header Row -->
+                <div class="mb-6 relative z-10">
+                    <div class="flex flex-wrap items-center gap-2 mb-3">
+                        <span class="text-[10px] font-black bg-slate-100 text-slate-500 px-3 py-1.5 rounded-full uppercase tracking-widest font-mono"><%= contract.contractCode %></span>
+                        <% if (contract.contractStatus === 'Active') { %>
+                            <span class="text-[10px] font-black bg-primary/20 text-primary px-3 py-1.5 rounded-full uppercase tracking-widest">Đang hiệu lực</span>
+                        <% } else if (contract.contractStatus === 'Paused') { %>
+                            <span class="text-[10px] font-black bg-orange-500/20 text-orange-500 px-3 py-1.5 rounded-full uppercase tracking-widest">Bảo lưu</span>
+                        <% } else if (contract.contractStatus === 'Expired') { %>
+                            <span class="text-[10px] font-black bg-red-500/20 text-red-500 px-3 py-1.5 rounded-full uppercase tracking-widest">Hết hạn</span>
+                        <% } else { %>
+                            <span class="text-[10px] font-black bg-slate-500/20 text-slate-500 px-3 py-1.5 rounded-full uppercase tracking-widest"><%= contract.contractStatus %></span>
+                        <% } %>
+                    </div>
+                    <h3 class="text-2xl font-black text-slate-900 leading-tight">
+                        <%= contract.packageSnapshot ? contract.packageSnapshot.name : (contract.servicePackage ? contract.servicePackage.name : 'Gói dịch vụ') %>
+                    </h3>
+                </div>
+ 
+                <!-- Info Grid -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 relative z-10">
+                    <div>
+                        <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Thời hạn</p>
+                        <p class="text-sm font-bold text-slate-900 mt-1">
+                            <% if (contract.packageSnapshot) { %>
+                                <%= Math.round(contract.packageSnapshot.duration / 30) %> tháng
+                            <% } else if (contract.servicePackage) { %>
+                                <%= contract.servicePackage.durationInMonths %> tháng
+                            <% } else { %>
+                                -
+                            <% } %>
+                        </p>
+                    </div>
+                    <div>
+                        <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Số buổi</p>
+                        <p class="text-sm font-bold text-primary mt-1">
+                            <% const sessions = contract.totalSessions || (contract.packageSnapshot ? contract.packageSnapshot.sessions : (contract.servicePackage ? contract.servicePackage.maxSessions : null)); %>
+                            <%= sessions ? sessions + ' buổi' : 'Không giới hạn' %>
+                        </p>
+                    </div>
+                    <div>
+                        <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Bắt đầu</p>
+                        <p class="text-sm font-bold text-slate-900 mt-1"><%= contract.startDate ? new Date(contract.startDate).toLocaleDateString('vi-VN') : '-' %></p>
+                    </div>
+                    <div>
+                        <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Kết thúc</p>
+                        <% const displayEnd = contract.currentEndDate || contract.endDate; %>
+                        <p class="text-sm font-bold text-slate-900 mt-1"><%= displayEnd ? new Date(displayEnd).toLocaleDateString('vi-VN') : '-' %></p>
+                    </div>
+                </div>
+
+                <!-- Payment Progress -->
+                <div class="mt-6 relative z-10">
+                    <div class="flex justify-between items-center mb-2">
+                        <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Thanh toán</p>
+                        <p class="text-xs font-bold">
+                            <span class="text-primary"><%= new Intl.NumberFormat('vi-VN').format(contract.paidAmount || 0) %></span>
+                            <span class="text-slate-500"> / <%= new Intl.NumberFormat('vi-VN').format(contract.totalAmount || 0) %> VNĐ</span>
+                        </p>
+                    </div>
+                    <div class="w-full bg-slate-100 rounded-full h-2">
+                        <% const paidPercent = contract.totalAmount ? Math.min(((contract.paidAmount || 0) / contract.totalAmount) * 100, 100) : 0; %>
+                        <div class="bg-primary h-2 rounded-full transition-all" data-width="<%= paidPercent %>" style="width: 0%"></div>
+                    </div>
+                    <script>document.currentScript.previousElementSibling.querySelector('[data-width]').style.width = document.currentScript.previousElementSibling.querySelector('[data-width]').dataset.width + '%';</script>
+                    <% if (contract.paymentStatus === 'Paid') { %>
+                        <p class="text-[10px] text-primary font-black uppercase tracking-widest mt-2">✓ ĐÃ THANH TOÁN ĐỦ</p>
+                    <% } else if (contract.paymentStatus === 'Deposit') { %>
+                        <p class="text-[10px] text-orange-500 font-black uppercase tracking-widest mt-2">↻ ĐÃ ĐẶT CỌC - CÒN NỢ <%= new Intl.NumberFormat('vi-VN').format((contract.totalAmount || 0) - (contract.paidAmount || 0)) %> VNĐ</p>
+                    <% } else { %>
+                        <p class="text-[10px] text-red-500 font-black uppercase tracking-widest mt-2">✗ CHƯA THANH TOÁN</p>
+                    <% } %>
+                </div>
+
+                <!-- Footer / Action Row -->
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mt-6 pt-6 border-t border-slate-200 relative z-10">
+                    <div class="flex flex-wrap items-center gap-4">
+                        <% if (contract.pt) { %>
+                        <div class="flex items-center gap-1.5">
+                            <span class="material-symbols-outlined text-[16px] text-slate-400">person</span>
+                            <span class="text-xs font-bold text-slate-500">HLV: <span class="text-slate-900"><%= contract.pt.name %></span></span>
+                        </div>
+                        <% } %>
+                        <% if (contract.branch) { %>
+                        <div class="flex items-center gap-1.5">
+                            <span class="material-symbols-outlined text-[16px] text-slate-400">location_on</span>
+                            <span class="text-xs font-bold text-slate-500"><%= contract.branch.name %></span>
+                        </div>
+                        <% } %>
+                    </div>
+                    
+                    <div class="flex items-center gap-2 w-full md:w-auto">
+                        <% const latestTxnId = latestTransactionByContract && latestTransactionByContract[String(contract._id)] ? latestTransactionByContract[String(contract._id)] : null; %>
+                        <% if (latestTxnId) { %>
+                            <button type="button" onclick="openPreviewModal('/client/contracts/<%= contract._id %>/receipt/<%= latestTxnId %>')"
+                               class="flex-1 md:flex-none text-center px-4 py-3 border border-primary/20 text-primary bg-primary/5 font-black uppercase rounded-2xl text-[10px] tracking-widest hover:bg-primary/10 transition-all">
+                                PHIẾU THU
+                            </button>
+                        <% } %>
+                        <button type="button" onclick="openPreviewModal('/client/contracts/<%= contract._id %>/preview')"
+                           class="flex-1 md:flex-none text-center px-5 py-3 bg-primary text-white font-black uppercase rounded-2xl hover:brightness-110 active:scale-95 transition-all text-[10px] tracking-widest shadow-lg shadow-accent/20">
+                            XEM HỢP ĐỒNG
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <% }); %>
+        <% } else { %>
+            <div class="glass p-16 rounded-[40px] text-center">
+                <span class="material-symbols-outlined text-[64px] text-slate-300 mb-4">description</span>
+                <p class="text-slate-500 font-bold uppercase tracking-widest">Bạn chưa có hợp đồng nào.</p>
+                <p class="text-slate-400 text-sm mt-2">Liên hệ bộ phận Sales để đăng ký gói tập.</p>
+            </div>
+        <% } %>
+    </main>
+
+    <!-- Navigation Bar -->
+    <% const activePage = 'dashboard'; %>
+    <%- include('../partials/client-bottom-nav', { activePage }) %>
+
+<!-- ============ PREVIEW MODAL ============ -->
+<div id="previewModal" class="hidden fixed inset-0 z-[100] overflow-hidden">
+    <div class="flex items-center justify-center min-h-screen p-4 sm:p-6">
+        <!-- Overlay -->
+        <div class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm transition-opacity" onclick="closePreviewModal()"></div>
+        
+        <!-- Modal Content -->
+        <div class="relative bg-white rounded-3xl shadow-2xl w-full max-w-5xl h-[85vh] flex flex-col z-10 overflow-hidden">
+            <!-- Header -->
+            <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50">
+                <h3 class="text-lg font-bold text-slate-800">Xem Trước Tài Liệu</h3>
+                <div class="flex items-center gap-3">
+                    <button onclick="printPreview()" class="px-4 py-2 bg-primary text-white font-black uppercase tracking-wider rounded-xl hover:brightness-110 transition-colors shadow-sm inline-flex items-center text-xs">
+                        <span class="material-symbols-outlined text-[18px] mr-1.5">print</span>
+                        In Tài Liệu
+                    </button>
+                    <button onclick="closePreviewModal()" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors">
+                        <span class="material-symbols-outlined text-[20px]">close</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Iframe -->
+            <div class="flex-1 bg-slate-200 relative">
+                <!-- Loader -->
+                <div id="previewLoader" class="absolute inset-0 flex flex-col items-center justify-center bg-white z-10">
+                    <div class="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+                    <span class="mt-3 text-sm font-semibold text-slate-500 uppercase tracking-widest">Đang tải...</span>
+                </div>
+                <iframe id="previewIframe" class="w-full h-full border-none hidden" onload="document.getElementById('previewLoader').classList.add('hidden'); this.classList.remove('hidden');"></iframe>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function openPreviewModal(url) {
+    const modal = document.getElementById('previewModal');
+    const iframe = document.getElementById('previewIframe');
+    const loader = document.getElementById('previewLoader');
+    
+    // Show modal and loader, hide iframe temporarily
+    modal.classList.remove('hidden');
+    loader.classList.remove('hidden');
+    iframe.classList.add('hidden');
+    
+    // Set src to trigger load
+    iframe.src = url;
+}
+
+function closePreviewModal() {
+    const modal = document.getElementById('previewModal');
+    const iframe = document.getElementById('previewIframe');
+    modal.classList.add('hidden');
+    iframe.src = 'about:blank'; // Clear memory
+}
+
+function printPreview() {
+    const iframe = document.getElementById('previewIframe');
+    if (iframe && iframe.contentWindow) {
+        iframe.contentWindow.print();
+    }
+}
+</script>
+</body>
+</html>

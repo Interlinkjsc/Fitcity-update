@@ -1,0 +1,73 @@
+<%#
+  Collapsible admin sidebar — data from sidebarMenu.js (sidebarMenuGroups + activePage).
+%>
+<% const navPayload = {
+    groups: (typeof sidebarMenuGroups !== 'undefined' ? sidebarMenuGroups : []).map(function (g) {
+        return {
+            moduleId: g.moduleId,
+            label: g.label,
+            moduleIcon: g.moduleIcon,
+            collapsible: g.collapsible,
+            items: g.items.map(function (i) {
+                return { key: i.key, label: i.label, href: i.href, icon: i.icon };
+            }),
+        };
+    }),
+    activePage: typeof activePage !== 'undefined' ? activePage : '',
+}; %>
+<script type="application/json" id="sidebar-nav-payload"><%- JSON.stringify(navPayload) %></script>
+
+<div x-data="createSidebarNav()" x-init="initFromPayload()" class="space-y-0.5">
+    <!-- Expanded: module groups with collapse -->
+    <div x-show="!$root.sidebarCollapsed" class="space-y-0.5">
+        <template x-for="group in groups" :key="group.moduleId">
+            <div>
+                <template x-if="!group.collapsible">
+                    <div class="space-y-0.5">
+                        <template x-for="item in group.items" :key="item.key">
+                            <a :href="item.href" :title="item.label" :class="itemLinkClass(item.key)">
+                                <span class="material-symbols-outlined h-5 w-5 flex-shrink-0 opacity-75 text-[20px] leading-none" x-text="item.icon"></span>
+                                <span class="ml-3 whitespace-nowrap overflow-hidden" x-text="item.label"></span>
+                            </a>
+                        </template>
+                    </div>
+                </template>
+
+                <template x-if="group.collapsible">
+                    <div>
+                        <button type="button"
+                            @click="toggleModule(group.moduleId)"
+                            class="w-full flex items-center justify-between px-4 pt-4 pb-1 text-left"
+                            :aria-expanded="isModuleOpen(group.moduleId)">
+                            <span class="flex items-center gap-2 min-w-0">
+                                <span class="material-symbols-outlined text-[18px] text-slate-400 flex-shrink-0" x-text="group.moduleIcon"></span>
+                                <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400 truncate" x-text="group.label"></span>
+                            </span>
+                            <span class="material-symbols-outlined text-slate-400 text-[18px] transition-transform duration-200 flex-shrink-0"
+                                :class="isModuleOpen(group.moduleId) ? 'rotate-180' : ''">expand_more</span>
+                        </button>
+                        <div x-show="isModuleOpen(group.moduleId)" x-transition class="space-y-0.5 pb-1">
+                            <template x-for="item in group.items" :key="item.key">
+                                <a :href="item.href" :title="item.label" :class="itemLinkClass(item.key) + ' pl-6'">
+                                    <span class="material-symbols-outlined h-5 w-5 flex-shrink-0 opacity-75 text-[20px] leading-none" x-text="item.icon"></span>
+                                    <span class="ml-3 whitespace-nowrap overflow-hidden text-[13px]" x-text="item.label"></span>
+                                </a>
+                            </template>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </template>
+    </div>
+
+    <!-- Collapsed sidebar: flat icon list -->
+    <div x-show="$root.sidebarCollapsed" class="space-y-0.5">
+        <template x-for="group in groups" :key="'c-' + group.moduleId">
+            <template x-for="item in group.items" :key="'c-' + item.key">
+                <a :href="item.href" :title="item.label" :class="itemLinkClass(item.key)">
+                    <span class="material-symbols-outlined h-5 w-5 flex-shrink-0 opacity-75 text-[20px] leading-none mx-auto" x-text="item.icon"></span>
+                </a>
+            </template>
+        </template>
+    </div>
+</div>

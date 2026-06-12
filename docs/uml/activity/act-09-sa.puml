@@ -1,0 +1,301 @@
+@startuml ACT_SA_Overview
+title Activity — System Admin (SA) — Overview đầy đủ
+skinparam activityStyle rectangle
+skinparam backgroundColor #FAFAFA
+skinparam partition {
+  BorderColor #7C3AED
+  BackgroundColor #F5F3FF
+  FontColor #4C1D95
+  FontSize 13
+}
+skinparam activity {
+  BorderColor #6D28D9
+  BackgroundColor #EDE9FE
+  FontSize 11
+}
+skinparam note {
+  BackgroundColor #FEF9C3
+  BorderColor #CA8A04
+  FontSize 10
+}
+
+start
+:SA đăng nhập\nPOST /auth/login;
+note right
+  SEQ-09: authMiddleware
+  → permissionService
+  → role = SA (full access)
+  Redirect → /admin
+end note
+
+:Truy cập Admin Dashboard\nGET /admin;
+
+fork
+
+  '=== RBAC ===
+  partition "🔐 RBAC — Phân quyền hệ thống" {
+    :Mở trang quản lý phân quyền\nGET /admin/permissions;
+    note right
+      UC-PLT70
+      UC-USR20
+    end note
+
+    :Xem danh sách roles\nvà permissions gợi ý từ Registry;
+    note right
+      UC-USR21
+      GET /admin/users/api/role-permissions
+      Source: permissionsRegistry.js
+    end note
+
+    if (Cần chỉnh quyền cho role?) then (có)
+      :Chọn role cần override;
+      :Tick/untick permissions;
+      :Lưu override vào DB\nPOST /admin/permissions/save;
+      note right
+        UC-USR22
+        RolePermission.findOneAndUpdate()
+        overrides: { resource.action: true/false }
+      end note
+    else (không)
+    endif
+
+    if (Cần reset về mặc định?) then (có)
+      :Reset permissions theo registry gợi ý\nPOST /admin/permissions/reset;
+      note right
+        UC-USR23
+        Xóa overrides → dùng lại
+        permissionsRegistry suggested
+      end note
+    else (không)
+    endif
+  }
+
+fork again
+
+  '=== BRANCHES ===
+  partition "🏢 Chi nhánh — Quản lý hạ tầng" {
+    :Xem danh sách chi nhánh\nGET /admin/branches/list;
+    note right
+      UC-CRM40
+      Hiển thị: name, address,
+      phone, managerId, status
+    end note
+
+    if (Tạo chi nhánh mới?) then (có)
+      :GET /admin/branches/create;
+      :Nhập thông tin chi nhánh\n(name, address, phone, manager);
+      :POST /admin/branches/store;
+      note right
+        UC-CRM41
+        Validate: tên không trùng
+        Gán Manager (optional)
+      end note
+    else (không)
+    endif
+
+    if (Sửa chi nhánh?) then (có)
+      :GET /admin/branches/edit/:id;
+      :Cập nhật thông tin;
+      :POST /admin/branches/update/:id;
+    else (không)
+    endif
+
+    if (Xóa chi nhánh?) then (có)
+      :POST /admin/branches/delete/:id;
+      note right
+        Kiểm tra: không có
+        User/Contract active
+        thuộc chi nhánh này
+      end note
+    else (không)
+    endif
+  }
+
+fork again
+
+  '=== USERS ===
+  partition "👥 Người dùng — Tạo & quản lý tài khoản" {
+    :Xem danh sách nhân sự\nGET /admin/users/list;
+    note right
+      UC-USR01
+      SA thấy toàn bộ users
+      mọi branch, mọi role
+    end note
+
+    if (Tạo tài khoản mới?) then (có)
+      :GET /admin/users/create;
+      :Chọn Role\n(Admin, CEO, Manager, PT,\nAccountant, Marketing, Client);
+      note right
+        UC-USR05
+        SA: có thể tạo mọi role
+        kể cả Admin và SA khác
+      end note
+
+      if (Role cần branchId?) then (có: PT, Manager, ACC, MKT, Sales)
+        :Chọn chi nhánh;
+      else (không: SA, Admin, CEO)
+      endif
+
+      if (Role = PT hoặc Sales?) then (có)
+        :Cấu hình Commission Rate\n(commissionRate: 0-1, default 0.1);
+        :Cấu hình Salary Base;
+        note right
+          UC-USR10
+          PT default: 10%
+          Sales default: theo settings
+        end note
+      else (không)
+      endif
+
+      :Chọn Job Description từ template;
+      note right
+        UC-USR09
+        Load JD template theo role
+        từ /admin/job-descriptions
+      end note
+
+      if (Custom permissions?) then (có)
+        :Tick useCustomPermissions;
+        :Chọn permissions riêng\n(subset từ quyền SA);
+        note right
+          UC-USR08
+          customPermissionIds on User
+          Admin: subset ≤ own permissions
+          SA: full access
+        end note
+      else (không — dùng role default)
+      endif
+
+      :POST /admin/users/store;
+      :Mật khẩu Bcrypt + email hash;
+    else (không)
+    endif
+
+    if (Sửa thông tin user?) then (có)
+      :GET /admin/users/detail/:id;
+      :Cập nhật fields;
+      :POST /admin/users/update/:id;
+      note right
+        UC-USR06
+        SA: có thể gán bất kỳ role
+        Manager: không gán Admin/SA/CEO
+        Admin: không gán SA
+      end note
+    else (không)
+    endif
+
+    if (Đặt KPI cho nhân viên?) then (có)
+      :POST /admin/users/detail/:id/kpi-target;
+      note right
+        UC-USR03
+        UC-PRG41
+        KPI target cá nhân
+      end note
+    else (không)
+    endif
+
+    if (Xóa / Suspend user?) then (có)
+      :POST /admin/users/delete/:id;
+      note right
+        UC-USR07
+        status: Active → Suspended
+      end note
+    else (không)
+    endif
+  }
+
+fork again
+
+  '=== SYSTEM SETTINGS ===
+  partition "⚙️ System Settings" {
+    :GET /admin/settings;
+    note right
+      UC-PLT10
+      SA có full quyền
+      xem và chỉnh tất cả
+    end note
+
+    :Cấu hình VAT mặc định\n(vatPercent: default 10%);
+    note right: UC-PLT11
+
+    :Cấu hình PT Commission Rate\n(ptCommissionRate: default 10%);
+    note right: UC-PLT12
+
+    :Chọn PT Payroll Mode\n(contract | timesheet | hybrid);
+    note right: UC-PLT13
+
+    :Cấu hình Timesheet Rate/Shift;
+    note right: UC-PLT14
+
+    :POST /admin/settings/update;
+  }
+
+fork again
+
+  '=== MONITORING ===
+  partition "📊 Giám sát & Báo cáo hệ thống" {
+    :Admin Dashboard — toàn hệ thống\nGET /admin;
+    note right: UC-PLT01
+
+    :Xem Contracts (all scope)\nGET /admin/contracts/list;
+    note right
+      UC-CTR01
+      SA scope: tất cả chi nhánh
+    end note
+
+    :Tải/Xem file PDF Hợp đồng từ Google Drive\nGET /admin/contracts/download/:id;
+    note right: UC-CTR06
+
+    :Xem Leads\nGET /admin/leads;
+    note right: UC-CRM10
+
+    :Xuất danh sách Lead sang file Excel\nGET /admin/leads/export;
+    note right: UC-CRM13
+
+    :Xem Payroll\nGET /admin/payroll;
+    note right: UC-FIN01
+
+    :Xem Expenses\nGET /admin/expenses;
+    note right: UC-FIN10
+
+    :Xuất báo cáo tài chính tổng quan\nGET /admin/export-report;
+    note right: UC-PLT40
+
+    :Xuất báo cáo công việc chi nhánh (Excel)\nGET /admin/export-work-report;
+    note right: UC-PLT41
+  }
+
+fork again
+
+  '=== JOB DESCRIPTIONS ===
+  partition "📋 Job Descriptions" {
+    :Quản lý danh mục công việc\nGET /admin/job-descriptions;
+    note right: UC-PLT50
+
+    :CRUD Job Description theo role\n(template cho form tạo user);
+    note right
+      UC-PLT51, UC-PLT52
+      API: GET /admin/job-descriptions/api/:role
+    end note
+  }
+
+end fork
+
+stop
+
+note right
+  **Tổng hợp quyền SA:**
+  ─────────────────────
+  RBAC: UC-PLT70, UC-USR20..23
+  Branches: UC-CRM40, UC-CRM41
+  Users: UC-USR01..10
+  Settings: UC-PLT10..14
+  JD: UC-PLT50..52
+  Monitoring: UC-PLT01, UC-CTR01,
+    UC-CRM10, UC-FIN01, UC-FIN10
+  ─────────────────────
+  SEQ: SEQ-09 (Auth/RBAC)
+  Source: permissionsRegistry.js
+end note
+
+@enduml

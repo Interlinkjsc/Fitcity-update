@@ -1,0 +1,32 @@
+@startuml SEQ_Payment_Affiliate
+title SEQ-03: Thanh toán HĐ → Paid → Affiliate F1
+autonumber
+
+actor Accountant
+participant "paymentController" as PC
+participant "paymentService" as PS
+database "Contract" as C
+database "PaymentTransaction" as TX
+participant "affiliateService" as AFF
+participant "rewardService" as RS
+database "User\n(referrer)" as U
+actor "Referrer\nClient" as Ref
+
+Accountant -> PC : POST /admin/contracts/:id/payments/store
+PC -> PS : createPayment({amount,...})
+PS -> TX : create transaction
+PS -> C : update paidAmount, paymentStatus
+alt paidAmount >= totalAmount
+  PS -> C : paymentStatus = Paid\ncontractStatus = Active
+  PS -> AFF : processReferralRewardOnPaid(contract)
+  AFF -> C : check referredBy on client
+  alt has referrer & no existing log
+    AFF -> RS : assignReward(Gift 200k)
+    RS -> U : Reward.create
+    RS -> Ref : pushNotification → /client/rewards
+    AFF -> AFF : AffiliateRewardLog.create
+  end
+end
+PC --> Accountant : redirect + flash
+
+@enduml

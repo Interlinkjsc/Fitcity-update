@@ -1,0 +1,4 @@
+# Shell scripts must use LF on checkout (Linux VPS)
+*.sh text eol=lf
+deploy/**/*.sh text eol=lf
+deploy/server/* text eol=lf

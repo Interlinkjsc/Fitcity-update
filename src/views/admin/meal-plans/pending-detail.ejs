@@ -1,0 +1,202 @@
+<%- include('../../partials/header', { title: 'Chi tiết kế hoạch dinh dưỡng', activePage: 'meal-plan-approval' }) %>
+
+<div class="mb-6 flex items-center gap-3">
+    <a href="/admin/meal-plans/pending" class="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 transition-colors">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+        Danh sách chờ duyệt
+    </a>
+    <span class="text-slate-300">/</span>
+    <span class="text-sm font-semibold text-slate-700">Chi tiết kế hoạch</span>
+</div>
+
+<!-- Header info -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+    <!-- Client -->
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Khách hàng</p>
+        <div class="flex items-center gap-3">
+            <% if (mealPlan.client && mealPlan.client.avatar) { %>
+            <img src="<%= mealPlan.client.avatar %>" class="w-12 h-12 rounded-full object-cover border-2 border-blue-200" alt="">
+            <% } else { %>
+            <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-black text-lg border-2 border-blue-200">
+                <%= mealPlan.client ? mealPlan.client.name.charAt(0).toUpperCase() : '?' %>
+            </div>
+            <% } %>
+            <div>
+                <p class="font-bold text-slate-800"><%= mealPlan.client ? mealPlan.client.name : 'N/A' %></p>
+                <p class="text-xs text-slate-400"><%= mealPlan.client ? mealPlan.client.email : '' %></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- PT -->
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Huấn luyện viên</p>
+        <div class="flex items-center gap-3">
+            <% if (mealPlan.pt && mealPlan.pt.avatar) { %>
+            <img src="<%= mealPlan.pt.avatar %>" class="w-12 h-12 rounded-full object-cover border-2 border-emerald-200" alt="">
+            <% } else { %>
+            <div class="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-black text-lg border-2 border-emerald-200">
+                <%= mealPlan.pt ? mealPlan.pt.name.charAt(0).toUpperCase() : 'P' %>
+            </div>
+            <% } %>
+            <div>
+                <p class="font-bold text-slate-800"><%= mealPlan.pt ? mealPlan.pt.name : 'N/A' %></p>
+                <p class="text-xs text-slate-400">Personal Trainer</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Plan summary -->
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Tổng quan kế hoạch</p>
+        <div class="space-y-1.5">
+            <div class="flex justify-between text-sm">
+                <span class="text-slate-500">Mục tiêu</span>
+                <span class="font-semibold text-indigo-700"><%= mealPlan.goal || '—' %></span>
+            </div>
+            <div class="flex justify-between text-sm">
+                <span class="text-slate-500">Calories/ngày</span>
+                <span class="font-bold text-slate-800"><%= mealPlan.dailyCalories ? mealPlan.dailyCalories.toLocaleString('vi-VN') + ' kcal' : '—' %></span>
+            </div>
+            <div class="flex justify-between text-sm">
+                <span class="text-slate-500">Ngày bắt đầu</span>
+                <span class="text-slate-700"><%= mealPlan.startDate ? new Date(mealPlan.startDate).toLocaleDateString('vi-VN') : '—' %></span>
+            </div>
+            <div class="flex justify-between text-sm">
+                <span class="text-slate-500">Ngày kết thúc</span>
+                <span class="text-slate-700"><%= mealPlan.endDate ? new Date(mealPlan.endDate).toLocaleDateString('vi-VN') : '—' %></span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Macros -->
+<% if (mealPlan.macros) { %>
+<div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 mb-6">
+    <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">Phân bổ Macros</p>
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <% const macroItems = [
+            { label: 'Protein', value: mealPlan.macros.protein, color: 'blue', unit: 'g' },
+            { label: 'Carbs', value: mealPlan.macros.carbs, color: 'amber', unit: 'g' },
+            { label: 'Fat', value: mealPlan.macros.fat, color: 'rose', unit: 'g' },
+            { label: 'Fiber', value: mealPlan.macros.fiber, color: 'emerald', unit: 'g' }
+        ]; %>
+        <% macroItems.forEach(m => { %>
+        <div class="bg-<%= m.color %>-50 border border-<%= m.color %>-100 rounded-xl p-4 text-center">
+            <p class="text-xs font-semibold text-<%= m.color %>-500 uppercase tracking-wider mb-1"><%= m.label %></p>
+            <p class="text-2xl font-black text-<%= m.color %>-700"><%= m.value || 0 %></p>
+            <p class="text-xs text-<%= m.color %>-400"><%= m.unit %>/ngày</p>
+        </div>
+        <% }) %>
+    </div>
+</div>
+<% } %>
+
+<!-- Meals -->
+<% if (mealPlan.meals && mealPlan.meals.length > 0) { %>
+<div class="space-y-4 mb-8">
+    <h3 class="text-base font-bold text-slate-700">Danh sách bữa ăn (<%= mealPlan.meals.length %> bữa)</h3>
+    <% mealPlan.meals.forEach((meal, mi) => { %>
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="flex items-center justify-between px-5 py-3 bg-slate-50 border-b border-slate-200">
+            <div class="flex items-center gap-2">
+                <span class="w-6 h-6 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xs font-bold"><%= mi + 1 %></span>
+                <span class="font-bold text-slate-700"><%= meal.mealName || 'Bữa ' + (mi + 1) %></span>
+                <% if (meal.time) { %>
+                <span class="text-xs text-slate-400">· <%= meal.time %></span>
+                <% } %>
+            </div>
+            <% if (mealNutritionByMeal && mealNutritionByMeal[mi]) { %>
+            <span class="text-sm font-semibold text-slate-600"><%= mealNutritionByMeal[mi].calories || 0 %> kcal</span>
+            <% } %>
+        </div>
+        <% if (meal.foodItems && meal.foodItems.length > 0) { %>
+        <table class="w-full text-sm">
+            <thead class="bg-slate-50/50">
+                <tr>
+                    <th class="px-4 py-2 text-left text-xs font-semibold text-slate-400 uppercase">Thực phẩm</th>
+                    <th class="px-4 py-2 text-right text-xs font-semibold text-slate-400 uppercase">Khẩu phần</th>
+                    <th class="px-4 py-2 text-right text-xs font-semibold text-slate-400 uppercase">Calories</th>
+                    <th class="px-4 py-2 text-right text-xs font-semibold text-slate-400 uppercase">Protein</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+                <% meal.foodItems.forEach(item => { %>
+                <tr class="hover:bg-slate-50">
+                    <td class="px-4 py-2.5 font-medium text-slate-700"><%= item.name || '—' %></td>
+                    <td class="px-4 py-2.5 text-right text-slate-500"><%= item.quantity || '' %> <%= item.unit || '' %></td>
+                    <td class="px-4 py-2.5 text-right text-slate-700 font-semibold"><%= item.calories || 0 %> kcal</td>
+                    <td class="px-4 py-2.5 text-right text-slate-500"><%= item.protein || 0 %>g</td>
+                </tr>
+                <% }) %>
+            </tbody>
+        </table>
+        <% } else { %>
+        <p class="px-5 py-3 text-sm text-slate-400 italic">Chưa có thực phẩm trong bữa này.</p>
+        <% } %>
+        <% if (meal.notes) { %>
+        <div class="px-5 py-3 bg-amber-50 border-t border-amber-100">
+            <p class="text-xs text-amber-700 font-medium">Ghi chú: <%= meal.notes %></p>
+        </div>
+        <% } %>
+    </div>
+    <% }) %>
+</div>
+<% } %>
+
+<!-- Action buttons -->
+<div class="flex gap-4 pb-6">
+    <form action="/admin/meal-plans/<%= mealPlan._id %>/approve" method="POST" class="flex-1"
+          onsubmit="return confirm('Xác nhận phê duyệt kế hoạch dinh dưỡng này?')">
+        <button type="submit"
+                class="w-full py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl transition-colors shadow-sm flex items-center justify-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>
+            Phê duyệt kế hoạch
+        </button>
+    </form>
+
+    <button type="button" onclick="document.getElementById('modal-reject-detail').classList.remove('hidden')"
+            class="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl transition-colors shadow-sm flex items-center justify-center gap-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+        Từ chối
+    </button>
+</div>
+
+<!-- Modal Từ chối -->
+<div id="modal-reject-detail" class="fixed inset-0 z-50 flex items-center justify-center p-4 hidden" role="dialog" aria-modal="true">
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm"
+         onclick="document.getElementById('modal-reject-detail').classList.add('hidden')"></div>
+    <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+        <button onclick="document.getElementById('modal-reject-detail').classList.add('hidden')"
+                class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+        </button>
+        <h3 class="text-lg font-bold text-slate-800 mb-2">Từ chối kế hoạch dinh dưỡng</h3>
+        <p class="text-sm text-slate-500 mb-5">Lý do sẽ được gửi đến PT và khách hàng.</p>
+        <form method="POST" action="/admin/meal-plans/<%= mealPlan._id %>/reject">
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Lý do từ chối</label>
+                <textarea name="reason" rows="4"
+                          class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-400 focus:border-transparent outline-none resize-none"
+                          placeholder="Nhập lý do từ chối (tùy chọn)"></textarea>
+            </div>
+            <div class="flex gap-3 mt-5">
+                <button type="button" onclick="document.getElementById('modal-reject-detail').classList.add('hidden')"
+                        class="flex-1 px-4 py-2 border border-slate-300 text-slate-700 text-sm font-semibold rounded-lg hover:bg-slate-50">Huỷ</button>
+                <button type="submit"
+                        class="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-bold rounded-lg shadow-sm">Xác nhận từ chối</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<%- include('../../partials/footer') %>

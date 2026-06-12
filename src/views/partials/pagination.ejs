@@ -1,0 +1,93 @@
+<% 
+    // Helper to build query string without 'page'
+    function getQueryString(query) {
+        let str = '';
+        if (query) {
+            for (let key in query) {
+                if (key !== 'page' && query[key] !== undefined && query[key] !== '') {
+                    str += `&${key}=${encodeURIComponent(query[key])}`;
+                }
+            }
+        }
+        return str;
+    }
+    const currentQuery = typeof query !== 'undefined' ? query : (typeof filters !== 'undefined' ? filters : {});
+    const queryString = getQueryString(currentQuery);
+%>
+
+<% if (typeof pagination !== 'undefined' && pagination.totalPages > 1) { %>
+<div class="mt-8 flex flex-col sm:flex-row justify-between items-center bg-white p-4 rounded-2xl border border-slate-100 shadow-sm gap-4">
+    <div class="text-sm text-slate-500 font-medium">
+        Hiển thị <span class="text-slate-900 font-bold"><%= (pagination.page - 1) * pagination.limit + 1 %></span> 
+        đến <span class="text-slate-900 font-bold"><%= Math.min(pagination.page * pagination.limit, pagination.totalDocs) %></span> 
+        trong tổng số <span class="text-slate-900 font-bold"><%= pagination.totalDocs %></span> mục
+    </div>
+    
+    <nav class="flex items-center gap-1">
+        <!-- Previous -->
+        <% if (pagination.page > 1) { %>
+            <a href="?page=<%= pagination.page - 1 %><%= queryString %>" 
+               class="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-slate-900 hover:bg-slate-50 rounded-xl transition-all"
+               title="Trang trước">
+               <span class="material-symbols-outlined text-[20px]">chevron_left</span>
+            </a>
+        <% } else { %>
+            <span class="w-10 h-10 flex items-center justify-center text-slate-200 cursor-not-allowed">
+                <span class="material-symbols-outlined text-[20px]">chevron_left</span>
+            </span>
+        <% } %>
+
+        <!-- Page Numbers Logic -->
+        <% 
+            let startPage = Math.max(1, pagination.page - 2);
+            let endPage = Math.min(pagination.totalPages, startPage + 4);
+            if (endPage - startPage < 4) {
+                startPage = Math.max(1, endPage - 4);
+            }
+            startPage = Math.max(1, startPage);
+        %>
+
+        <% if (startPage > 1) { %>
+            <a href="?page=1<%= queryString %>" class="w-10 h-10 flex items-center justify-center text-sm font-bold text-slate-400 hover:text-slate-900 rounded-xl">1</a>
+            <% if (startPage > 2) { %>
+                <span class="w-10 h-10 flex items-center justify-center text-slate-300">...</span>
+            <% } %>
+        <% } %>
+
+        <% for(let i = startPage; i <= endPage; i++) { %>
+            <% if (i === pagination.page) { %>
+                <span class="w-10 h-10 flex items-center justify-center text-sm font-black bg-slate-900 text-white rounded-xl shadow-lg shadow-slate-200">
+                    <%= i %>
+                </span>
+            <% } else { %>
+                <a href="?page=<%= i %><%= queryString %>" 
+                   class="w-10 h-10 flex items-center justify-center text-sm font-bold text-slate-400 hover:text-slate-900 hover:bg-slate-50 rounded-xl transition-all">
+                    <%= i %>
+                </a>
+            <% } %>
+        <% } %>
+
+        <% if (endPage < pagination.totalPages) { %>
+            <% if (endPage < pagination.totalPages - 1) { %>
+                <span class="w-10 h-10 flex items-center justify-center text-slate-300">...</span>
+            <% } %>
+            <a href="?page=<%= pagination.totalPages %><%= queryString %>" class="w-10 h-10 flex items-center justify-center text-sm font-bold text-slate-400 hover:text-slate-900 rounded-xl">
+                <%= pagination.totalPages %>
+            </a>
+        <% } %>
+
+        <!-- Next -->
+        <% if (pagination.page < pagination.totalPages) { %>
+            <a href="?page=<%= pagination.page + 1 %><%= queryString %>" 
+               class="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-slate-900 hover:bg-slate-50 rounded-xl transition-all"
+               title="Trang sau">
+               <span class="material-symbols-outlined text-[20px]">chevron_right</span>
+            </a>
+        <% } else { %>
+            <span class="w-10 h-10 flex items-center justify-center text-slate-200 cursor-not-allowed">
+                <span class="material-symbols-outlined text-[20px]">chevron_right</span>
+            </span>
+        <% } %>
+    </nav>
+</div>
+<% } %>

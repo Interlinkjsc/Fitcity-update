@@ -1,0 +1,274 @@
+@startuml FitCity_Overview_Flow
+title FitCity FMS — Luồng Tổng Quan Hệ Thống\n(End-to-End: Guest → Revenue → Report)
+skinparam activityStyle rectangle
+skinparam backgroundColor #FAFAFA
+skinparam partition {
+  BorderColor #334155
+  BackgroundColor #F1F5F9
+  FontColor #1E293B
+  FontSize 13
+}
+skinparam activity {
+  BorderColor #475569
+  BackgroundColor #E2E8F0
+  FontSize 11
+}
+skinparam note {
+  BackgroundColor #FEF9C3
+  BorderColor #CA8A04
+}
+
+|#DBEAFE|Guest / Public|
+start
+:Truy cập Website\n(Landing, Blog, Contact);
+note right
+  UC-G01..G05
+  CMS-driven content
+end note
+
+if (Muốn đăng ký hội viên ngay?) then (Đường D)
+  :POST /auth/register\n→ User Client + login;
+  note right: UC-A02\nbranch bắt buộc
+else (Quan tâm tư vấn — Đường A)
+  :POST /register-lead → Lead (F);
+  note right: SEQ-01\nR1: chặn email đã Client (register-lead)
+endif
+
+if (Chỉ xem nội dung?) then (Blog/About)
+  :Tiếp tục đọc;
+  stop
+endif
+
+|#DCFCE7|Marketing|
+:Nhận notification Lead mới;
+:Phễu Lead: F → Contacted → Qualified / Lost;
+note right
+  UC-CRM10..14
+  **Qualified** ≠ đã ký HĐ (R3)
+  Export Excel
+end note
+
+|#FEF3C7|Sales|
+:<<planned>> Convert Lead → Client\nhoặc POST /admin/clients/store;
+note right: act-11, R2/R4
+end note
+
+if (Đã có User Client?) then (có)
+else (chưa)
+  stop
+endif
+
+:Tạo Hợp đồng Draft\n(Chọn Client, Package, PT, Branch, Nhân viên Sales [Sales/PT/Manager/Admin/SA]);
+note right
+  UC-CTR02
+  contractService.calculate()
+  NetPrice = Price - Discount
+  VAT = NetPrice × 10%
+  Total = NetPrice + VAT
+  PT Commission = NetPrice × Rate
+end note
+:Gửi HĐ cho Kế toán;
+
+|#FCE7F3|Accountant (Kế toán)|
+:Ghi nhận thanh toán\n(amount, method, receipt);
+note right
+  UC-CTR08
+  SEQ-03
+end note
+
+if (Đã thanh toán đủ?\npaidAmount ≥ totalAmount) then (✅ Đủ)
+  :paymentStatus = **Paid**\ncontractStatus = **Active**;
+
+  |#E0E7FF|System (Auto)|
+  if (Client có mã giới thiệu?) then (có referrer)
+    :Tặng Gift 200k/90d cho Referrer\n→ /client/rewards;
+    note right: affiliateService\nSEQ-03 step 21-28
+  else (không)
+  endif
+
+else (❌ Chưa đủ)
+  :paymentStatus = **Deposit**\nHĐ thường vẫn Draft;
+  stop
+endif
+
+|#DBEAFE|Client (Khách hàng)|
+:Đăng nhập → /client/dashboard;
+note right
+  UC-CLI01
+  Xem: mealPlan, nextSession,
+  QR, pendingConfirm, CSAT
+end note
+
+fork
+  partition "📅 Lịch & Buổi tập" {
+    :Xem lịch tập /client/schedule;
+    :Đặt slot PT → gửi request;
+    :Chờ PT duyệt slot;
+    :Nhận QR buổi tập;
+    :PT quét QR bắt đầu → In_Progress;
+    :PT quét QR kết thúc → Completed;
+    :Xác nhận buổi tập (Confirm);
+    :Đánh giá PT (CSAT feedback);
+    note right
+      UC-CLI02..07
+      SEQ-02 (QR flow)
+    end note
+  }
+fork again
+  partition "🥗 Dinh dưỡng & Tiến độ" {
+    :Xem Meal Plan (PT thiết kế);
+    :Ghi Meal Log hàng ngày;
+    :Xem Workout Assignments tuần;
+    :Xem Progress 30/60/90 ngày\n(Radar Chart lục giác);
+    note right
+      UC-CLI08..12
+      UC-PRG14..22
+      SEQ-08
+    end note
+  }
+fork again
+  partition "🎁 Affiliate & Thưởng" {
+    :Copy link giới thiệu (Profile);
+    :Xem Rewards / Gift Box;
+    note right: UC-CLI19, UC-FIN40
+  }
+fork again
+  partition "📋 Hợp đồng" {
+    :Xem DS hợp đồng của tôi;
+    :Preview HĐ / Phiếu thu;
+    if (Muốn bảo lưu?) then (có)
+      :Gửi yêu cầu bảo lưu;
+      note right: UC-CLI17\n→ Manager duyệt
+    else (không)
+    endif
+  }
+end fork
+
+|#D1FAE5|PT (Personal Trainer)|
+:Đăng nhập → /pt/dashboard;
+
+fork
+  partition "📅 Quản lý Slot & Session" {
+    :Quản lý availability slots;
+    :Duyệt/từ chối booking request;
+    :Quét QR Client (start → end);
+    note right
+      UC-PT05..06, UC-PT12..16
+      SEQ-02
+      States: Scheduled→In_Progress→Completed
+    end note
+  }
+fork again
+  partition "⏰ Chấm công" {
+    :Check-in đầu ca;
+    :Check-out cuối ca;
+    :Chờ Manager approve Timesheet;
+    note right
+      UC-PT08..09
+      SEQ-05
+    end note
+  }
+fork again
+  partition "🏋️ Chương trình tập" {
+    :CRUD Meal Plans → assign Client;
+    :Workout Assignments tuần;
+    :Nhập Body Metrics cho Client;
+    note right: UC-PT17..18, UC-PT20..22
+  }
+fork again
+  partition "📝 Báo cáo & Nghỉ phép" {
+    :Nộp Daily Report;
+    if (Xin nghỉ phép?) then (có)
+      :POST /pt/leave → chờ duyệt;
+    else (không)
+    endif
+    note right: UC-PT10..11\nSEQ-06, SEQ-07
+  }
+end fork
+
+|#FEF3C7|Manager (Quản lý Chi nhánh)|
+:Đăng nhập → /admin dashboard;
+
+fork
+  partition "✅ Duyệt nghiệp vụ" {
+    :Duyệt Timesheets PT;
+    :Duyệt PT Leave + chọn PT thay;
+    :Duyệt Daily Reports;
+    :Duyệt yêu cầu bảo lưu HĐ;
+    note right
+      UC-PT30..32, PT40..43
+      SEQ-05, SEQ-07
+    end note
+  }
+fork again
+  partition "📊 Giám sát" {
+    :Dashboard Branch KPI;
+    :CSAT widget (feedback Client);
+    :Checklist Tasks;
+    :Violations (kỷ luật);
+    note right: UC-PLT01..03, UC-PLT20..22
+  }
+end fork
+
+|#FCE7F3|Accountant (Kế toán)|
+fork
+  partition "💰 Thu / Chi" {
+    :Quản lý Expenses\n(nhập chi, VAT, upload Drive);
+    :Theo dõi dòng tiền\n(Thu từ HĐ, Chi nội bộ);
+    note right: UC-FIN10..14
+  }
+fork again
+  partition "💵 Tính lương" {
+    :GET /admin/payroll?month&year;
+    :Xem bảng lương tổng hợp;
+    note right
+      SEQ-05: ptPayrollMode
+      contract | timesheet | hybrid
+      Salary = Base + Commission
+             + Session Allowance
+    end note
+    :Export CSV;
+  }
+end fork
+
+|#EDE9FE|Admin|
+:Users CRUD + JD + Branch assign;
+:System Settings (VAT, Commission, ptPayrollMode);
+:Packages CRUD;
+:Approve Payroll → Mark Paid;
+:Coupons & Rewards management;
+note right
+  UC-USR01..10
+  UC-PLT10..14
+  UC-PRG01..05
+end note
+
+|#FEE2E2|CEO (Chủ đầu tư)|
+:Multi-branch Dashboard;
+:Xem CSAT tổng thể;
+:KPI setup theo chi nhánh;
+:Work Report Export\n(Checklist + Daily Report → Excel);
+:Financial Export\n(Báo cáo tài chính theo quý);
+note right
+  UC-PLT01, PLT40..41
+  UC-PRG40..41
+end note
+
+|#F3E8FF|SA (System Admin)|
+:Quản lý phân quyền RBAC;
+:Reset / Override Role Permissions;
+:CRUD Chi nhánh (hạ tầng);
+:Tạo tài khoản nhân sự;
+note right
+  UC-PLT70..72
+  UC-USR20..23
+  SEQ-09
+end note
+
+|#E0E7FF|System (Auto)|
+:Notification Bell\n🔴 Quan trọng (HĐ hết hạn)\n🟢 Hoạt động (Confirm buổi)\n🟡 Nhắc việc (Checklist quá hạn);
+:Auto-expire Contracts\n(currentEndDate < today → Expired);
+:Backup MongoDB + Google Drive sync;
+stop
+
+@enduml

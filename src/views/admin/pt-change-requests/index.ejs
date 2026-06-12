@@ -1,0 +1,248 @@
+<%- include('../../partials/header', { title: 'Yêu cầu thay đổi PT', activePage: 'pt-change' }) %>
+
+<div class="mb-6">
+    <h2 class="text-2xl font-bold text-slate-800">Yêu cầu thay đổi PT</h2>
+    <p class="text-slate-500 text-sm mt-1">Quản lý các yêu cầu thay đổi Huấn luyện viên cá nhân từ khách hàng.</p>
+</div>
+
+<div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead class="bg-slate-50 border-b border-slate-200">
+                <tr class="text-xs uppercase tracking-wider text-slate-500">
+                    <th class="px-4 py-3 text-left">Khách hàng</th>
+                    <th class="px-4 py-3 text-left">PT Hiện tại</th>
+                    <th class="px-4 py-3 text-left">Lý do</th>
+                    <th class="px-4 py-3 text-center">Trạng thái</th>
+                    <th class="px-4 py-3 text-center">Ngày gửi</th>
+                    <th class="px-4 py-3 text-center">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+                <% if (requests && requests.length > 0) { %>
+                    <% requests.forEach(request => { %>
+                        <tr class="hover:bg-slate-50/70">
+                            <td class="px-4 py-3">
+                                <p class="font-semibold text-slate-800"><%= request.client ? request.client.name : 'N/A' %></p>
+                                <p class="text-xs text-slate-500"><%= request.client ? request.client.phone : '' %></p>
+                            </td>
+                            <td class="px-4 py-3 text-slate-700 font-medium">
+                                <%= request.currentPT ? request.currentPT.name : 'N/A' %>
+                            </td>
+                            <td class="px-4 py-3 text-slate-600 italic">"<%= request.reason %>"</td>
+                            <td class="px-4 py-3 text-center">
+                                <% if (request.status === 'Pending') { %>
+                                    <span class="px-2 py-1 rounded-full bg-amber-100 text-amber-700 text-xs font-semibold">Chờ duyệt</span>
+                                <% } else if (request.status === 'Approved') { %>
+                                    <span class="px-2 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-semibold">Đã duyệt</span>
+                                <% } else { %>
+                                    <span class="px-2 py-1 rounded-full bg-rose-100 text-rose-700 text-xs font-semibold">Đã từ chối</span>
+                                <% } %>
+                            </td>
+                            <td class="px-4 py-3 text-center text-slate-500">
+                                <%= new Date(request.createdAt).toLocaleDateString('vi-VN') %>
+                            </td>
+                            <td class="px-4 py-3">
+                                <% if (request.status === 'Pending') { %>
+                                    <div class="flex items-center justify-center gap-2">
+                                        <button onclick="openActionModal('<%= request._id %>', 'Approved')" class="px-3 py-1.5 rounded-lg bg-emerald-500 text-white text-xs font-semibold hover:bg-emerald-600 transition-colors">
+                                            Chấp thuận
+                                        </button>
+                                        <button onclick="openActionModal('<%= request._id %>', 'Rejected')" class="px-3 py-1.5 rounded-lg bg-rose-500 text-white text-xs font-semibold hover:bg-rose-600 transition-colors">
+                                            Từ chối
+                                        </button>
+                                    </div>
+                                <% } else { %>
+                                    <div class="text-center text-xs text-slate-400">
+                                        Xử lý bởi: <%= request.processedBy ? request.processedBy.name : 'Hệ thống' %>
+                                    </div>
+                                <% } %>
+                            </td>
+                        </tr>
+                    <% }) %>
+                <% } else { %>
+                    <tr>
+                        <td colspan="6" class="px-6 py-12 text-center text-slate-500">
+                            Hiện không có yêu cầu thay đổi PT nào.
+                        </td>
+                    </tr>
+                <% } %>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script type="application/json" id="pts-json-data"><%- JSON.stringify((pts || []).map(p => ({ _id: String(p._id), name: p.name || '' }))) %></script>
+
+<style>[x-cloak]{display:none!important}</style>
+
+<!-- Modal xử lý yêu cầu -->
+<div id="actionModal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden animate-fade-in-up">
+        <div class="p-6">
+            <h3 id="modalTitle" class="text-xl font-bold text-slate-800 mb-2">Phê duyệt yêu cầu</h3>
+            <p class="text-slate-500 text-sm mb-6">Nhập ghi chú phản hồi cho khách hàng.</p>
+            
+            <form id="actionForm" method="POST">
+                <input type="hidden" name="status" id="modalStatus">
+                
+                <div id="newPTSection" class="mb-6 hidden relative z-10" x-data="ptSearchCombobox()" x-cloak>
+                    <label class="block text-sm font-semibold text-slate-700 mb-2">Chọn PT mới</label>
+                    <input type="hidden" name="newPTId" :value="selectedId">
+                    <div class="relative" @click.outside="open = false">
+                        <input
+                            type="text"
+                            autocomplete="off"
+                            x-model="search"
+                            @focus="open = true"
+                            @click="open = true"
+                            @input="onSearchInput()"
+                            @keydown.escape.prevent="open = false"
+                            placeholder="Gõ tên PT để tìm hoặc chọn trong danh sách..."
+                            class="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 pr-10 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+                        >
+                        <span class="material-symbols-outlined pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]">search</span>
+                        <div
+                            x-show="open"
+                            x-transition
+                            class="absolute left-0 right-0 top-full z-[60] mt-1 max-h-52 overflow-y-auto rounded-xl border border-slate-200 bg-white py-1 shadow-lg"
+                        >
+                            <template x-if="filtered.length === 0">
+                                <div class="px-4 py-3 text-sm text-slate-500">Không tìm thấy PT phù hợp.</div>
+                            </template>
+                            <template x-for="p in filtered" :key="p._id">
+                                <button
+                                    type="button"
+                                    @click="pick(p)"
+                                    class="flex w-full items-center px-4 py-2.5 text-left text-sm text-slate-800 hover:bg-emerald-50"
+                                    x-text="p.name"
+                                ></button>
+                            </template>
+                        </div>
+                    </div>
+                    <p class="text-[10px] text-slate-400 mt-1 italic">* PT mới sẽ được cập nhật vào hợp đồng của khách. Gõ để lọc, chọn một dòng để xác nhận.</p>
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-sm font-semibold text-slate-700 mb-2">Ghi chú (Tùy chọn)</label>
+                    <textarea name="adminNote" rows="3" class="w-full rounded-xl border-slate-200 focus:ring-lime-500 focus:border-lime-500 text-sm" placeholder="Nhập lời nhắn gửi tới khách hàng..."></textarea>
+                </div>
+                
+                <div class="flex gap-3">
+                    <button type="button" onclick="closeModal()" class="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50 transition-colors">
+                        Hủy
+                    </button>
+                    <button type="submit" id="submitBtn" class="flex-1 px-4 py-2.5 rounded-xl bg-lime-500 text-white font-semibold hover:bg-lime-600 shadow-lg shadow-lime-200 transition-all">
+                        Xác nhận
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function ptSearchCombobox() {
+        var raw = document.getElementById('pts-json-data');
+        var pts = [];
+        try {
+            pts = raw ? JSON.parse(raw.textContent) : [];
+        } catch (e) {
+            pts = [];
+        }
+        return {
+            open: false,
+            search: '',
+            selectedId: '',
+            selectedName: '',
+            pts: pts,
+            get filtered() {
+                var q = (this.search || '').trim().toLowerCase();
+                if (!q) return this.pts;
+                return this.pts.filter(function (p) {
+                    return (p.name || '').toLowerCase().includes(q);
+                });
+            },
+            pick: function (p) {
+                this.selectedId = p._id;
+                this.selectedName = p.name || '';
+                this.search = this.selectedName;
+                this.open = false;
+            },
+            onSearchInput: function () {
+                if (this.search !== this.selectedName) {
+                    this.selectedId = '';
+                    this.selectedName = '';
+                }
+                this.open = true;
+            },
+            reset: function () {
+                this.search = '';
+                this.selectedId = '';
+                this.selectedName = '';
+                this.open = false;
+            }
+        };
+    }
+
+    function resetPtPicker() {
+        var el = document.getElementById('newPTSection');
+        if (el && window.Alpine && typeof Alpine.$data === 'function') {
+            try {
+                var d = Alpine.$data(el);
+                if (d && typeof d.reset === 'function') d.reset();
+            } catch (e) { /* ignore */ }
+        }
+    }
+
+    function openActionModal(requestId, status) {
+        const modal = document.getElementById('actionModal');
+        const form = document.getElementById('actionForm');
+        const title = document.getElementById('modalTitle');
+        const statusInput = document.getElementById('modalStatus');
+        const submitBtn = document.getElementById('submitBtn');
+        const newPTSection = document.getElementById('newPTSection');
+
+        form.action = `/admin/pt-change-requests/${requestId}/update`;
+        statusInput.value = status;
+        resetPtPicker();
+
+        if (status === 'Approved') {
+            title.innerText = 'Chấp thuận yêu cầu';
+            submitBtn.className = 'flex-1 px-4 py-2.5 rounded-xl bg-emerald-500 text-white font-semibold hover:bg-emerald-600 shadow-lg shadow-emerald-200 transition-all';
+            newPTSection.classList.remove('hidden');
+        } else {
+            title.innerText = 'Từ chối yêu cầu';
+            submitBtn.className = 'flex-1 px-4 py-2.5 rounded-xl bg-rose-500 text-white font-semibold hover:bg-rose-600 shadow-lg shadow-rose-200 transition-all';
+            newPTSection.classList.add('hidden');
+        }
+
+        modal.classList.remove('hidden');
+    }
+
+    function closeModal() {
+        document.getElementById('actionModal').classList.add('hidden');
+        resetPtPicker();
+        var form = document.getElementById('actionForm');
+        if (form) form.reset();
+        document.getElementById('modalStatus').value = '';
+    }
+
+    document.getElementById('actionForm').addEventListener('submit', function (e) {
+        var st = document.getElementById('modalStatus').value;
+        if (st !== 'Approved') return;
+        var section = document.getElementById('newPTSection');
+        if (!section || section.classList.contains('hidden')) return;
+        if (window.Alpine && typeof Alpine.$data === 'function') {
+            try {
+                var d = Alpine.$data(section);
+                if (d && !d.selectedId) {
+                    e.preventDefault();
+                    alert('Vui lòng chọn PT mới từ danh sách (gõ tìm rồi chọn một tên).');
+                }
+            } catch (err) { /* ignore */ }
+        }
+    });
+</script>
+
+<%- include('../../partials/footer') %>

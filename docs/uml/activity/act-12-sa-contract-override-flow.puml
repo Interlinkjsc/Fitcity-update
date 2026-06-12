@@ -1,0 +1,73 @@
+@startuml ACT_SA_Contract_Override
+title Activity — SA: Client & Hợp đồng (Bypass Lead + gộp vai Sales/Kế toán)\n<<implemented>> / <<planned>>
+skinparam activityStyle rectangle
+skinparam backgroundColor #FAFAFA
+skinparam partition {
+  BorderColor #7C3AED
+  BackgroundColor #F5F3FF
+  FontColor #4C1D95
+  FontSize 13
+}
+skinparam activity {
+  BorderColor #6D28D9
+  BackgroundColor #EDE9FE
+  FontSize 11
+}
+
+start
+:Đăng nhập SA\n(toàn quyền RBAC);
+
+partition "1. Khách hàng (UC-SA-BYP01)" {
+  if (Email đã là Client?) then (<<planned>> R1)
+    :Mở hồ sơ Client — không tạo Lead thừa;
+    stop
+  else (Chưa có Client)
+    if (Có Lead mở trùng email/SĐT?) then (<<planned>> R2)
+      :Convert Lead → Client\nPOST .../leads/.../convert;
+    else (Walk-in)
+      :POST /admin/clients/store\n<<implemented>>\n(name, email, password, <<planned>> branch);
+    endif
+  endif
+  note right
+    Cùng API Admin; SA không route riêng
+    Bypass = bỏ qua phễu A/B, không bắt Lead
+  end note
+}
+
+partition "2. Hợp đồng & thanh toán" {
+  :GET /admin/contracts/create;
+  :POST /admin/contracts/store → Draft;
+  if (Thu ngay trên wizard Paid?) then (<<implemented>>)
+    :Active ngay (không cần payments/store);
+  else (Thu qua phiếu thu)
+    :POST .../payments/store → Paid + Active;
+  endif
+  note right
+    SA đóng vai Sales + người ghi thu
+    Không workflow duyệt Kế toán riêng
+  end note
+}
+
+partition "3. Vận hành buổi tập <<planned>>" {
+  :Quản lý lịch /admin/slots;
+  :<<planned>> Force Check-in (UC-SA-OVR01);
+  :<<planned>> Force Confirm (UC-SA-OVR02);
+  note right
+    Chưa implement — giữ trên sơ đồ spec
+  end note
+}
+
+partition "4. Full control Hợp đồng" {
+  :Chi tiết HĐ Active;
+  if (Hành động?) then (Sửa hạn)
+    :POST .../update — endDate\n<<implemented>>;
+  elseif (Bảo lưu) then (Pause/Unpause)
+    :POST pause / unpause\n<<implemented>>;
+  else (Hủy)
+    :Xóa HĐ / Cancelled / Liquidated\n<<implemented>>\nXóa HĐ Paid: **chỉ SA**;
+  endif
+}
+
+stop
+
+@enduml

@@ -1,0 +1,44 @@
+<%- include('../../partials/header', { title: 'Mô tả công việc (JD)', activePage: 'job-descriptions' }) %>
+
+<div class="mb-6 flex justify-between items-center">
+    <div>
+        <h2 class="text-2xl font-bold text-slate-800">Mô tả công việc (JD)</h2>
+        <p class="text-slate-500 text-sm mt-1">Danh mục JD gán khi tạo tài khoản nhân sự</p>
+    </div>
+    <a href="/admin/job-descriptions/create" class="px-4 py-2 bg-green-600 text-white text-sm font-bold rounded-lg hover:bg-green-700">+ Thêm JD</a>
+</div>
+
+<div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+    <table class="w-full text-sm">
+        <thead class="bg-slate-50 text-[10px] uppercase tracking-widest text-slate-500">
+            <tr>
+                <th class="px-4 py-3 text-left">Vai trò</th>
+                <th class="px-4 py-3 text-left">Tên mẫu</th>
+                <th class="px-4 py-3 text-left">Số mục</th>
+                <th class="px-4 py-3 text-left">Trạng thái</th>
+                <th class="px-4 py-3 text-right">Thao tác</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+            <% if (!templates.length) { %>
+            <tr><td colspan="5" class="px-4 py-10 text-center text-slate-400">Chưa có mẫu JD.</td></tr>
+            <% } %>
+            <% templates.forEach(t => { %>
+            <tr>
+                <td class="px-4 py-3 font-medium"><%= roleLabels[t.role] || t.role %></td>
+                <td class="px-4 py-3"><%= t.title %></td>
+                <td class="px-4 py-3"><%= (t.items || []).length %></td>
+                <td class="px-4 py-3"><%= t.active ? 'Đang dùng' : 'Tắt' %></td>
+                <td class="px-4 py-3 text-right space-x-2">
+                    <a href="/admin/job-descriptions/edit/<%= t._id %>" class="text-blue-600 text-xs font-bold">Sửa</a>
+                    <form action="/admin/job-descriptions/delete/<%= t._id %>" method="POST" class="inline" onsubmit="return confirm('Xóa?')">
+                        <button type="submit" class="text-rose-600 text-xs font-bold">Xóa</button>
+                    </form>
+                </td>
+            </tr>
+            <% }) %>
+        </tbody>
+    </table>
+</div>
+
+<%- include('../../partials/footer') %>

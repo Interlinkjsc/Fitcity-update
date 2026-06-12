@@ -1,0 +1,73 @@
+<%# Expects openQrModal(sessionId, action) — include qrcodejs on parent page %>
+<div id="qrModalOverlay" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] opacity-0 pointer-events-none transition-opacity duration-300" onclick="closeQrModal()"></div>
+
+<div id="qrModal" class="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white rounded-t-[40px] z-[110] transform translate-y-full transition-transform duration-300 shadow-[0_-10px_40px_rgba(0,0,0,0.1)] flex flex-col items-center pt-8 pb-10 px-8">
+    <button type="button" class="absolute top-6 right-6 w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-200 transition-all" onclick="closeQrModal()">
+        <span class="material-symbols-outlined text-[20px]">close</span>
+    </button>
+    <h2 id="qrModalTitle" class="text-2xl font-black italic tracking-tighter uppercase text-slate-900 mb-1"><span class="text-primary tracking-normal">QR</span> CHECK-IN</h2>
+    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center mb-6">Đưa màn hình cho PT quét · Mã tự hết hạn</p>
+    <div class="relative w-64 h-64 bg-slate-50 rounded-[32px] border-2 border-slate-200 p-6 flex flex-col items-center justify-center shadow-inner">
+        <div id="qrLoading" class="absolute inset-0 flex flex-col items-center justify-center bg-slate-50 rounded-[30px] z-10 transition-opacity duration-300">
+            <div class="w-10 h-10 border-4 border-slate-200 border-t-primary rounded-full animate-spin mb-3"></div>
+            <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Đang tạo mã...</p>
+        </div>
+        <div id="qrcode" class="w-full h-full flex items-center justify-center"></div>
+    </div>
+    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-6">Hết hạn sau ~60 giây</p>
+</div>
+
+<script>
+    async function openQrModal(sessionId, action) {
+        const overlay = document.getElementById('qrModalOverlay');
+        const modal = document.getElementById('qrModal');
+        const qrContainer = document.getElementById('qrcode');
+        const loading = document.getElementById('qrLoading');
+        const title = document.getElementById('qrModalTitle');
+        if (!overlay || !modal) return;
+
+        overlay.classList.remove('opacity-0', 'pointer-events-none');
+        modal.classList.remove('translate-y-full');
+        title.innerHTML = action === 'start'
+            ? '<span class="text-primary tracking-normal">QR</span> CHECK-IN'
+            : '<span class="text-primary tracking-normal">QR</span> CHECK-OUT';
+        loading.style.opacity = '1';
+        qrContainer.innerHTML = '';
+
+        try {
+            const res = await fetch(`/client/sessions/${sessionId}/qr?action=${action}`, {
+                headers: { Accept: 'application/json' }
+            });
+            const data = await res.json();
+            if (data.success && data.token) {
+                if (typeof QRCode !== 'undefined') {
+                    new QRCode(qrContainer, {
+                        text: data.token,
+                        width: 200,
+                        height: 200,
+                        colorDark: '#0f172a',
+                        colorLight: '#ffffff',
+                        correctLevel: QRCode.CorrectLevel.H
+                    });
+                } else {
+                    qrContainer.textContent = data.token;
+                }
+                loading.style.opacity = '0';
+            } else {
+                alert(data.message || 'Lỗi tạo mã QR');
+                closeQrModal();
+            }
+        } catch (e) {
+            console.error(e);
+            alert('Lỗi kết nối');
+            closeQrModal();
+        }
+    }
+    function closeQrModal() {
+        const overlay = document.getElementById('qrModalOverlay');
+        const modal = document.getElementById('qrModal');
+        if (!overlay || !modal) return;
+        overlay.classList.add('opacity-0', 'pointer-events-none');
+        modal.classList.add('translate-y-full');
+    }
+</script>

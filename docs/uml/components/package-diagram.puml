@@ -1,0 +1,106 @@
+@startuml FitCity_Component_Packages
+title FitCity FMS — Component / Package (theo src/modules)
+skinparam componentStyle rectangle
+skinparam packageStyle rectangle
+
+package "core" {
+  [httpMount.js] as Mount
+  [permissionsRegistry.js] as Perm
+  [authMiddleware] as AuthMW
+}
+
+package "auth" {
+  [authController] as AuthC
+  [authRoutes] as AuthR
+}
+
+package "crm" {
+  [leadController] as LeadC
+  [cmsController] as CmsC
+  [contentLibrary] as ContentC
+  [branchController] as BranchC
+}
+
+package "contracts" {
+  [contractController] as CtrC
+  [paymentController] as PayC
+  [contractService] as CtrSvc
+  [paymentService] as PaySvc
+}
+
+package "clients" {
+  [clientController] as CliC
+  [clientScheduleController] as SchedC
+  [clientRoutes /client/*] as CliR
+}
+
+package "pt" {
+  [ptController] as PtC
+  [timesheetController] as TsC
+  [ptLeaveController] as LeaveC
+  [ptSlotController] as SlotC
+}
+
+package "finance" {
+  [payrollController] as PrC
+  [expenseController] as ExpC
+  [couponController] as CpnC
+  [payrollService] as PrSvc
+}
+
+package "programs" {
+  [mealPlanController] as MealC
+  [workoutService] as WkSvc
+  [rewardService] as RwdSvc
+  [affiliateService] as AffSvc
+  [kpiController] as KpiC
+}
+
+package "platform" {
+  [homeController] as HomeC
+  [settingsController] as SetC
+  [dailyReportController] as DrC
+  [notificationService] as Noti
+  [driveService] as Drive
+}
+
+package "users" {
+  [userController] as UsrC
+  [rolePermissionController] as RpC
+}
+
+package "api" {
+  [calendarController] as ApiCal
+}
+
+database "MongoDB" as DB
+cloud "Google Drive" as GDrive
+actor "Browser\n(EJS views)" as UI
+
+UI --> Mount
+Mount --> AuthR
+Mount --> LeadC
+Mount --> CtrC
+Mount --> CliR
+Mount --> PtC
+Mount --> PrC
+Mount --> MealC
+Mount --> HomeC
+
+AuthR --> AuthMW
+AuthMW --> Perm
+LeadC --> DB
+CmsC --> DB
+CtrC --> CtrSvc
+PayC --> PaySvc
+PaySvc --> AffSvc
+CliC --> WkSvc
+SchedC --> DB
+TsC --> DB
+PrSvc --> DB
+MealC --> DB
+Noti --> DB
+ContentC --> Drive
+Drive --> GDrive
+
+@enduml

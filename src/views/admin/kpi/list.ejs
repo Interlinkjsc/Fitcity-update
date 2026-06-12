@@ -1,0 +1,97 @@
+<%- include('../../partials/header', { title: 'Thiết lập chỉ tiêu KPI', activePage: 'kpi' }) %>
+
+<div class="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div>
+        <h2 class="text-2xl font-bold text-slate-800">Thiết lập KPI</h2>
+        <p class="text-slate-500 text-sm mt-1">Cài đặt mục tiêu kinh doanh theo chi nhánh cho từng tháng.</p>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <!-- Form Thiết lập -->
+    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm h-fit">
+        <h3 class="text-lg font-bold text-slate-800 mb-6">Cài đặt mục tiêu mới</h3>
+        <form action="/admin/kpi/save" method="POST" class="space-y-4">
+            <div>
+                <label class="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-widest">Chi nhánh</label>
+                <select name="branch" required class="w-full border border-slate-300 rounded-lg text-sm p-3 focus:ring-2 focus:ring-lime-500 outline-none">
+                    <% branches.forEach(b => { %>
+                        <option value="<%= b._id %>"><%= b.name %></option>
+                    <% }) %>
+                </select>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-widest">Tháng</label>
+                    <select name="month" class="w-full border border-slate-300 rounded-lg text-sm p-3 focus:ring-2 focus:ring-lime-500 outline-none">
+                        <% for(let i=1; i<=12; i++) { %>
+                            <option value="<%= i %>" <%= i === (new Date().getMonth() + 1) ? 'selected' : '' %>>Tháng <%= i %></option>
+                        <% } %>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-widest">Năm</label>
+                    <input type="number" name="year" value="<%= new Date().getFullYear() %>" class="w-full border border-slate-300 rounded-lg text-sm p-3 focus:ring-2 focus:ring-lime-500 outline-none">
+                </div>
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-widest">Mục tiêu Doanh thu (VNĐ)</label>
+                <input type="number" name="revenueTarget" placeholder="VD: 500000000" required class="w-full border border-slate-300 rounded-lg text-sm p-3 focus:ring-2 focus:ring-lime-500 outline-none font-bold">
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-widest">Mục tiêu Lead mới</label>
+                <input type="number" name="newLeadTarget" placeholder="Số lượng lead" class="w-full border border-slate-300 rounded-lg text-sm p-3 focus:ring-2 focus:ring-lime-500 outline-none">
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-widest">Mục tiêu số hợp đồng</label>
+                <input type="number" name="contractTarget" min="0" placeholder="VD: 20" class="w-full border border-slate-300 rounded-lg text-sm p-3 focus:ring-2 focus:ring-lime-500 outline-none">
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-widest">Ghi chú</label>
+                <textarea name="notes" rows="3" class="w-full border border-slate-300 rounded-lg text-sm p-3 focus:ring-2 focus:ring-lime-500 outline-none"></textarea>
+            </div>
+            <button type="submit" class="w-full py-3 bg-lime-500 hover:bg-lime-600 text-slate-900 font-bold rounded-lg transition-transform hover:scale-[1.02] shadow-sm">
+                Lưu cài đặt
+            </button>
+        </form>
+    </div>
+
+    <!-- Bảng danh sách KPI -->
+    <div class="lg:col-span-2 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="p-5 border-b border-slate-200 bg-slate-50/50">
+            <h3 class="text-sm font-bold text-slate-500 uppercase tracking-widest leading-none">Chỉ tiêu đã thiết lập</h3>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead>
+                    <tr class="text-slate-400 text-[10px] uppercase font-bold tracking-widest border-b border-slate-100">
+                        <th class="p-4">Thời gian</th>
+                        <th class="p-4">Chi nhánh</th>
+                        <th class="p-4 text-right">Mục tiêu Doanh thu</th>
+                        <th class="p-4 text-center">Hợp đồng</th>
+                        <th class="p-4 text-center">Leads</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-50">
+                    <% if(kpis && kpis.length > 0) { %>
+                        <% kpis.forEach(item => { %>
+                        <tr class="hover:bg-slate-50/70 transition-colors">
+                            <td class="p-4 font-bold text-slate-700 text-sm">Tháng <%= item.month %> / <%= item.year %></td>
+                            <td class="p-4 text-sm font-medium text-slate-600"><%= item.branch ? item.branch.name : 'N/A' %></td>
+                            <td class="p-4 text-right font-bold text-lime-600"><%= new Intl.NumberFormat('vi-VN').format(item.revenueTarget) %></td>
+                            <td class="p-4 text-center text-sm font-bold text-blue-600"><%= item.contractTarget || 0 %></td>
+                            <td class="p-4 text-center text-sm font-bold text-slate-500"><%= item.newLeadTarget || 0 %></td>
+                        </tr>
+                        <% }) %>
+                    <% } else { %>
+                        <tr>
+                            <td colspan="4" class="p-12 text-center text-slate-400 text-sm">Chưa thiết lập mục tiêu nào.</td>
+                        </tr>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<%- include('../../partials/footer') %>

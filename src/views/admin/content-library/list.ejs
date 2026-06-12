@@ -1,0 +1,77 @@
+<%- include('../../partials/header', { title: 'Kho nội dung', activePage: 'content_library' }) %>
+
+<div class="mb-6">
+    <h2 class="text-2xl font-bold text-slate-800">Kho nội dung Marketing</h2>
+    <p class="text-slate-500 text-sm mt-1">Ảnh / video — lưu local + Google Drive (nếu cấu hình)</p>
+</div>
+
+<div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 mb-8 max-w-2xl">
+    <h3 class="font-bold text-slate-800 mb-4">Thêm tài nguyên</h3>
+    <form action="/admin/content-library/store" method="POST" enctype="multipart/form-data" class="space-y-4">
+        <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">Tiêu đề</label>
+            <input type="text" name="title" required class="w-full border border-slate-300 rounded-lg py-2 px-3 text-sm">
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">Mô tả</label>
+            <textarea name="description" rows="2" class="w-full border border-slate-300 rounded-lg py-2 px-3 text-sm"></textarea>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Loại media</label>
+                <select name="mediaType" class="w-full border border-slate-300 rounded-lg py-2 px-3 text-sm">
+                    <option value="image">Ảnh</option>
+                    <option value="video">Video</option>
+                    <option value="text">Text</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Tags (phẩy)</label>
+                <input type="text" name="tags" placeholder="banner, promo" class="w-full border border-slate-300 rounded-lg py-2 px-3 text-sm">
+            </div>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">File</label>
+            <input type="file" name="mediaFile" accept="image/*,video/*" class="w-full text-sm">
+        </div>
+        <button type="submit" class="px-5 py-2 bg-green-600 text-white text-sm font-bold rounded-lg">Tải lên</button>
+    </form>
+</div>
+
+<div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+    <table class="w-full text-sm">
+        <thead class="bg-slate-50 text-slate-500 uppercase text-[10px] tracking-widest">
+            <tr>
+                <th class="px-4 py-3 text-left">Tiêu đề</th>
+                <th class="px-4 py-3 text-left">Loại</th>
+                <th class="px-4 py-3 text-left">Link</th>
+                <th class="px-4 py-3 text-left">Người tải</th>
+                <th class="px-4 py-3 text-right">Thao tác</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+            <% if (!assets || assets.length === 0) { %>
+            <tr><td colspan="5" class="p-8 text-center text-slate-400">Chưa có tài nguyên.</td></tr>
+            <% } else { %>
+            <% assets.forEach(a => { %>
+            <tr>
+                <td class="px-4 py-3 font-medium"><%= a.title %></td>
+                <td class="px-4 py-3"><%= a.mediaType %></td>
+                <td class="px-4 py-3 text-xs">
+                    <% if (a.fileUrl) { %><a href="<%= a.fileUrl %>" target="_blank" class="text-blue-600">Local</a><% } %>
+                    <% if (a.googleDriveFileId) { %> · <span class="text-slate-500">Drive</span><% } %>
+                </td>
+                <td class="px-4 py-3 text-slate-600"><%= a.uploadedBy ? a.uploadedBy.name : '—' %></td>
+                <td class="px-4 py-3 text-right">
+                    <form action="/admin/content-library/delete/<%= a._id %>" method="POST" class="inline" onsubmit="return confirm('Xóa?')">
+                        <button type="submit" class="text-red-600 text-xs font-bold">Xóa</button>
+                    </form>
+                </td>
+            </tr>
+            <% }) %>
+            <% } %>
+        </tbody>
+    </table>
+</div>
+
+<%- include('../../partials/footer') %>

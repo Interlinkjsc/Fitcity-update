@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <title>Daily Report - PT</title>
+    <%- include('../partials/pt-head') %>
+</head>
+<body class="bg-[#F8FAF7] min-h-screen pb-28">
+<%- include('../partials/flash') %>
+<header class="p-6 flex justify-between items-center">
+    <div>
+        <h1 class="text-xl font-black uppercase italic">Daily <span class="text-primary">Report</span></h1>
+        <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Báo cáo ngày</p>
+    </div>
+    <a href="/pt" class="size-10 rounded-xl border flex items-center justify-center"><span class="material-symbols-outlined">close</span></a>
+</header>
+<main class="px-6 space-y-6">
+    <form action="/pt/daily-report" method="POST" class="glass p-6 rounded-3xl border space-y-4">
+        <div>
+            <label class="text-[10px] font-black uppercase text-slate-400">Ngày</label>
+            <input type="date" name="reportDate" value="<%= today %>" required class="w-full mt-1 border rounded-xl py-3 px-4 text-sm">
+        </div>
+        <div>
+            <label class="text-[10px] font-black uppercase text-slate-400">Tóm tắt *</label>
+            <textarea name="summary" rows="3" required class="w-full mt-1 border rounded-xl py-3 px-4 text-sm"></textarea>
+        </div>
+        <div>
+            <label class="text-[10px] font-black uppercase text-slate-400">Kết quả</label>
+            <textarea name="accomplishments" rows="2" class="w-full mt-1 border rounded-xl py-3 px-4 text-sm"></textarea>
+        </div>
+        <div>
+            <label class="text-[10px] font-black uppercase text-slate-400">Khó khăn</label>
+            <textarea name="blockers" rows="2" class="w-full mt-1 border rounded-xl py-3 px-4 text-sm"></textarea>
+        </div>
+        <button type="submit" class="w-full py-4 bg-slate-900 text-primary font-black uppercase rounded-2xl text-xs tracking-widest">Gửi báo cáo</button>
+    </form>
+    <% if (myReports && myReports.length) { %>
+    <section class="bg-white rounded-3xl border p-4">
+        <h2 class="text-xs font-black uppercase text-slate-400 mb-3">Tháng <%= month %>/<%= year %></h2>
+        <ul class="space-y-2 text-sm">
+            <% myReports.forEach(r => { %>
+            <li class="flex justify-between gap-2 border-b border-slate-50 pb-2">
+                <span class="truncate"><%= new Date(r.reportDate).toLocaleDateString('vi-VN') %></span>
+                <span class="text-[10px] font-bold <%= r.status === 'Approved' ? 'text-emerald-600' : 'text-amber-600' %>"><%= r.status.replace('_',' ') %></span>
+            </li>
+            <% }) %>
+        </ul>
+    </section>
+    <% } %>
+</main>
+<%- include('../partials/nav_pt', { activePage: 'dashboard' }) %>
+</body>
+</html>

@@ -1,0 +1,53 @@
+@startuml ACT_Client
+title Activity — Client Portal
+skinparam activityStyle rectangle
+
+start
+:Đăng nhập → /client/dashboard;
+partition "Hợp đồng & thanh toán" {
+  :GET /client/contracts;
+  :Xem trạng thái HĐ, QR thanh toán (nếu có);
+}
+partition "Lịch & buổi tập" {
+  :GET /client/schedule;
+  :Xem các lịch tập đã lên bởi PT (Scheduled);
+  if (Muốn hủy lịch tập?) then (Có)
+    if (Buổi tập đã bắt đầu?) then (Có)
+      :Nút Hủy bị khóa/ẩn;
+    else (Chưa)
+      :Gửi yêu cầu hủy lịch tập;
+      :Chờ PT liên hệ trao đổi offline;
+      :Nhận thông báo kết quả (Đồng ý / Từ chối);
+    endif
+    stop
+  else (Không)
+    :Đến ngày tập, GET session QR;
+    :PT quét QR (Check-in/Check-out);
+    :POST confirm session (hoặc hệ thống tự động confirm);
+    :POST feedback rating;
+  endif
+}
+partition "Dinh dưỡng & tập" {
+  :GET /client/nutrition;
+  :Xem meal plan active;
+  :POST /client/meal-log theo bữa;
+  :GET /client/workouts (assignment tuần);
+  :GET /client/progress?days=30|60|90;
+}
+partition "Affiliate & thưởng" {
+  :Profile: copy referral link;
+  :GET /client/rewards;
+  if (Có Gift từ F1 paid?) then (có)
+    :Mở gift box UI;
+  endif
+}
+partition "Yêu cầu đổi PT" {
+  :POST client PT change request;
+}
+stop
+
+note right
+  UC-CLI*, SEQ-02, SEQ-04, SEQ-08
+end note
+
+@enduml

@@ -1,0 +1,87 @@
+@startuml UC_Finance_Full
+title Module: Finance (đầy đủ)
+left to right direction
+skinparam actorStyle awesome
+
+actor PT
+actor Sales
+actor Manager as MGR
+actor Accountant as ACC
+actor Admin as ADM
+actor CEO
+actor Client
+actor System
+
+package "Payroll /admin/payroll" {
+  usecase "UC-FIN01\nSummary view" as F01
+  usecase "UC-FIN02\nExport CSV" as F02
+  usecase "UC-FIN03\nFinalize approve" as F03
+  usecase "UC-FIN04\nAuto suggest" as F04
+  usecase "UC-FIN05\nMark paid" as F05
+  usecase "UC-FIN06\nSales HH % netAmount" as F06
+  usecase "UC-FIN07\nPT HH contract/timesheet/hybrid" as F07
+}
+
+package "Expenses /admin/expenses" {
+  usecase "UC-FIN10\nList + VAT widgets" as F10
+  usecase "UC-FIN11\nCreate + upload Drive" as F11
+  usecase "UC-FIN12\nDetail expense" as F12
+  usecase "UC-FIN13\nDelete expense" as F13
+  usecase "UC-FIN14\nExport Excel quarter" as F14
+}
+
+package "Coupons /admin/coupons" {
+  usecase "UC-FIN20\nList" as F20
+  usecase "UC-FIN21\nCreate/Edit/Delete" as F21
+  usecase "UC-FIN22\nAssign reward" as F22
+  usecase "UC-FIN23\nCoupon detail" as F23
+}
+
+package "Rewards /admin/rewards" {
+  usecase "UC-FIN30\nReward list" as F30
+  usecase "UC-FIN31\nCreate reward" as F31
+  usecase "UC-FIN32\nDelete reward" as F32
+}
+
+package "Client" {
+  usecase "UC-FIN40\nView my rewards\n(Gift box UI)" as F40
+}
+
+ACC --> F01
+ACC --> F02
+ACC --> F10
+ACC --> F11
+ACC --> F12
+ACC --> F14
+ADM --> F01
+ADM --> F03
+ADM --> F04
+ADM --> F05
+ADM --> F10
+ADM --> F11
+ADM --> F13
+ADM --> F20
+ADM --> F30
+MGR --> F10
+MGR --> F11
+CEO --> F14
+Sales --> F20
+Sales --> F21
+Sales --> F22
+PT --> F07
+Client --> F40
+System --> F07
+F22 ..> F40 : noti
+
+note bottom of F07
+  Settings: ptPayrollMode
+  contract | timesheet | hybrid
+  timesheetRatePerShift
+end note
+
+note bottom of F11
+  amountBeforeVat, vatRate,
+  taxDocumentType, googleDriveFileId
+end note
+
+@enduml

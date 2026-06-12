@@ -1,0 +1,30 @@
+@startuml ACT_Accountant
+title Activity — Accountant
+skinparam activityStyle rectangle
+
+start
+:Đăng nhập /admin;
+partition "Thu HĐ" {
+  :GET /admin/contracts/list;
+  :POST payment store\n(amount, method);
+  if (paidAmount >= total?) then (đủ)
+    :paymentStatus = Paid;
+    :Kích hoạt affiliate F1 (system);
+  endif
+}
+partition "Chi phí & payroll" {
+  :CRUD expenses;
+  :GET /admin/payroll?month&year;
+  :Xuất / chốt payroll PT;
+}
+partition "Coupon" {
+  :Quản lý mã giảm giá;
+}
+stop
+
+note right
+  UC-CTR30+, UC-FIN*
+  SEQ-03, SEQ-05
+end note
+
+@enduml

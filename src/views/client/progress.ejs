@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <title>Tiến độ tập luyện - FitCity</title>
+    <%- include('../partials/client-head') %>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="p-6 md:p-12 mb-20 overflow-x-hidden">
+    <header class="flex justify-between items-start mb-12">
+        <div>
+            <h1 class="text-4xl font-black italic tracking-tighter uppercase leading-none"><span class="text-primary tracking-normal">KẾT QUẢ</span> TẬP LUYỆN</h1>
+            <p class="text-slate-500 text-sm mt-2">Dữ liệu phân tích thể trạng và tiến độ thay đổi của bạn.</p>
+        </div>
+        <a href="/client" aria-label="Về trang chủ" class="w-12 h-12 glass rounded-full flex items-center justify-center hover:bg-slate-50 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60">
+            <span class="material-symbols-outlined">close</span>
+        </a>
+    </header>
+
+    <div class="flex gap-2 mb-8 -mt-6">
+        <% const rd = typeof rangeDays !== 'undefined' ? rangeDays : 90; %>
+        <a href="/client/progress?days=30" class="px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border <%= rd === 30 ? 'bg-primary text-white border-primary' : 'bg-white text-slate-600 border-slate-200' %>">30 ngày</a>
+        <a href="/client/progress?days=60" class="px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border <%= rd === 60 ? 'bg-primary text-white border-primary' : 'bg-white text-slate-600 border-slate-200' %>">60 ngày</a>
+        <a href="/client/progress?days=90" class="px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border <%= rd === 90 ? 'bg-primary text-white border-primary' : 'bg-white text-slate-600 border-slate-200' %>">90 ngày</a>
+    </div>
+
+    <% if (metrics && metrics.length > 0) { %>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+            <!-- Latest Stats Cards -->
+            <div class="space-y-6">
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="glass p-6 rounded-3xl card-glow border-l-4 border-l-primary">
+                        <p class="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-1">Cân nặng hiện tại</p>
+                        <h3 class="text-3xl font-black text-slate-900"><%= metrics[metrics.length-1].weight %> <span class="text-sm font-normal text-slate-500">KG</span></h3>
+                    </div>
+                    <div class="glass p-6 rounded-3xl card-glow">
+                        <p class="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-1">Chỉ số BMI</p>
+                        <h3 class="text-3xl font-black text-primary"><%= metrics[metrics.length-1].bmi %></h3>
+                    </div>
+                </div>
+                
+                <div class="glass p-8 rounded-[40px] relative overflow-hidden group">
+                    <h4 class="text-sm font-black uppercase tracking-widest text-slate-500 mb-8 border-b border-slate-200 pb-4">Phân tích Body Composition</h4>
+                    <div class="h-64 flex items-center justify-center">
+                        <canvas id="radarChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Trend Chart -->
+            <div class="glass p-8 rounded-[40px] flex flex-col">
+                <div class="flex justify-between items-start mb-8">
+                    <h4 class="text-sm font-black uppercase tracking-widest text-slate-500 border-b border-slate-200 pb-4 w-full">Biểu đồ Cân nặng theo thời gian</h4>
+                </div>
+                <div class="h-80 w-full mt-auto">
+                    <canvas id="lineChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- History Records Table -->
+        <div class="glass rounded-[40px] overflow-hidden">
+            <div class="px-8 py-6 border-b border-slate-200 flex justify-between items-center">
+                <h4 class="text-sm font-black uppercase tracking-widest text-slate-500">Lịch sử InBody</h4>
+                <span class="px-3 py-1 bg-accent/10 text-accent text-[10px] font-black rounded-full uppercase tracking-widest">Total <%= metrics.length %> Records</span>
+            </div>
+            <div class="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-6 px-8 hide-scrollbar">
+                <% [...metrics].reverse().forEach((record, index) => { %>
+                    <div class="snap-center shrink-0 w-[280px] bg-white border border-slate-200 rounded-[24px] p-5 shadow-sm">
+                        <div class="flex justify-between items-center mb-4 border-b border-slate-100 pb-3">
+                            <span class="text-xs font-bold text-slate-500"><%= new Date(record.date).toLocaleDateString('vi-VN') %></span>
+                            <% if (index === 0) { %>
+                                <span class="bg-accent/10 text-accent text-[10px] font-black px-2 py-1 rounded-full uppercase tracking-widest">Mới nhất</span>
+                            <% } else { %>
+                                <span class="bg-slate-100 text-slate-400 text-[10px] font-black px-2 py-1 rounded-full uppercase tracking-widest">Cũ hơn</span>
+                            <% } %>
+                        </div>
+                        <div class="grid grid-cols-2 gap-y-5 gap-x-3">
+                            <div>
+                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Cân nặng</p>
+                                <p class="text-xl font-black text-slate-900 mt-1"><%= record.weight %> <span class="text-xs font-bold text-slate-400">kg</span></p>
+                            </div>
+                            <div>
+                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Cơ bắp</p>
+                                <p class="text-xl font-black text-primary mt-1"><%= record.muscleMass || 'N/A' %> <span class="text-xs font-bold text-primary/60">kg</span></p>
+                            </div>
+                            <div>
+                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Body Fat</p>
+                                <p class="text-xl font-black text-slate-700 mt-1"><%= record.bodyFat || 'N/A' %> <span class="text-xs font-bold text-slate-400">%</span></p>
+                            </div>
+                            <div>
+                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">BMI</p>
+                                <p class="text-xl font-black mt-1 <%= record.bmi > 25 ? 'text-orange-500' : 'text-primary' %>"><%= record.bmi %></p>
+                            </div>
+                            <div class="pt-3 border-t border-slate-100">
+                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Nước</p>
+                                <p class="text-sm font-bold text-slate-600"><%= record.water || 0 %> %</p>
+                            </div>
+                            <div class="pt-3 border-t border-slate-100">
+                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Protein</p>
+                                <p class="text-sm font-bold text-slate-600"><%= record.protein || 0 %> %</p>
+                            </div>
+                        </div>
+                    </div>
+                <% }) %>
+            </div>
+        </div>
+    <% } else { %>
+        <div class="py-40 flex flex-col items-center justify-center text-center opacity-40">
+            <span class="material-symbols-outlined text-8xl text-primary/20 mb-6">analytics</span>
+            <h2 class="text-2xl font-black text-slate-900">CHƯA CÓ DỮ LIỆU INBODY</h2>
+            <p class="text-slate-500 max-w-sm mt-2 font-medium">Bạn chưa thực hiện đo chỉ số cơ thể lần nào. Hãy yêu cầu PT của bạn cập nhật InBody ngay hôm nay!</p>
+        </div>
+    <% } %>
+
+    <div id="chart-data" 
+         data-metrics='<%- JSON.stringify(metrics) %>'
+         class="hidden"></div>
+
+    <script>
+        const dataElement = document.getElementById('chart-data');
+        const metrics = JSON.parse(dataElement.dataset.metrics);
+
+        if (metrics && metrics.length > 0) {
+            const labels = metrics.map(m => new Date(m.date).toLocaleDateString('vi-VN'));
+            const weights = metrics.map(m => m.weight);
+            const latest = metrics[metrics.length - 1];
+            const start = metrics[0];
+
+            // 1. Line Chart (Weight Trend)
+            const lineCtx = document.getElementById('lineChart').getContext('2d');
+            new Chart(lineCtx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Weight (kg)',
+                        data: weights,
+                        borderColor: '#16A34A',
+                        backgroundColor: 'rgba(22, 163, 74, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        borderWidth: 4,
+                        pointBackgroundColor: '#16A34A',
+                        pointRadius: 6,
+                        pointHoverRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { ticks: { color: '#64748b', font: { family: 'Inter', weight: 'bold', size: 10 } }, grid: { display: false } },
+                        y: { ticks: { color: '#64748b', font: { family: 'Inter', size: 10 } }, grid: { color: 'rgba(226,232,240,0.5)' } }
+                    }
+                }
+            });
+
+            // 2. Radar Chart (Comparison - 6 Axes: Weight, Fat, Muscle, Water, Minerals, Protein)
+            const radarCtx = document.getElementById('radarChart').getContext('2d');
+            new Chart(radarCtx, {
+                type: 'radar',
+                data: {
+                    labels: ['Weight (kg)', 'Fat (%)', 'Muscle (%)', 'Water (%)', 'Minerals (kg)', 'Protein (%)'],
+                    datasets: [
+                        {
+                            label: 'Initial',
+                            data: [
+                                start.weight, 
+                                start.bodyFat || 0, 
+                                (start.muscleMass / start.weight * 100).toFixed(1) || 0, 
+                                start.water || 0, 
+                                start.minerals || 0, 
+                                start.protein || 0
+                            ],
+                            borderColor: '#94a3b8',
+                            backgroundColor: 'rgba(148, 163, 184, 0.2)',
+                            borderWidth: 1,
+                            pointRadius: 0
+                        },
+                        {
+                            label: 'LATEST',
+                            data: [
+                                latest.weight, 
+                                latest.bodyFat || 0, 
+                                (latest.muscleMass / latest.weight * 100).toFixed(1) || 0, 
+                                latest.water || 0, 
+                                latest.minerals || 0, 
+                                latest.protein || 0
+                            ],
+                            borderColor: '#16A34A',
+                            backgroundColor: 'rgba(22, 163, 74, 0.2)',
+                            borderWidth: 3,
+                            pointBackgroundColor: '#16A34A'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { 
+                        legend: { display: false },
+                        tooltip: { backgroundColor: '#1e293b', titleFont: { family: 'Inter', weight: 'black' } }
+                    },
+                    scales: {
+                        r: {
+                            angleLines: { color: 'rgba(226,232,240,0.5)' },
+                            grid: { color: 'rgba(226,232,240,0.5)' },
+                            pointLabels: { 
+                                color: '#64748b', 
+                                font: { family: 'Inter', weight: 'black', size: 10 } 
+                            },
+                            ticks: { display: false },
+                            suggestedMin: 0
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+
+    <!-- Navigation Bar -->
+    <% const activePage = 'progress'; %>
+    <%- include('../partials/client-bottom-nav', { activePage }) %>
+</body>
+</html>

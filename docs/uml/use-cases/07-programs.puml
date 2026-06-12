@@ -1,0 +1,79 @@
+@startuml UC_Programs_Full
+title Module: Programs (đầy đủ)
+left to right direction
+skinparam actorStyle awesome
+
+actor Client
+actor PT
+actor Manager as MGR
+actor Admin as ADM
+actor CEO
+
+package "Packages /admin/packages" {
+  usecase "UC-PRG01\nList packages" as P01
+  usecase "UC-PRG02\nPackage detail" as P02
+  usecase "UC-PRG03\nCreate package" as P03
+  usecase "UC-PRG04\nEdit package" as P04
+  usecase "UC-PRG05\nDelete package" as P05
+}
+
+package "Meal /pt/meal-plans" {
+  usecase "UC-PRG10\nList meal plans" as P10
+  usecase "UC-PRG11\nCreate meal plan" as P11
+  usecase "UC-PRG12\nMeal plan detail" as P12
+  usecase "UC-PRG13\nEdit meal plan (PT)" as P13
+}
+
+package "Meal log" {
+  usecase "UC-PRG14\nClient meal log" as P14
+  usecase "UC-PRG15\nNutrition page" as P15
+}
+
+package "Metrics" {
+  usecase "UC-PRG20\nPT add metric" as P20
+  usecase "UC-PRG21\nPT metric history" as P21
+  usecase "UC-PRG22\nClient progress chart" as P22
+}
+
+package "Workout" {
+  usecase "UC-PRG30\nAssign week program" as P30
+  usecase "UC-PRG31\nClient view program" as P31
+  usecase "UC-PRG32\nPublic program library" as P32
+}
+
+package "KPI /admin/kpi" {
+  usecase "UC-PRG40\nKPI branch config" as P40
+  usecase "UC-PRG41\nEmployee KPI target" as P41
+}
+
+PT --> P10
+PT --> P11
+PT --> P12
+PT --> P13
+PT --> P20
+PT --> P21
+PT --> P30
+Client --> P14
+Client --> P15
+Client --> P22
+Client --> P31
+Client --> P32
+ADM --> P01
+ADM --> P03
+ADM --> P04
+ADM --> P05
+MGR --> P01
+CEO --> P40
+ADM --> P40
+ADM --> P41
+
+P11 ..> P15
+P20 ..> P22 : noti → /client/progress
+P30 ..> P31
+
+note bottom of P11
+  Deactivate old active plan
+  Macros, meals JSON, contract dates
+end note
+
+@enduml

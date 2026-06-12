@@ -1,0 +1,51 @@
+@startuml FitCity_All_UseCases_Index
+title FitCity FMS — Index toàn bộ sơ đồ Use Case (mở file con để xem chi tiết)
+skinparam packageStyle rectangle
+
+package "use-cases/" {
+  card "00-actors-overview.puml" as UC00
+  card "01-public-auth.puml" as UC01
+  card "02-crm.puml" as UC02
+  card "03-contracts.puml" as UC03
+  card "04-clients.puml" as UC04
+  card "05-pt-operations.puml" as UC05
+  card "06-finance.puml" as UC06
+  card "07-programs.puml" as UC07
+  card "08-platform.puml" as UC08
+  card "09-users-organization.puml" as UC09
+  card "10-cross-module-flows.puml" as UC10
+  card "11-api-health.puml" as UC11
+  card "12-sa-standalone.puml" as UC12
+}
+
+package "sequence/" {
+  card "seq-01..09" as SEQ
+}
+
+package "activity/" {
+  card "act-01..09 (theo actor)" as ACT
+}
+
+package "components/" {
+  card "package-diagram.puml" as COMP
+}
+
+note bottom of UC00
+  Catalog đầy đủ ~120 UC:
+  docs/uml/UC-MASTER-CATALOG.md
+end note
+
+UC00 -down-> UC01
+UC01 -down-> UC02
+UC02 -down-> UC03
+UC03 -down-> UC04
+UC04 -down-> UC05
+UC05 -down-> UC06
+UC06 -down-> UC07
+UC07 -down-> UC08
+UC08 -down-> UC09
+UC09 -down-> UC10
+UC10 -down-> UC11
+UC11 -down-> UC12
+
+@enduml

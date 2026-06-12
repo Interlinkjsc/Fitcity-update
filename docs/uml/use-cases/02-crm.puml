@@ -1,0 +1,94 @@
+@startuml UC_CRM_Full
+title Module: CRM (đầy đủ)
+left to right direction
+skinparam actorStyle awesome
+
+actor Guest
+actor Marketing as MKT
+actor Manager as MGR
+actor Admin as ADM
+actor CEO
+actor Sales
+
+package "Public" {
+  usecase "UC-G02/G03\nLead capture" as PUB
+  usecase "UC-G04/G05\nBlog CMS" as BLOG
+}
+
+package "Leads /admin/leads" as LEADS {
+  usecase "UC-CRM10\nList + filter + funnel" as L10
+  usecase "UC-CRM12\nUpdate status + notes" as L12
+  usecase "UC-CRM13\nExport Excel" as L13
+  usecase "UC-CRM14\nDetail" as L14
+  usecase "UC-CRM15\nConvert Lead → Client\n<<planned>>" as L15
+  usecase "UC-CRM16\nChặn Lead trùng email Client\n<<planned>>" as L16
+}
+
+package "CMS /admin/cms" as CMS {
+  usecase "UC-CRM20\nList CMS" as C20
+  usecase "UC-CRM21\nCreate/Store" as C21
+  usecase "UC-CRM22\nEdit/Update/Delete" as C22
+}
+
+package "Content /admin/content-library" as LIB {
+  usecase "UC-CRM30\nList assets" as LIB30
+  usecase "UC-CRM31\nUpload + Drive" as LIB31
+  usecase "UC-CRM32\nDelete asset" as LIB32
+}
+
+package "Branches /admin/branches" as BR {
+  usecase "UC-CRM40\nList branches" as B40
+  usecase "UC-CRM41\nCreate/Edit/Delete" as B41
+  usecase "UC-CRM42\nBranch detail dashboard" as B42
+}
+
+package "Violations /admin/violations" as VIO {
+  usecase "UC-CRM50\nList" as V50
+  usecase "UC-CRM51\nCRUD violation" as V51
+}
+
+Guest --> PUB
+Guest --> BLOG
+PUB ..> L10 : noti
+MKT --> L10
+MKT --> L12
+MKT --> L13
+MKT --> L14
+MKT --> L15
+Sales --> L15
+MGR --> L15
+MKT --> C20
+MKT --> C21
+MKT --> C22
+MKT --> LIB30
+MKT --> LIB31
+MKT --> LIB32
+ADM --> L10
+ADM --> C20
+ADM --> B40
+ADM --> B41
+ADM --> V50
+ADM --> V51
+MGR --> L10
+MGR --> L12
+MGR --> B42
+MGR --> V50
+CEO --> B42
+CEO --> V50
+Sales --> L10
+
+C21 ..> BLOG : publish post
+C22 ..> BLOG
+
+note bottom of LEADS
+  GET /admin/leads
+  GET /admin/leads/export
+  GET /admin/leads/detail/:id
+  POST /admin/leads/detail/:id/status
+  <<planned>> POST .../convert (UC-CRM15)
+  Status: F, Contacted, Qualified, Lost, Converted
+  (Signed → Qualified — R3)
+  Filter: status, package, source, dates
+end note
+
+@enduml

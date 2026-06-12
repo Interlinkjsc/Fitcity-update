@@ -1,0 +1,31 @@
+@startuml SEQ_Daily_Report
+title SEQ-06: Daily Report nộp & duyệt
+autonumber
+
+actor "PT / Sales" as Submitter
+participant "dailyReportController" as DRC
+database "DailyReport" as DR
+actor Manager
+
+Submitter -> DRC : GET /admin/daily-reports/submit\nor /pt/daily-report
+DRC --> Submitter : form
+
+Submitter -> DRC : POST submit {date, content...}
+DRC -> DR : upsert 1 report/day/user
+DRC --> Submitter : flash success
+
+Manager -> DRC : GET /admin/daily-reports
+DRC -> DR : list Pending
+Manager -> DRC : POST approve/:id
+DRC -> DR : status = Approved
+alt reject
+  Manager -> DRC : POST reject/:id
+  DRC -> DR : status = Rejected
+end
+
+note over Manager
+  CEO export: workReportService
+  merges Checklist + DailyReport
+end note
+
+@enduml

@@ -1,0 +1,253 @@
+<%- include('../../partials/header', { title: 'Mã Giảm Giá & Affiliate', activePage: 'coupons' }) %>
+
+<div class="mb-8 flex justify-between items-center bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+    <div>
+        <h2 class="text-2xl font-bold text-slate-800 tracking-tight">Khuyến mãi & Mã giảm giá</h2>
+        <p class="text-slate-500 text-sm mt-1">Quản lý các chiến dịch marketing và mã giới thiệu đại lý.</p>
+    </div>
+    <a href="/admin/coupons/create" class="bg-slate-900 text-white px-6 py-3 rounded-xl font-bold hover:bg-slate-800 transition-all shadow-lg flex items-center gap-2">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+        </svg>
+        Tạo mã mới
+    </a>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <% if(coupons && coupons.length > 0) { %>
+        <% coupons.forEach(c => { %>
+            <div class="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden hover:shadow-xl transition-all group">
+                <div class="p-6">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="bg-lime-50 text-lime-700 px-3 py-1 rounded-full text-xs font-black font-mono tracking-widest uppercase">
+                            #<%= c.code %>
+                        </div>
+                        <% if(c.usageLimit <= 0 || (c.endDate && new Date(c.endDate) < new Date())) { %>
+                            <span class="text-[10px] bg-rose-50 text-rose-600 px-2 py-0.5 rounded-lg font-bold uppercase">Hết hạn</span>
+                        <% } else { %>
+                            <span class="text-[10px] bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-lg font-bold uppercase">Hoạt động</span>
+                        <% } %>
+                    </div>
+
+                    <div class="text-3xl font-black text-slate-900 mb-1">
+                        <% if (c.type === 'FreeSessions') { %>
+                            <%= c.value %> <span class="text-xl font-bold text-lime-600">buổi</span>
+                        <% } else if (c.type === 'Percentage') { %>
+                            <%= c.value + '%' %>
+                        <% } else { %>
+                            <%= new Intl.NumberFormat('vi-VN').format(c.value) + 'đ' %>
+                        <% } %>
+                    </div>
+                    <p class="text-slate-500 text-xs font-medium uppercase tracking-tighter">
+                        <%= c.type === 'FreeSessions' ? 'Tặng buổi tập' : 'Giảm giá trực tiếp' %>
+                    </p>
+
+                    <div class="mt-6 space-y-3 pt-6 border-t border-slate-50">
+                        <div class="flex justify-between text-xs font-medium">
+                            <span class="text-slate-400 uppercase">Giới hạn sử dụng</span>
+                            <span class="text-slate-800 font-bold"><%= c.usageCount %> / <%= c.usageLimit + c.usageCount %></span>
+                        </div>
+                        <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                            <% 
+                                let totalLimit = (c.usageLimit + c.usageCount);
+                                let percent = totalLimit > 0 ? (c.usageCount / totalLimit) * 100 : 0;
+                            %>
+                            <div class="bg-lime-500 h-full coupon-bar" data-width="<%= percent %>"></div>
+                        </div>
+                        <div class="flex justify-between text-xs font-medium">
+                            <span class="text-slate-400 uppercase">Ngày hết hạn</span>
+                            <span class="text-slate-800 font-bold"><%= c.endDate ? new Date(c.endDate).toLocaleDateString('vi-VN') : 'Không' %></span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-between items-center opacity-0 group-hover:opacity-100 transition-all">
+                    <span class="text-[10px] text-slate-400 italic">By: <%= c.createdBy ? c.createdBy.name : 'System' %></span>
+                    <div class="flex items-center gap-3">
+                        <button type="button" onclick="openAssignModal('<%= c._id %>', '<%= c.code %>', '<%= c.type %>', '<%= c.value %>')" class="text-amber-500 hover:text-amber-700" title="Tặng khách hàng">
+                            <span class="material-symbols-outlined text-[20px]">card_giftcard</span>
+                        </button>
+                        <a href="/admin/coupons/detail/<%= c._id %>" class="text-emerald-500 hover:text-emerald-700" title="Xem chi tiết">
+                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                        </a>
+                        <a href="/admin/coupons/edit/<%= c._id %>" class="text-blue-500 hover:text-blue-700" title="Chỉnh sửa">
+                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                            </svg>
+                        </a>
+                        <form action="/admin/coupons/delete/<%= c._id %>" method="POST" class="inline" onsubmit="return confirm('Xoá mã này?')">
+                            <button type="submit" class="text-rose-500 hover:text-rose-700" title="Xóa">
+                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v2m-3 7h10"></path>
+                                </svg>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        <% }) %>
+    <% } else { %>
+        <!-- Empty State -->
+        <div class="col-span-full py-20 text-center bg-white rounded-3xl border border-dashed border-slate-200">
+            <svg class="mx-auto h-12 w-12 text-slate-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+            </svg>
+            <p class="text-slate-500 font-medium">Bạn chưa khởi tạo mã giảm giá nào.</p>
+        </div>
+    <% } %>
+</div>
+
+<!-- Modal Gán Reward cho Khách -->
+<div id="assignRewardModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[9999] hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden border border-slate-200 transform transition-all animate-in fade-in zoom-in duration-200">
+        <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+            <div>
+                <h3 class="text-xl font-bold text-slate-800">Tặng Voucher cho khách</h3>
+                <p class="text-xs text-slate-500 mt-1">Chọn khách hàng để gán phần thưởng này trực tiếp</p>
+            </div>
+            <button onclick="closeAssignModal()" class="p-2 hover:bg-white rounded-full text-slate-400 hover:text-slate-600 transition-colors">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        
+        <form action="/admin/coupons/assign-reward" method="POST" class="p-6 space-y-5">
+            <input type="hidden" name="couponId" id="modalCouponId">
+            
+            <div class="bg-amber-50 p-4 rounded-2xl border border-amber-100 flex items-center gap-4">
+                <div class="bg-white p-3 rounded-xl shadow-sm text-amber-600">
+                    <span class="material-symbols-outlined text-2xl">card_giftcard</span>
+                </div>
+                <div>
+                    <div id="modalCouponCode" class="font-black text-slate-900 tracking-wider">CODE123</div>
+                    <div id="modalCouponValue" class="text-sm text-slate-500 font-medium italic">Giảm 15%</div>
+                </div>
+            </div>
+
+            <div x-data="{ 
+                open: false, 
+                search: '', 
+                selectedId: '', 
+                selectedName: '-- Chọn khách hàng --',
+                clients: <%= JSON.stringify(typeof clients !== 'undefined' ? clients : []) %>,
+                get filteredClients() {
+                    if (this.search === '') return this.clients;
+                    return this.clients.filter(c => {
+                        const q = this.search.toLowerCase();
+                        const contact = (c.email || c.phone || '').toLowerCase();
+                        return c.name.toLowerCase().includes(q) || contact.includes(q);
+                    });
+                },
+                selectClient(client) {
+                    this.selectedId = client._id;
+                    this.selectedName = client.name + (client.phone ? ' (' + client.phone + ')' : '');
+                    this.open = false;
+                    this.search = '';
+                }
+            }">
+                <label class="block text-sm font-bold text-slate-700 mb-2 ml-1">Chọn khách hàng <span class="text-rose-500">*</span></label>
+                
+                <input type="hidden" name="clientId" :value="selectedId" required>
+                
+                <div class="relative">
+                    <!-- Dropdown Trigger -->
+                    <button type="button" @click="open = !open" 
+                        class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm text-left focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all flex justify-between items-center"
+                        :class="open ? 'ring-2 ring-amber-500 border-amber-500' : ''">
+                        <span x-text="selectedName" :class="selectedId ? 'text-slate-900 font-medium' : 'text-slate-400'"></span>
+                        <span class="material-symbols-outlined text-slate-400 transition-transform duration-200" :class="open ? 'rotate-180' : ''">expand_more</span>
+                        <div class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+                            <span class="material-symbols-outlined text-[20px]">person</span>
+                        </div>
+                    </button>
+
+                    <!-- Dropdown Menu -->
+                    <div x-show="open" @click.away="open = false" x-transition 
+                        class="absolute z-[10000] mt-2 w-full bg-white border border-slate-200 rounded-2xl shadow-xl overflow-hidden">
+                        
+                        <!-- Search Input -->
+                        <div class="p-3 border-b border-slate-100 bg-slate-50">
+                            <div class="relative">
+                                <input type="text" x-model="search" placeholder="Tìm tên hoặc email..." 
+                                    class="w-full pl-9 pr-4 py-2 bg-white border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none">
+                                <span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">search</span>
+                            </div>
+                        </div>
+
+                        <!-- Clients List -->
+                        <div class="max-h-60 overflow-y-auto custom-scrollbar">
+                            <template x-for="client in filteredClients" :key="client._id">
+                                <button type="button" @click="selectClient(client)" 
+                                    class="w-full px-4 py-3 text-left text-sm hover:bg-amber-50 transition-colors flex flex-col group border-b border-slate-50 last:border-0">
+                                    <span class="font-bold text-slate-800 group-hover:text-amber-700" x-text="client.name"></span>
+                                    <span class="text-xs text-slate-500" x-text="client.phone || client.email || '—'"></span>
+                                </button>
+                            </template>
+                            
+                            <!-- Empty Search Result -->
+                            <div x-show="filteredClients.length === 0" class="p-8 text-center text-slate-400 text-sm italic">
+                                <span class="material-symbols-outlined text-3xl mb-2 opacity-20 block">person_off</span>
+                                Không tìm thấy khách hàng nào
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-bold text-slate-700 mb-2 ml-1">Ghi chú tặng thưởng</label>
+                <textarea name="notes" rows="3" class="w-full p-4 bg-slate-50 border-slate-200 rounded-2xl text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all placeholder:text-slate-400" placeholder="Lý do tặng: Ví dụ: Khách hàng thân thiết, Quà tặng sinh nhật..."></textarea>
+            </div>
+
+            <div class="pt-2 flex gap-3">
+                <button type="button" onclick="closeAssignModal()" class="flex-1 px-6 py-3 border border-slate-200 rounded-2xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all">Hủy bỏ</button>
+                <button type="submit" class="flex-[1.5] px-6 py-3 bg-amber-500 text-white rounded-2xl text-sm font-black hover:bg-amber-600 transition-all shadow-lg shadow-amber-200 flex items-center justify-center gap-2">
+                    <span class="material-symbols-outlined text-[20px]">send</span>
+                    Xác nhận tặng quà
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+<%- include('../../partials/pagination') %>
+
+<script>
+    function openAssignModal(id, code, type, value) {
+        document.getElementById('modalCouponId').value = id;
+        document.getElementById('modalCouponCode').innerText = '#' + code;
+        
+        const displayValue =
+            type === 'FreeSessions'
+                ? 'Tặng ' + value + ' buổi tập'
+                : type === 'Percentage'
+                    ? 'Giảm ' + value + '%'
+                    : 'Giảm ' + new Intl.NumberFormat('vi-VN').format(value) + 'đ';
+        document.getElementById('modalCouponValue').innerText = displayValue;
+        
+        document.getElementById('assignRewardModal').classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeAssignModal() {
+        document.getElementById('assignRewardModal').classList.add('hidden');
+        document.body.style.overflow = 'auto';
+    }
+
+    // Đóng modal khi click ra ngoài
+    window.onclick = function(event) {
+        const modal = document.getElementById('assignRewardModal');
+        if (event.target == modal) {
+            closeAssignModal();
+        }
+    }
+</script>
+
+<script>
+document.querySelectorAll('.coupon-bar[data-width]').forEach(function(el) {
+    el.style.width = el.dataset.width + '%';
+});
+</script>
+
+<%- include('../../partials/footer') %>

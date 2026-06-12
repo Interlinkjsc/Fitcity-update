@@ -1,0 +1,144 @@
+@startuml UC_SA_Standalone
+title Use Case — Bản Đồ Quyền Hạn Toàn Diện của Super Admin (SA) trên Mọi Modules
+left to right direction
+skinparam actorStyle awesome
+skinparam backgroundColor #FAFAFA
+
+' Cấu hình màu sắc riêng biệt cho hệ thống SA (Tông tím cao cấp)
+skinparam package {
+  BorderColor #7C3AED
+  BackgroundColor #F5F3FF
+  FontColor #4C1D95
+  FontSize 13
+}
+
+skinparam usecase {
+  BorderColor #6D28D9
+  BackgroundColor #EDE9FE
+  FontSize 11
+  ArrowColor #7C3AED
+}
+
+actor "Super Admin\n(SA)" as SA
+
+package "1. Quản lý Hệ thống & Thiết lập (Platform & Settings)" {
+  usecase "UC-PLT70\nPhân quyền & Override Permissions" as PLT70
+  usecase "UC-PLT10\nCấu hình System Settings vĩ mô" as PLT10
+  usecase "UC-PLT20\nThiết lập Checklist công việc chi nhánh" as PLT20
+  usecase "UC-PLT31\nDuyệt Daily Reports toàn hệ thống" as PLT31
+  usecase "UC-PLT40\nBáo cáo tài chính tổng quan" as PLT40
+  usecase "UC-PLT41\nBáo cáo công việc chi nhánh (Excel)" as PLT41
+  usecase "UC-PLT50\nQuản lý Mô tả công việc (Job Descriptions)" as PLT50
+  usecase "UC-USR23\nReset phân quyền về Registry mặc định" as USR23
+}
+
+package "2. Quản lý Tổ chức & Nhân sự (HR & Organization)" {
+  usecase "UC-USR01\nXem danh sách nhân sự toàn hệ thống" as USR01
+  usecase "UC-USR02\nCRUD Tài khoản Nhân sự / Staff" as USR02
+  usecase "UC-CRM41\nCRUD Chi nhánh toàn quốc (Branches)" as CRM41
+  usecase "UC-CRM50\nQuản lý chế tài kỷ luật & phạt (Violations)" as CRM50
+}
+
+package "3. Quản lý CRM & Tiếp thị (CRM & Marketing)" {
+  usecase "UC-CRM10\nQuản lý Phễu chuyển đổi Lead toàn hệ thống" as CRM10
+  usecase "UC-CRM13\nXuất danh sách Lead sang file Excel" as CRM13
+  usecase "UC-CRM21\nCRUD bài viết & Trang tin tức (CMS)" as CRM21
+  usecase "UC-CRM31\nQuản lý kho tài nguyên & Media (Content Library)" as CRM31
+}
+
+package "4. Quản lý Khách hàng & Hợp đồng (Clients & Contracts)" {
+  usecase "UC-CLI21\nCRUD tài khoản Khách hàng (Clients)" as CLI21
+  usecase "UC-CTR04\nSửa/Xóa/Điều chỉnh Hợp đồng (Full Control)" as CTR04
+  usecase "UC-CTR06\nTải/Xem file PDF Hợp đồng từ Google Drive" as CTR06
+  usecase "UC-CTR08\nGhi thanh toán & Kích hoạt Hợp đồng\n(Bypass Kế toán duyệt)" as CTR08
+  usecase "UC-CTR13\nDuyệt/Từ chối yêu cầu Bảo lưu Hợp đồng" as CTR13
+  usecase "UC-SA-BYP01\nTạo trực tiếp Khách hàng\n(Bypass phễu Lead CRM)" as SA_BYP01
+}
+
+package "5. Quản trị Tài chính & Hiệu suất (Finance & Performance)" {
+  usecase "UC-FIN03\nDuyệt bảng lương PT & Staff toàn hệ thống" as FIN03
+  usecase "UC-FIN05\nĐánh dấu bảng lương đã thanh toán" as FIN05
+  usecase "UC-FIN11\nQuản lý Sổ chi & Khấu trừ VAT (Expenses)" as FIN11
+  usecase "UC-FIN13\nXuất sổ chi theo quý ra Excel" as FIN13
+  usecase "UC-FIN20\nQuản lý Coupon & Chiến dịch Khuyến mãi" as FIN20
+  usecase "UC-PRG40\nThiết lập chỉ tiêu target KPI chi nhánh" as PRG40
+  usecase "UC-PRG41\nThiết lập KPI mục tiêu cá nhân cho Sales/PT" as PRG41
+}
+
+package "6. Vận hành PT & Chấm công (PT Operations & Timesheets)" {
+  usecase "UC-PT30\nDuyệt bảng chấm công (Timesheet) của PT" as PT30
+  usecase "UC-PT31\nDuyệt đơn xin nghỉ (Leave requests) của PT" as PT31
+  usecase "UC-PT32\nDuyệt yêu cầu thay đổi PT của khách hàng" as PT32
+  usecase "UC-PT40\nXem và Quản lý Lịch Slot của chi nhánh (Admin)" as PT40
+  usecase "UC-SA-OVR01\nCưỡng chế Điểm danh (Force Check-in)\n(Bypass PT quét QR)" as SA_OVR01
+  usecase "UC-SA-OVR02\nCưỡng chế Xác nhận Buổi tập (Force Confirm)\n(Bypass Client bấm App)" as SA_OVR02
+}
+
+package "7. Quản lý Chương trình & Gói tập (Programs & Gamification)" {
+  usecase "UC-PRG01\nCRUD Gói tập & Gói dịch vụ (Packages)" as PRG01
+  usecase "UC-FIN30\nCRUD Rewards & Quản lý đổi thưởng của hội viên" as FIN30
+}
+
+' Kết nối Actor SA với tất cả các Use Case trong các Module
+SA --> PLT70
+SA --> PLT10
+SA --> PLT20
+SA --> PLT31
+SA --> PLT40
+SA --> PLT41
+SA --> PLT50
+SA --> USR23
+
+SA --> USR01
+SA --> USR02
+SA --> CRM41
+SA --> CRM50
+
+SA --> CRM10
+SA --> CRM13
+SA --> CRM21
+SA --> CRM31
+
+SA --> CLI21
+SA --> CTR04
+SA --> CTR06
+SA --> CTR08
+SA --> CTR13
+SA --> SA_BYP01
+
+SA --> FIN03
+SA --> FIN05
+SA --> FIN11
+SA --> FIN13
+SA --> FIN20
+SA --> PRG40
+SA --> PRG41
+
+SA --> PT30
+SA --> PT31
+SA --> PT32
+SA --> PT40
+SA --> SA_OVR01
+SA --> SA_OVR02
+
+SA --> PRG01
+SA --> FIN30
+
+note bottom of SA_BYP01
+  <<implemented>>
+  POST /admin/clients/store (cùng UC-CLI21)
+  act-12: ưu tiên Convert Lead (R2 <<planned>>)
+end note
+
+note bottom of SA_OVR01
+  <<planned>> — chưa có route
+  POST /admin/sessions/force-checkin/:id
+  POST /admin/sessions/force-confirm/:id
+  Xem act-12 partition 3
+end note
+
+note bottom of SA_OVR02
+  (cùng ghi chú SA_OVR01)
+end note
+
+@enduml

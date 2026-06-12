@@ -1,0 +1,92 @@
+@startuml UC_PT_Full
+title Module: PT Operations (đầy đủ)
+left to right direction
+skinparam actorStyle awesome
+
+actor PT
+actor Client
+actor Manager as MGR
+actor Admin as ADM
+
+package "PT Core /pt" {
+  usecase "UC-PT01\nDashboard" as P01
+  usecase "UC-PT02\nMy clients" as P02
+  usecase "UC-PT03\nPT schedule" as P03
+  usecase "UC-PT04\nIncome" as P04
+  usecase "UC-PT05\nScan QR session" as P05
+  usecase "UC-PT06\nCheck-out session" as P06
+  usecase "UC-PT07\nCreate contract" as P07
+  usecase "UC-PT08\nAttendance check-in" as P08
+  usecase "UC-PT09\nAttendance check-out" as P09
+  usecase "UC-PT10\nDaily report" as P10
+  usecase "UC-PT11\nLeave request" as P11
+  usecase "UC-PT12\nSchedule session" as P12
+  usecase "UC-PT13\nHandle cancel request\n(Accept / Reject)" as P13
+  usecase "UC-PT17\nEdit meal plan" as P17
+  usecase "UC-PT18\nWorkout assignment" as P18
+}
+
+package "Metrics /pt/metrics" {
+  usecase "UC-PT20\nClients for metrics" as P20
+  usecase "UC-PT21\nAdd body metric" as P21
+  usecase "UC-PT22\nMetric history" as P22
+}
+
+package "Admin PT Ops" {
+  usecase "UC-PT30\nTimesheet list" as P30
+  usecase "UC-PT31\nApprove timesheet" as P31
+  usecase "UC-PT32\nReject timesheet" as P32
+  usecase "UC-PT40\nPT leave admin" as P40
+  usecase "UC-PT41\nApprove leave+reassign" as P41
+  usecase "UC-PT42\nPT change requests" as P42
+  usecase "UC-PT43\nUpdate PT change" as P43
+  usecase "UC-PT50\nAdmin slot calendar" as P50
+  usecase "UC-PT51\nSlot requests admin" as P51
+}
+
+PT --> P01
+PT --> P02
+PT --> P03
+PT --> P04
+PT --> P05
+PT --> P06
+PT --> P07
+PT --> P08
+PT --> P09
+PT --> P10
+PT --> P11
+PT --> P12
+PT --> P13
+PT --> P17
+PT --> P18
+PT --> P20
+PT --> P21
+PT --> P22
+
+Client --> P05 : QR token
+
+MGR --> P30
+MGR --> P31
+MGR --> P32
+MGR --> P40
+MGR --> P41
+MGR --> P42
+MGR --> P43
+MGR --> P50
+MGR --> P51
+ADM --> P30
+ADM --> P40
+
+P05 ..> P06
+
+note bottom of P05
+  POST /pt/sessions/scan-qr
+  POST /api/calendar/sessions/:id/scan-qr
+  States: Scheduled→In_Progress→Completed
+end note
+
+note bottom of P41
+  Reassign pt on Active/Draft contracts
+end note
+
+@enduml

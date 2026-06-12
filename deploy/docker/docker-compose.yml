@@ -1,0 +1,79 @@
+# FitCity production stack — run from repo root on VPS:
+#   docker compose -f deploy/docker/docker-compose.yml up -d --build
+#
+# Requires: /opt/fitcity/env/.env.production (Phase 0)
+
+name: fitcity
+
+services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    command: ["mongod", "--wiredTigerCacheSizeGB", "1"]
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - fitcity_net
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  app:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile
+    image: fitcity-app:latest
+    restart: unless-stopped
+    env_file:
+      - /opt/fitcity/env/.env.production
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      MONGODB_URI: mongodb://mongo:27017/Fitcity
+      TRUST_PROXY: "1"
+      # HTTP via IP (no domain/SSL yet). Set "true" when behind HTTPS.
+      COOKIE_SECURE: "false"
+    ports:
+      - "3000:3000"
+    volumes:
+      - /opt/fitcity/secrets:/opt/fitcity/secrets:ro
+    depends_on:
+      mongo:
+        condition: service_healthy
+    networks:
+      - fitcity_net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:3000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+
+  cron:
+    image: fitcity-app:latest
+    restart: unless-stopped
+    command: ["node", "src/cron/runner.js"]
+    env_file:
+      - /opt/fitcity/env/.env.production
+    environment:
+      NODE_ENV: production
+      MONGODB_URI: mongodb://mongo:27017/Fitcity
+    volumes:
+      - /opt/fitcity/secrets:/opt/fitcity/secrets:ro
+    depends_on:
+      mongo:
+        condition: service_healthy
+      app:
+        condition: service_healthy
+    networks:
+      - fitcity_net
+
+networks:
+  fitcity_net:
+    driver: bridge
+
+volumes:
+  mongo_data:

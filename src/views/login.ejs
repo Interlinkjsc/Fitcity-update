@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>FitCity - <%= typeof view !== 'undefined' && view === 'register' ? 'Đăng ký' : 'Đăng nhập' %></title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script data-purpose="tailwind-config">
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              black: '#F8FAF7',
+              neon: '#16A34A',
+              gray: '#FFFFFF'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style data-purpose="custom-transitions">
+    .neon-focus:focus-within {
+      box-shadow: 0 0 10px rgba(22, 163, 74, 0.3);
+    }
+    .btn-glow:active {
+      box-shadow: 0 0 15px rgba(22, 163, 74, 0.5);
+      transform: scale(0.98);
+    }
+    .auth-input {
+      display: block;
+      width: 100%;
+      background-color: #F8FAF7;
+      border: 1px solid #e5e7eb;
+      border-radius: 0.5rem;
+      padding: 0.375rem 0.625rem;
+      font-size: 0.875rem;
+      line-height: 1.25rem;
+    }
+    .auth-input:focus {
+      border-color: #16A34A;
+      outline: none;
+      box-shadow: 0 0 0 1px #16A34A;
+    }
+    .auth-label {
+      display: block;
+      font-size: 10px;
+      font-weight: 600;
+      color: #4b5563;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.125rem;
+    }
+  </style>
+</head>
+<% const isRegister = typeof view !== 'undefined' && view === 'register'; %>
+<body class="bg-brand-black text-gray-900 font-sans flex flex-col <%= isRegister ? 'h-screen overflow-hidden' : 'min-h-screen' %>">
+  <header class="text-center shrink-0 <%= isRegister ? 'pt-5 pb-2' : 'pt-16 pb-8' %>" data-purpose="app-branding">
+    <h1 class="<%= isRegister ? 'text-2xl' : 'text-3xl' %> font-extrabold tracking-tighter italic text-brand-neon">FITCITY</h1>
+    <% if (!isRegister) { %>
+      <p class="text-gray-500 text-sm mt-2 uppercase tracking-widest">Hệ thống quản lý phòng tập</p>
+    <% } %>
+  </header>
+
+  <main class="flex-1 px-4 flex items-center justify-center <%= isRegister ? 'pb-4 min-h-0' : 'pb-12' %>">
+    <div class="w-full <%= isRegister ? 'max-w-lg p-5' : 'max-w-sm p-8' %> rounded-2xl bg-brand-gray border border-brand-neon/20 shadow-2xl" data-purpose="login-card">
+      <div class="<%= isRegister ? 'mb-3' : 'mb-8' %>">
+        <h2 class="<%= isRegister ? 'text-lg' : 'text-xl' %> font-bold"><%= isRegister ? 'Tạo tài khoản' : 'Chào mừng trở lại' %></h2>
+        <% if (!isRegister) { %>
+          <p class="text-gray-500 text-sm">Vui lòng nhập thông tin để tiếp tục.</p>
+        <% } %>
+      </div>
+
+      <% if (success_msg && success_msg.length > 0) { %>
+        <div class="bg-brand-neon/10 border border-brand-neon text-brand-neon text-xs px-3 py-1.5 rounded-lg mb-3 text-center">
+          <%= success_msg %>
+        </div>
+      <% } %>
+
+      <% if (error_msg && error_msg.length > 0) { %>
+        <div class="bg-red-500/10 border border-red-500 text-red-500 text-xs px-3 py-1.5 rounded-lg mb-3 text-center">
+          <%= error_msg %>
+        </div>
+      <% } %>
+
+      <% if (isRegister) { %>
+        <form action="/auth/register" method="POST" data-purpose="register-form">
+          <div class="grid grid-cols-2 gap-x-3 gap-y-2.5">
+            <div>
+              <label class="auth-label" for="reg-name">Họ và tên <span class="text-red-500">*</span></label>
+              <input class="auth-input" id="reg-name" name="name" placeholder="Nguyễn Văn A" required type="text"/>
+            </div>
+            <div>
+              <label class="auth-label" for="reg-phone">Số điện thoại</label>
+              <input class="auth-input" id="reg-phone" name="phone" placeholder="09xxxxxxxx" type="tel"/>
+            </div>
+            <div>
+              <label class="auth-label" for="reg-email">Email <span class="text-red-500">*</span></label>
+              <input class="auth-input" id="reg-email" name="email" placeholder="email@example.com" required type="email"/>
+            </div>
+            <div>
+              <label class="auth-label" for="reg-branch">Chi nhánh <span class="text-red-500">*</span></label>
+              <select class="auth-input" id="reg-branch" name="branch" required>
+                <option value="">-- Chọn --</option>
+                <% if (typeof branches !== 'undefined' && branches.length) { %>
+                  <% branches.forEach(function(b) { %>
+                    <option value="<%= b._id %>"><%= b.name %></option>
+                  <% }); %>
+                <% } %>
+              </select>
+            </div>
+            <div>
+              <label class="auth-label" for="reg-password">Mật khẩu <span class="text-red-500">*</span></label>
+              <input class="auth-input" id="reg-password" name="password" minlength="6" placeholder="≥ 6 ký tự" required type="password"/>
+            </div>
+            <div>
+              <label class="auth-label" for="reg-confirm">Xác nhận <span class="text-red-500">*</span></label>
+              <input class="auth-input" id="reg-confirm" name="confirmPassword" minlength="6" placeholder="Nhập lại" required type="password"/>
+            </div>
+            <div class="col-span-2">
+              <label class="auth-label" for="reg-referral">Mã giới thiệu (nếu có)</label>
+              <input class="auth-input" id="reg-referral" name="referralCode" placeholder="VD: ABC12XYZ" type="text"/>
+            </div>
+          </div>
+
+          <% if (typeof branches === 'undefined' || !branches.length) { %>
+            <p class="text-[10px] text-amber-600 mt-1.5">Chưa có chi nhánh mở. Vui lòng liên hệ lễ tân.</p>
+          <% } %>
+
+          <button class="w-full mt-3 py-2.5 bg-brand-neon text-white text-sm font-black uppercase tracking-widest rounded-lg hover:bg-opacity-90 transition-all btn-glow shadow-md shadow-brand-neon/20" type="submit" <%= (typeof branches === 'undefined' || !branches.length) ? 'disabled' : '' %>>
+            Đăng ký
+          </button>
+
+          <p class="text-center text-[11px] text-gray-500 mt-2">
+            Đã có tài khoản?
+            <a href="/auth/login" class="text-brand-neon hover:underline font-medium">Đăng nhập</a>
+          </p>
+        </form>
+      <% } else { %>
+        <form action="/auth/login" class="space-y-6" method="POST" data-purpose="login-form">
+          <div class="space-y-2">
+            <label class="block text-xs font-medium text-gray-600 uppercase tracking-wider" for="email">Địa chỉ Email</label>
+            <div class="relative group">
+              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg class="h-5 w-5 text-gray-400 group-focus-within:text-brand-neon transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+              </div>
+              <input class="block w-full pl-10 bg-brand-black border border-gray-200 rounded-lg text-gray-900 placeholder-gray-400 focus:border-brand-neon focus:ring-1 focus:ring-brand-neon transition-all" id="email" name="email" placeholder="email@congty.com" required type="email"/>
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <label class="block text-xs font-medium text-gray-600 uppercase tracking-wider" for="password">Mật khẩu</label>
+            <div class="relative group">
+              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg class="h-5 w-5 text-gray-400 group-focus-within:text-brand-neon transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+              </div>
+              <input class="block w-full pl-10 bg-brand-black border border-gray-200 rounded-lg text-gray-900 placeholder-gray-400 focus:border-brand-neon focus:ring-1 focus:ring-brand-neon transition-all" id="password" name="password" placeholder="••••••••" required type="password"/>
+            </div>
+          </div>
+
+          <button class="w-full py-4 bg-brand-neon text-white font-black uppercase tracking-widest rounded-lg hover:bg-opacity-90 transition-all btn-glow shadow-md shadow-brand-neon/20" type="submit">
+            Đăng nhập
+          </button>
+
+          <p class="text-center text-xs text-gray-500 pt-1">
+            Chưa có tài khoản?
+            <a href="/auth/login?view=register" class="text-brand-neon hover:underline font-medium">Đăng ký tài khoản</a>
+          </p>
+        </form>
+      <% } %>
+    </div>
+  </main>
+</body>
+</html>

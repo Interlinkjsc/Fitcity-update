@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lỗi truy cập - FitCity</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <style>body { font-family: 'Inter', sans-serif; }</style>
+</head>
+<body class="bg-slate-900 text-white min-h-screen flex items-center justify-center p-6">
+    <div class="text-center max-w-md">
+        <div class="w-24 h-24 mx-auto mb-8 rounded-full bg-red-500/10 flex items-center justify-center">
+            <svg class="w-12 h-12 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+            </svg>
+        </div>
+        <h1 class="text-4xl font-black mb-3">403</h1>
+        <h2 class="text-xl font-bold text-slate-300 mb-4">Truy cập bị từ chối</h2>
+        <p class="text-slate-500 mb-8 leading-relaxed">
+            <%= typeof message !== 'undefined' ? message : 'Bạn không có quyền truy cập vào chức năng này.' %>
+        </p>
+        <div class="flex gap-4 justify-center">
+            <a href="javascript:history.back()" 
+               class="px-6 py-3 bg-slate-800 hover:bg-slate-700 rounded-xl font-semibold transition-colors border border-slate-700">
+                ← Quay lại
+            </a>
+            <a href="/auth/login" 
+               class="px-6 py-3 bg-lime-500 hover:bg-lime-400 text-slate-900 rounded-xl font-bold transition-colors">
+                Đăng nhập lại
+            </a>
+        </div>
+        <p class="mt-12 text-xs text-slate-600">© 2026 FITCITY — Cao cấp & Đẳng cấp</p>
+    </div>
+</body>
+</html>

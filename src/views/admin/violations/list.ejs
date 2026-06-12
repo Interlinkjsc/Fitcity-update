@@ -1,0 +1,261 @@
+<%- include('../../partials/header', { title: 'Quản lý Kỷ luật', activePage: 'violations' }) %>
+
+<div class="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+        <h2 class="text-2xl font-bold text-slate-800">Quản lý Kỷ luật</h2>
+        <p class="text-slate-500 text-sm mt-1">Quản lý các vi phạm của nhân sự và tự động trừ lương</p>
+    </div>
+    <div class="flex gap-2">
+        <a href="/admin/violations/create" class="flex items-center gap-2 px-4 py-2 bg-rose-600 text-white text-sm font-medium rounded-lg hover:bg-rose-700 transition-colors shadow-sm">
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+            </svg>
+            Ghi nhận vi phạm mới
+        </a>
+    </div>
+</div>
+
+<!-- Thống kê tổng quan -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm border-l-4 border-l-rose-500 relative overflow-hidden group">
+        <div class="relative z-10">
+            <p class="text-slate-500 text-xs font-bold uppercase tracking-widest mb-1">Tổng tiền vi phạm</p>
+            <h3 class="text-3xl font-black text-rose-600">
+                <%= new Intl.NumberFormat('vi-VN').format(Math.round(totalPenalty)) %>
+                <span class="text-sm font-normal text-slate-400">VNĐ</span>
+            </h3>
+            <p class="text-[10px] text-slate-400 mt-2 italic font-medium">* Theo điều kiện lọc hiện tại</p>
+        </div>
+        <div class="absolute -right-4 -bottom-4 opacity-[0.03] group-hover:scale-110 transition-transform duration-500">
+            <span class="material-symbols-outlined text-[100px]">payments</span>
+        </div>
+    </div>
+
+    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm border-l-4 border-l-amber-500 relative overflow-hidden group">
+        <div class="relative z-10">
+            <p class="text-slate-500 text-xs font-bold uppercase tracking-widest mb-1">Tổng số lỗi</p>
+            <h3 class="text-3xl font-black text-amber-600">
+                <%= typeof pagination !== 'undefined' && pagination.totalDocs != null ? pagination.totalDocs : 0 %>
+                <span class="text-sm font-normal text-slate-400">lỗi</span>
+            </h3>
+            <p class="text-[10px] text-slate-400 mt-2 italic font-medium">* Theo điều kiện lọc hiện tại</p>
+        </div>
+        <div class="absolute -right-4 -bottom-4 opacity-[0.03] group-hover:scale-110 transition-transform duration-500">
+            <span class="material-symbols-outlined text-[100px]">warning</span>
+        </div>
+    </div>
+
+    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm border-l-4 border-l-blue-500 relative overflow-hidden group">
+        <div class="relative z-10">
+            <p class="text-slate-500 text-xs font-bold uppercase tracking-widest mb-1">Nhân sự bị kỷ luật</p>
+            <h3 class="text-3xl font-black text-blue-600">
+                <%= typeof staffStats !== 'undefined' ? staffStats.length : 0 %>
+                <span class="text-sm font-normal text-slate-400">Người</span>
+            </h3>
+            <p class="text-[10px] text-slate-400 mt-2 italic font-medium">* Số nhân viên có vi phạm</p>
+        </div>
+        <div class="absolute -right-4 -bottom-4 opacity-[0.03] group-hover:scale-110 transition-transform duration-500">
+            <span class="material-symbols-outlined text-[100px]">groups</span>
+        </div>
+    </div>
+</div>
+
+<!-- Báo cáo thống kê Nhân sự -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+    <!-- Top loại vi phạm -->
+    <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+        <h3 class="text-sm font-semibold text-slate-700 uppercase tracking-wider mb-4">Lỗi vi phạm phổ biến</h3>
+        <% if (typeof typeStats !== 'undefined' && typeStats.length > 0) { %>
+            <div class="space-y-4">
+                <% typeStats.slice(0, 5).forEach(stat => { %>
+                    <div>
+                        <div class="flex justify-between text-sm mb-1">
+                            <span class="font-medium text-slate-800"><%= stat._id %></span>
+                            <span class="text-slate-500"><%= stat.count %> lần (<%= new Intl.NumberFormat('vi-VN').format(Math.round(stat.totalPenalty)) %>đ)</span>
+                        </div>
+                        <div class="w-full bg-slate-100 rounded-full h-2">
+                            <% const barWidth = Math.min(100, (stat.count / typeStats[0].count) * 100); %>
+                            <div class="bg-rose-500 h-2 rounded-full violation-bar" data-width="<%= barWidth %>" style="width: 0%"></div>
+                        </div>
+                    </div>
+                <% }) %>
+            </div>
+        <% } else { %>
+            <p class="text-sm text-slate-500 italic">Chưa có dữ liệu thống kê.</p>
+        <% } %>
+    </div>
+
+    <!-- Top nhân sự vi phạm -->
+    <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+        <h3 class="text-sm font-semibold text-slate-700 uppercase tracking-wider mb-4">Nhân viên vi phạm nhiều nhất</h3>
+        <% if (typeof staffStats !== 'undefined' && staffStats.length > 0) { %>
+            <div class="space-y-4">
+                <% staffStats.slice(0, 5).forEach(stat => { %>
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="h-8 w-8 rounded-full overflow-hidden bg-slate-200 shrink-0">
+                                <img src="<%= stat.staffInfo.avatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(stat.staffInfo.name) %>" class="h-full w-full object-cover">
+                            </div>
+                            <div>
+                                <div class="font-medium text-sm text-slate-900"><%= stat.staffInfo.name %></div>
+                                <div class="text-xs text-slate-500"><%= stat.count %> lần vi phạm</div>
+                            </div>
+                        </div>
+                        <div class="text-sm font-semibold text-rose-600">
+                            -<%= new Intl.NumberFormat('vi-VN').format(Math.round(stat.totalPenalty)) %>đ
+                        </div>
+                    </div>
+                <% }) %>
+            </div>
+        <% } else { %>
+            <p class="text-sm text-slate-500 italic">Chưa có dữ liệu thống kê.</p>
+        <% } %>
+    </div>
+</div>
+
+<!-- Lọc và Tìm kiếm -->
+<div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 mb-6">
+    <form action="/admin/violations" method="GET" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 items-end">
+        <div class="lg:col-span-2">
+            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Tìm kiếm nhân viên</label>
+            <div class="relative">
+                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
+                    <span class="material-symbols-outlined text-sm">search</span>
+                </span>
+                <input type="text" name="search" value="<%= filters.search %>" placeholder="Nhập tên nhân viên cần tìm..." 
+                    class="w-full pl-9 text-sm border-slate-300 rounded-lg focus:ring-rose-500 focus:border-rose-500 outline-none py-2 transition-all">
+            </div>
+        </div>
+        <div>
+            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Tháng</label>
+            <select name="month" class="w-full text-sm border-slate-300 rounded-lg focus:ring-rose-500 focus:border-rose-500 py-2 outline-none">
+                <option value="">Tất cả tháng</option>
+                <% for(let i=1; i<=12; i++) { %>
+                    <option value="<%= i %>" <%= filters.month == i ? 'selected' : '' %>>Tháng <%= i %></option>
+                <% } %>
+            </select>
+        </div>
+        <div>
+            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Năm</label>
+            <select name="year" class="w-full text-sm border-slate-300 rounded-lg focus:ring-rose-500 focus:border-rose-500 py-2 outline-none">
+                <% const currentYear = new Date().getFullYear(); %>
+                <% for(let i=currentYear; i>=currentYear-2; i--) { %>
+                    <option value="<%= i %>" <%= filters.year == i ? 'selected' : '' %>><%= i %></option>
+                <% } %>
+            </select>
+        </div>
+        <div>
+            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Trạng thái</label>
+            <select name="status" class="w-full text-sm border-slate-300 rounded-lg focus:ring-rose-500 focus:border-rose-500 py-2 outline-none">
+                <option value="all" <%= filters.status === 'all' ? 'selected' : '' %>>Tất cả trạng thái</option>
+                <option value="Pending" <%= filters.status === 'Pending' ? 'selected' : '' %>>Chưa trừ</option>
+                <option value="Applied_To_Payroll" <%= filters.status === 'Applied_To_Payroll' ? 'selected' : '' %>>Đã trừ lương</option>
+            </select>
+        </div>
+        <div class="flex gap-2">
+            <button type="submit" class="flex-1 bg-slate-800 text-white text-sm font-bold py-2 rounded-lg hover:bg-slate-900 transition-all shadow-sm">Lọc</button>
+            <a href="/admin/violations" class="px-3 py-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200 transition-colors" title="Xóa bộ lọc">
+                <span class="material-symbols-outlined text-[20px] align-middle">restart_alt</span>
+            </a>
+        </div>
+    </form>
+</div>
+
+<div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse" id="violationsTable">
+            <thead>
+                <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 text-xs uppercase tracking-wider">
+                    <th class="p-4 font-semibold">Nhân sự</th>
+                    <th class="p-4 font-semibold">Loại vi phạm</th>
+                    <th class="p-4 font-semibold">Ngày vi phạm</th>
+                    <th class="p-4 font-semibold text-right">Phạt (VNĐ)</th>
+                    <th class="p-4 font-semibold text-center">Trạng thái</th>
+                    <th class="p-4 font-semibold text-center">Người ghi nhận</th>
+                    <th class="p-4 font-semibold text-right">Hành động</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 text-sm">
+                <% if (violations.length > 0) { %>
+                    <% violations.forEach(violation => { %>
+                        <tr class="hover:bg-slate-50 transition-colors violation-row" data-status="<%= violation.status %>" data-search="<%= violation.staff ? violation.staff.name.toLowerCase() : '' %>">
+                            <td class="p-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="h-8 w-8 rounded-full overflow-hidden bg-slate-200 shrink-0">
+                                        <img src="<%= violation.staff && violation.staff.avatar ? violation.staff.avatar : 'https://ui-avatars.com/api/?name=' + encodeURIComponent(violation.staff ? violation.staff.name : 'U') %>" alt="" class="h-full w-full object-cover">
+                                    </div>
+                                    <div>
+                                        <div class="font-medium text-slate-900"><%= violation.staff ? violation.staff.name : 'Không xác định' %></div>
+                                        <div class="text-xs text-slate-500"><%= violation.staff ? violation.staff.role : '' %></div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="p-4">
+                                <div class="font-medium text-slate-700"><%= violation.type %></div>
+                                <div class="text-xs text-slate-500 truncate max-w-xs" title="<%= violation.description %>"><%= violation.description %></div>
+                            </td>
+                            <td class="p-4 text-slate-600">
+                                <%= new Date(violation.date).toLocaleDateString('vi-VN') %>
+                            </td>
+                            <td class="p-4 text-right">
+                                <span class="font-semibold text-rose-600">-<%= new Intl.NumberFormat('vi-VN').format(Math.round(violation.penaltyAmount)) %></span>
+                            </td>
+                            <td class="p-4 text-center">
+                                <% if (violation.status === 'Pending') { %>
+                                    <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-amber-100 text-amber-700">Chưa trừ</span>
+                                <% } else if (violation.status === 'Applied_To_Payroll') { %>
+                                    <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-emerald-100 text-emerald-700">Đã trừ lương</span>
+                                <% } else { %>
+                                    <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-slate-100 text-slate-600">Đã hủy</span>
+                                <% } %>
+                            </td>
+                            <td class="p-4 text-center text-slate-500 text-xs">
+                                <%= violation.loggedBy ? violation.loggedBy.name : 'Hệ thống' %>
+                            </td>
+                            <td class="p-4 text-right">
+                                <% if (violation.status !== 'Applied_To_Payroll') { %>
+                                    <div class="flex justify-end gap-2">
+                                        <a href="/admin/violations/edit/<%= violation._id %>" class="text-blue-600 hover:text-blue-800 p-1" title="Chỉnh sửa">
+                                            <span class="material-symbols-outlined text-[20px]">edit</span>
+                                        </a>
+                                        <form action="/admin/violations/delete/<%= violation._id %>" method="POST" class="inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa ghi nhận vi phạm này?');">
+                                            <button type="submit" class="text-red-500 hover:text-red-700 p-1" title="Xóa">
+                                                <span class="material-symbols-outlined text-[20px]">delete</span>
+                                            </button>
+                                        </form>
+                                    </div>
+                                <% } else { %>
+                                    <span class="text-xs text-slate-400 italic">Locked</span>
+                                <% } %>
+                            </td>
+                        </tr>
+                    <% }) %>
+                <% } else { %>
+                    <tr>
+                        <td colspan="7" class="p-8 text-center text-slate-500">
+                            <div class="flex flex-col items-center justify-center">
+                                <span class="material-symbols-outlined text-4xl mb-2 text-slate-300">verified_user</span>
+                                <p>Không có ghi nhận vi phạm nào.</p>
+                            </div>
+                        </td>
+                    </tr>
+                <% } %>
+            </tbody>
+        </table>
+    </div>
+</div>
+<%- include('../../partials/pagination') %>
+
+<script>
+    // Set bar widths dynamically to avoid IDE linting errors in HTML attributes
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.violation-bar').forEach(el => {
+            const width = el.getAttribute('data-width');
+            if (width) {
+                el.style.width = width + '%';
+            }
+        });
+    });
+</script>
+
+<%- include('../../partials/footer') %>

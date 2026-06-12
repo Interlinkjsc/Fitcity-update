@@ -1,0 +1,92 @@
+<%- include('../../partials/header', { title: isEdit ? 'Chỉnh sửa Chi nhánh' : 'Thiết lập Chi nhánh mới', activePage: 'branches' }) %>
+
+<div class="mb-6 flex flex-col sm:flex-row justify-between items-start gap-4">
+    <div>
+        <h2 class="text-2xl font-bold text-slate-800"><%= isEdit ? 'Cập nhật' : 'Thêm mới' %> Thông tin Cơ sở</h2>
+        <p class="text-slate-500 text-sm mt-1">
+            <a href="/admin/branches/list" class="text-blue-600 hover:underline">Quay lại danh sách</a> / 
+            <span><%= isEdit ? 'Chỉnh sửa' : 'Tạo mới' %></span>
+        </p>
+    </div>
+</div>
+
+<div class="bg-white rounded-xl border border-slate-200 shadow-sm max-w-4xl overflow-hidden pb-8">
+    <div class="px-6 py-4 border-b border-slate-200 bg-slate-50">
+        <h3 class="font-semibold text-slate-800 flex items-center gap-2">
+            <svg class="h-5 w-5 text-lime-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+            </svg>
+            Biểu mẫu Hồ sơ Chi nhánh
+        </h3>
+    </div>
+    
+    <form action="/admin/branches/<%= isEdit ? 'update/' + branch._id : 'store' %>" method="POST" class="p-6 md:p-8 space-y-6">
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <!-- Tên Chi nhánh -->
+            <div>
+                <label for="name" class="block text-sm font-medium text-slate-700 mb-1">Tên Chi nhánh <span class="text-red-500">*</span></label>
+                <input type="text" id="name" name="name" required value="<%= typeof branch !== 'undefined' ? branch.name : '' %>"
+                    class="block w-full rounded-md border-slate-300 shadow-sm focus:border-lime-500 focus:ring focus:ring-lime-500 focus:ring-opacity-50 text-sm py-2 px-3 border bg-white"
+                    placeholder="VD: FitCity Quận Nhất">
+            </div>
+
+            <!-- Hotline / Số điện thoại liên hệ -->
+            <div>
+                <label for="phone" class="block text-sm font-medium text-slate-700 mb-1">Đường dây nóng (Hotline) <span class="text-red-500">*</span></label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
+                        </svg>
+                    </span>
+                    <input type="text" id="phone" name="phone" required value="<%= typeof branch !== 'undefined' ? branch.phone : '' %>"
+                        class="block w-full rounded-md border-slate-300 shadow-sm focus:border-lime-500 focus:ring focus:ring-lime-500 text-sm py-2 pl-9 pr-3 border bg-white"
+                        placeholder="VD: 0987123456">
+                </div>
+            </div>
+        </div>
+
+        <!-- Địa chỉ tòa nhà/mặt bằng -->
+        <div>
+            <label for="address" class="block text-sm font-medium text-slate-700 mb-1">Địa chỉ chi tiết cơ sở hạ tầng <span class="text-red-500">*</span></label>
+            <input type="text" id="address" name="address" required value="<%= typeof branch !== 'undefined' ? branch.address : '' %>"
+                class="block w-full rounded-md border-slate-300 shadow-sm focus:border-lime-500 focus:ring focus:ring-lime-500 text-sm py-2 px-3 border bg-white"
+                placeholder="Nhập số nhà, tên đường, Phường, Quận, Thành phố...">
+        </div>
+
+        <!-- Gán giám đốc / quản lý -->
+        <div class="bg-indigo-50 border border-indigo-100 rounded-lg p-5">
+            <div class="flex items-start">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-indigo-400 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                    </svg>
+                </div>
+                <div class="ml-3 w-full">
+                    <label for="manager" class="block text-sm font-bold text-indigo-900 mb-2">Phân bổ Giám đốc Chi nhánh (Manager)</label>
+                    <select id="manager" name="manager" class="block w-full rounded-md border-indigo-200 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 text-sm py-2 px-3 border bg-white">
+                        <option value="">-- [Tùy chọn] Chọn Một Quản Lý từ danh sách Staff --</option>
+                        <% if (typeof managers !== 'undefined' && managers.length > 0) { %>
+                            <% managers.forEach(user => { %>
+                                <option value="<%= user._id %>" <%= (typeof branch !== 'undefined' && branch.manager && branch.manager._id && branch.manager._id.toString() === user._id.toString()) ? 'selected' : '' %>>
+                                    <%= user.name %> (<%= user.email %>)
+                                </option>
+                            <% }) %>
+                        <% } %>
+                    </select>
+                    <p class="mt-2 text-xs text-indigo-600">Những người dùng có Role = Manager mới xuất hiện trong danh sách này.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex justify-end gap-3 pt-6 border-t border-slate-100">
+            <a href="/admin/branches/list" class="px-5 py-2 text-sm font-medium rounded-md border border-slate-300 text-slate-700 hover:bg-slate-50 transition-colors">Hủy & Trở về</a>
+            <button type="submit" class="px-5 py-2 text-sm font-medium rounded-md bg-lime-500 text-slate-900 border border-transparent shadow hover:bg-lime-600 focus:outline-none focus:ring-2 focus:ring-lime-500 transition-colors">
+                <%= isEdit ? 'Ghi đè thay đổi' : 'Thiết lập Cơ sở' %>
+            </button>
+        </div>
+    </form>
+</div>
+
+<%- include('../../partials/footer') %>

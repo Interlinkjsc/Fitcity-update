@@ -1,0 +1,56 @@
+@startuml SEQ_Client_Booking
+title SEQ-04: Luồng lên lịch tập trực tiếp và Hủy lịch tập (Cancel Policy before start)
+autonumber
+
+actor PT
+participant "ptController" as PC
+database "WorkoutSession" as WS
+participant "notificationService" as NS
+actor Client
+participant "clientScheduleController" as CSC
+participant "calendarController" as CAL
+
+== 1. PT đặt lịch tập trực tiếp cho Khách hàng ==
+PT -> PC : POST /pt/slots\n{clientId, contractId, startTime, durationMinutes}
+PC -> WS : create WorkoutSession (status: Scheduled, pt, client, contract)
+PC -> NS : notify Client about new session scheduled
+NS --> Client : Push Notification: "PT đã lên lịch tập mới cho bạn"
+
+== 2. Khách hàng xem lịch tập ==
+Client -> CSC : GET /client/schedule
+CSC -> WS : find scheduled sessions for clientId
+CSC --> Client : Render schedule.ejs (hiển thị lịch tập chính thức)
+
+== 3. Khách hàng yêu cầu hủy lịch tập ==
+alt Buổi tập chưa bắt đầu (status == Scheduled)
+  Client -> CAL : POST /api/calendar/sessions/:id/request-cancel
+  CAL -> WS : findById(sessionId)
+  CAL -> WS : update status: Cancel_Requested
+  CAL --> Client : JSON { status: 'success', message: 'Đã gửi yêu cầu hủy lịch.' }
+  CAL -> NS : notify PT that cancellation is requested
+  NS --> PT : In-app/Push: "Hội viên yêu cầu hủy lịch tập"
+  
+  PT -> Client : Liên hệ trao đổi offline (Zalo/Call) để thống nhất phương án
+  
+  alt Action 1: Accept (PT đồng ý hủy)
+    PT -> PC : POST /pt/sessions/:id/accept-cancel
+    PC -> WS : update status: Cancelled
+    PC --> PT : OK
+    PC -> NS : notify Client that session is cancelled
+    NS --> Client : Push: "Lịch tập của bạn đã được hủy thành công"
+    note over PT, Client : PT thực hiện đặt lại lịch tập mới (Quay lại bước 1)
+  else Action 2: Cancel (PT từ chối hủy / hủy bỏ yêu cầu hủy)
+    PT -> PC : POST /pt/sessions/:id/reject-cancel
+    PC -> WS : update status: Scheduled
+    PC --> PT : OK
+    PC -> NS : notify Client that cancel request was declined
+    NS --> Client : Push: "Yêu cầu hủy lịch tập của bạn bị từ chối"
+  end
+else Buổi tập đã bắt đầu/kết thúc (status != Scheduled)
+  note over Client : Nút yêu cầu hủy trên App bị khóa/ẩn
+  Client -> CAL : (Nếu gọi API trực tiếp) POST /api/calendar/sessions/:id/request-cancel
+  CAL -> WS : findById(sessionId)
+  CAL --> Client : JSON { status: 'fail', message: 'Không thể yêu cầu hủy buổi tập đã bắt đầu hoặc hoàn thành.' }
+end
+
+@enduml

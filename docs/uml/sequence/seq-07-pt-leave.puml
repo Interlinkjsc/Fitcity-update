@@ -1,0 +1,23 @@
+@startuml SEQ_PT_Leave
+title SEQ-07: PT nghỉ → Reassign HĐ
+autonumber
+
+actor PT
+participant "ptLeaveController" as PLC
+database "PTLeaveRequest" as LR
+actor Manager
+database "Contract" as C
+
+PT -> PLC : POST /pt/leave {dates, reason}
+PLC -> LR : create Pending
+
+Manager -> PLC : GET /admin/pt-leave-requests
+PLC -> LR : list pending
+
+Manager -> PLC : POST approve/:id\n{replacementPtId}
+PLC -> PLC : ptLeaveService.approveWithReassign()
+PLC -> LR : status = Approved
+PLC -> C : updateMany {pt: replacementPt}\nActive|Draft contracts
+PLC --> Manager : redirect
+
+@enduml

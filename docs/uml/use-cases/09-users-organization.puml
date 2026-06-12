@@ -1,0 +1,70 @@
+@startuml UC_Users_Full
+title Module: Users & Organization (đầy đủ)
+left to right direction
+skinparam actorStyle awesome
+
+actor SA
+actor Admin as ADM
+actor Manager as MGR
+actor CEO
+actor "All staff" as Staff
+
+package "Users /admin/users" {
+  usecase "UC-USR01\nUser list" as U01
+  usecase "UC-USR02\nUser detail\n+ KPI target form" as U02
+  usecase "UC-USR03\nSave employee KPI" as U03
+  usecase "UC-USR04\nRole permissions API" as U04
+  usecase "UC-USR05\nCreate user" as U05
+  usecase "UC-USR06\nEdit user" as U06
+  usecase "UC-USR07\nDelete user" as U07
+  usecase "UC-USR08\nCustom permissions" as U08
+  usecase "UC-USR09\nJD template on create" as U09
+  usecase "UC-USR10\nCommission rates" as U10
+}
+
+package "Permissions /admin/permissions" {
+  usecase "UC-USR20\nPermission UI" as U20
+  usecase "UC-USR21\nSuggested API" as U21
+  usecase "UC-USR22\nSave overrides" as U22
+  usecase "UC-USR23\nReset suggested" as U23
+}
+
+package "Branch dashboard" {
+  usecase "UC-USR30\nBranch dashboard route" as U30
+}
+
+SA --> U20
+SA --> U21
+SA --> U22
+SA --> U23
+SA --> U05
+ADM --> U01
+ADM --> U02
+ADM --> U03
+ADM --> U05
+ADM --> U06
+ADM --> U07
+ADM --> U08
+MGR --> U01
+MGR --> U05
+MGR --> U06
+CEO --> U30
+Staff --> "UC-USR40\nLogin session" as U40
+
+U05 ..> U08 : optional
+U05 ..> U09 : optional
+U05 ..> U10 : pt/sales rates
+
+note bottom of U08
+  useCustomPermissions
+  customPermissionIds on User
+  Admin ⊆ own permissions
+  SA: full access
+end note
+
+note bottom of U06
+  Manager: cannot assign Admin/SA/CEO
+  Admin: cannot assign SA
+end note
+
+@enduml

@@ -1,0 +1,282 @@
+<%- include('../../partials/header', { title: 'Quản lý lịch tập', activePage: 'slots' }) %>
+
+<div class="mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+    <div>
+        <h2 class="text-xl font-bold text-slate-800">Quản lý lịch tập</h2>
+        <p class="text-slate-500 text-xs mt-0.5">Xem lịch buổi tập theo từng chi nhánh (chọn cơ sở để tải dữ liệu).</p>
+    </div>
+</div>
+
+<!-- Calendar Filters -->
+<div class="mb-4 bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+    <div class="flex flex-wrap items-end gap-6">
+        <div class="w-full md:w-64">
+            <label class="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">Chi nhánh</label>
+            <select id="branch-filter" class="w-full border border-slate-300 rounded-lg text-sm py-2 px-3 focus:ring-2 focus:ring-green-500 outline-none" <%= (!branches || branches.length === 0) ? 'disabled' : '' %>>
+                <option value="" selected disabled>— Chọn chi nhánh —</option>
+                <% if (branches && branches.length > 0) { %>
+                    <% branches.forEach(branch => { %>
+                        <option value="<%= branch._id %>"><%= branch.name %></option>
+                    <% }) %>
+                <% } %>
+            </select>
+            <% if (!branches || branches.length === 0) { %>
+            <p class="text-xs text-amber-600 mt-1.5">Chưa có chi nhánh trong hệ thống. Hãy tạo chi nhánh trước khi xem lịch.</p>
+            <% } %>
+        </div>
+        <div class="flex-1 flex gap-2">
+            <div class="flex items-center gap-2 px-3 py-2 bg-slate-50 rounded-lg border border-slate-100">
+                <span class="w-3 h-3 rounded-full bg-[#3788d8]"></span>
+                <span class="text-xs text-slate-600 font-medium">Đang chờ</span>
+            </div>
+            <div class="flex items-center gap-2 px-3 py-2 bg-slate-50 rounded-lg border border-slate-100">
+                <span class="w-3 h-3 rounded-full bg-[#f39c12]"></span>
+                <span class="text-xs text-slate-600 font-medium">Đang tập</span>
+            </div>
+            <div class="flex items-center gap-2 px-3 py-2 bg-slate-50 rounded-lg border border-slate-100">
+                <span class="w-3 h-3 rounded-full bg-[#2ecc71]"></span>
+                <span class="text-xs text-slate-600 font-medium">Đã tập xong</span>
+            </div>
+            <div class="flex items-center gap-2 px-3 py-2 bg-slate-50 rounded-lg border border-slate-100">
+                <span class="w-3 h-3 rounded-full bg-[#e74c3c]"></span>
+                <span class="text-xs text-slate-600 font-medium">Đã hủy</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Gợi ý trước khi chọn chi nhánh -->
+<div id="calendar-placeholder" class="bg-slate-50 rounded-2xl border border-dashed border-slate-200 p-12 mb-8 text-center">
+    <span class="material-symbols-outlined text-5xl text-slate-300 mb-3 block">calendar_month</span>
+    <p class="text-slate-600 font-medium">Chọn chi nhánh ở trên để hiển thị lịch tập.</p>
+    <p class="text-slate-400 text-sm mt-1">Lịch chỉ tải dữ liệu theo một cơ sở đã chọn.</p>
+</div>
+
+<!-- Calendar Container (ẩn cho đến khi có chi nhánh) -->
+<div id="calendar-panel" class="hidden bg-white rounded-2xl border border-slate-200 shadow-sm p-4 mb-8 overflow-hidden">
+    <div id="calendar"></div>
+</div>
+
+<!-- Modal Chi tiết -->
+<div id="eventModal" class="fixed inset-0 z-[100] hidden items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 transform transition-all animate-in fade-in zoom-in duration-200">
+        <div class="flex justify-between items-start mb-6">
+            <div>
+                <h3 id="modalTitle" class="text-xl font-bold text-slate-900">Chi tiết buổi tập</h3>
+                <p id="modalBranch" class="text-xs font-bold text-slate-500 uppercase tracking-widest mt-1">Cơ sở...</p>
+            </div>
+            <button onclick="closeModal()" class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+        
+        <div class="space-y-4 mb-8">
+            <div class="flex items-center gap-4 p-3 bg-slate-50 rounded-xl">
+                <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center text-green-600 shadow-sm">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3M5 11h14M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                </div>
+                <div>
+                    <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Thời gian</p>
+                    <p id="modalTime" class="font-bold text-slate-900">--:--</p>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4">
+                <div class="p-3 bg-slate-50 rounded-xl">
+                    <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Hội viên</p>
+                    <p id="modalClient" class="font-bold text-slate-900 truncate">---</p>
+                </div>
+                <div class="p-3 bg-slate-50 rounded-xl">
+                    <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Huấn luyện viên</p>
+                    <p id="modalPT" class="font-bold text-slate-900 truncate">---</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-4 p-3 bg-slate-50 rounded-xl">
+                <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center text-blue-600 shadow-sm">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </div>
+                <div>
+                    <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Trạng thái</p>
+                    <span id="modalStatus" class="inline-block mt-1 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">---</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex gap-3">
+            <button onclick="closeModal()" class="flex-1 py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-bold rounded-xl transition-all">Đóng</button>
+            <button id="cancelBtn" onclick="cancelEvent()" class="flex-1 py-3 px-4 bg-red-500 hover:bg-red-600 text-white text-sm font-bold rounded-xl shadow-lg shadow-red-500/20 transition-all hidden">Hủy buổi tập</button>
+        </div>
+    </div>
+</div>
+
+<!-- FullCalendar JS & CSS -->
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
+<style>
+    :root {
+        --fc-border-color: #f1f5f9;
+        --fc-today-bg-color: #f8fafc;
+        --fc-button-bg-color: #1e293b;
+        --fc-button-border-color: #1e293b;
+        --fc-button-hover-bg-color: #0f172a;
+        --fc-button-active-bg-color: #0f172a;
+    }
+    #calendar { max-width: 100%; margin: 0 auto; }
+    .fc-toolbar-title { font-weight: 800 !important; font-size: 1.1rem !important; }
+    .fc-event { cursor: pointer; border: none !important; padding: 1px 2px !important; border-radius: 4px !important; }
+    .fc-event-title { font-size: 0.75rem !important; font-weight: 700 !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; }
+    .fc-timegrid-slot { height: 2.5em !important; }
+    .fc-timegrid-axis-cushion, .fc-timegrid-slot-label-cushion { font-size: 0.75rem !important; color: #64748b !important; }
+</style>
+
+<script>
+    let calendarApp = null;
+    let currentEventId = null;
+
+    function setCalendarVisible(show) {
+        var ph = document.getElementById('calendar-placeholder');
+        var panel = document.getElementById('calendar-panel');
+        if (ph) ph.classList.toggle('hidden', show);
+        if (panel) panel.classList.toggle('hidden', !show);
+    }
+
+    function buildCalendar(branchFilter) {
+        var calendarEl = document.getElementById('calendar');
+        if (!calendarEl || calendarApp) return;
+
+        calendarApp = new FullCalendar.Calendar(calendarEl, {
+            initialView: window.innerWidth < 768 ? 'timeGridDay' : 'timeGridWeek',
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek,timeGridDay'
+            },
+            buttonText: {
+                today: 'Hôm nay', month: 'Tháng', week: 'Tuần', day: 'Ngày'
+            },
+            locale: 'vi',
+            slotMinTime: '06:00:00',
+            slotMaxTime: '22:00:00',
+            allDaySlot: false,
+            height: 600,
+            contentHeight: 550,
+            handleWindowResize: true,
+            expandRows: true,
+            stickyHeaderDates: true,
+            navLinks: true,
+            nowIndicator: true,
+            displayEventTime: false,
+            events: function(info, successCallback, failureCallback) {
+                var branchId = branchFilter.value;
+                if (!branchId) {
+                    successCallback([]);
+                    return;
+                }
+                fetch('/api/calendar/sessions?start=' + encodeURIComponent(info.startStr) + '&end=' + encodeURIComponent(info.endStr) + '&branchId=' + encodeURIComponent(branchId))
+                    .then(function (res) { return res.json(); })
+                    .then(function (result) {
+                        var events = Array.isArray(result) ? result : (result && result.status === 'success' && result.data) ? result.data : [];
+                        successCallback(events);
+                    })
+                    .catch(function (err) { failureCallback(err); });
+            },
+            eventClick: function(info) {
+                showEventModal(info.event);
+            },
+            eventDidMount: function(info) {
+                // Thêm tooltip hoặc các tùy chỉnh khác nếu cần
+            }
+        });
+
+        calendarApp.render();
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        var branchFilter = document.getElementById('branch-filter');
+        if (!branchFilter) return;
+
+        setCalendarVisible(false);
+
+        branchFilter.addEventListener('change', function () {
+            var v = branchFilter.value;
+            if (!v) {
+                setCalendarVisible(false);
+                return;
+            }
+            setCalendarVisible(true);
+            if (!calendarApp) {
+                buildCalendar(branchFilter);
+            } else {
+                calendarApp.refetchEvents();
+            }
+        });
+    });
+
+    function showEventModal(event) {
+        currentEventId = event.id;
+        document.getElementById('modalTitle').innerText = event.title;
+        document.getElementById('modalClient').innerText = event.extendedProps.client || 'N/A';
+        document.getElementById('modalPT').innerText = event.extendedProps.pt || 'N/A';
+        
+        if (event.start && event.end) {
+            const dateStr = event.start.toLocaleDateString('vi-VN');
+            const startTime = event.start.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+            const endTime = event.end.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+            document.getElementById('modalTime').innerText = `${dateStr} | ${startTime} - ${endTime}`;
+        }
+
+        const statusBadge = document.getElementById('modalStatus');
+        const status = event.extendedProps.status;
+        const cancelBtn = document.getElementById('cancelBtn');
+
+        let bgColor = 'bg-slate-100', textColor = 'text-slate-600', statusText = status;
+
+        if (status === 'Completed') {
+            bgColor = 'bg-green-100'; textColor = 'text-green-700'; statusText = 'Đã tập xong';
+            cancelBtn.classList.add('hidden');
+        } else if (status === 'In_Progress') {
+            bgColor = 'bg-amber-100'; textColor = 'text-amber-700'; statusText = 'Đang tập';
+            cancelBtn.classList.add('hidden');
+        } else if (status === 'Scheduled') {
+            bgColor = 'bg-blue-100'; textColor = 'text-blue-700'; statusText = 'Đang chờ';
+            cancelBtn.classList.remove('hidden');
+        } else if (status === 'Cancelled') {
+            bgColor = 'bg-red-100'; textColor = 'text-red-700'; statusText = 'Đã hủy';
+            cancelBtn.classList.add('hidden');
+        }
+
+        statusBadge.className = `inline-block mt-1 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${bgColor} ${textColor}`;
+        statusBadge.innerText = statusText;
+
+        document.getElementById('eventModal').classList.remove('hidden');
+        document.getElementById('eventModal').classList.add('flex');
+    }
+
+    function closeModal() {
+        document.getElementById('eventModal').classList.add('hidden');
+        document.getElementById('eventModal').classList.remove('flex');
+    }
+
+    async function cancelEvent() {
+        if (!currentEventId) return;
+        if (!confirm('Bạn có chắc chắn muốn hủy lịch tập này?')) return;
+
+        try {
+            const res = await fetch(`/api/calendar/sessions/${currentEventId}/cancel`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const data = await res.json();
+            if (res.ok) {
+                closeModal();
+                calendarApp.refetchEvents();
+            } else {
+                alert(data.message || 'Lỗi khi hủy lịch');
+            }
+        } catch (err) {
+            alert('Lỗi kết nối máy chủ');
+        }
+    }
+</script>
+
+<%- include('../../partials/footer') %>

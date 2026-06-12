@@ -1,0 +1,192 @@
+<%- include('../../partials/header', { title: 'Quản lý Khách hàng', activePage: 'clients' }) %>
+
+<div class="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div>
+        <h2 class="text-2xl font-bold text-slate-800">Quản lý Khách hàng</h2>
+        <p class="text-slate-500 text-sm mt-1">Danh sách hội viên, trạng thái tài khoản và hợp đồng liên quan.</p>
+    </div>
+    <a href="/admin/clients/create" class="inline-flex items-center justify-center px-4 py-2 bg-lime-500 hover:bg-lime-600 text-slate-900 font-semibold rounded-lg transition-colors shadow-sm">
+        <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
+        </svg>
+        Thêm khách hàng
+    </a>
+</div>
+
+<div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+    <div class="p-5 border-b border-slate-200 bg-slate-50/50 flex flex-col sm:flex-row justify-between items-center gap-3">
+        <form method="GET" action="/admin/clients/list" class="w-full sm:max-w-md relative">
+            <svg class="h-5 w-5 absolute left-3 top-2.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            </svg>
+            <input
+                type="text"
+                name="keyword"
+                value="<%= query && query.keyword ? query.keyword : '' %>"
+                placeholder="Tìm theo tên, email hoặc số điện thoại..."
+                class="pl-10 pr-4 py-2 w-full border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-lime-500 focus:border-lime-500 outline-none transition-all">
+        </form>
+        <div class="text-sm text-slate-500">
+            Tổng số: <span class="font-bold text-slate-800"><%= typeof clients !== 'undefined' ? clients.length : 0 %></span> khách hàng
+        </div>
+    </div>
+
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="bg-slate-50 text-slate-500 text-sm uppercase tracking-wider border-b border-slate-200">
+                    <th class="p-4 font-semibold">Khách hàng</th>
+                    <th class="p-4 font-semibold">Liên hệ</th>
+                    <th class="p-4 font-semibold text-center">Trạng thái</th>
+                    <th class="p-4 font-semibold text-center">Mã giới thiệu</th>
+                    <th class="p-4 font-semibold text-center">Ngày tạo</th>
+                    <th class="p-4 font-semibold text-center">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+                <% if (typeof clients !== 'undefined' && clients.length > 0) { %>
+                    <% clients.forEach(client => { %>
+                        <tr class="hover:bg-slate-50/70 transition-colors">
+                            <td class="p-4">
+                                <div class="flex items-center">
+                                    <img class="h-10 w-10 rounded-full border border-slate-200 object-cover" src="<%= client.avatar || '/images/default-avatar.png' %>" alt="">
+                                    <div class="ml-4">
+                                        <div class="font-semibold text-slate-800"><%= client.name || 'Chưa cập nhật' %></div>
+                                        <div class="text-xs text-slate-500">ID: <%= client._id %></div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="p-4 text-sm text-slate-700">
+                                <div><%= client.email || '-' %></div>
+                                <div class="text-xs text-slate-500 mt-1"><%= client.phone || 'Chưa có SĐT' %></div>
+                            </td>
+                            <td class="p-4 text-center">
+                                <% if (client.status === 'Active') { %>
+                                    <span class="px-2.5 py-1 inline-flex text-xs font-semibold rounded-full bg-emerald-100 text-emerald-800">Hoạt động</span>
+                                <% } else if (client.status === 'Suspended') { %>
+                                    <span class="px-2.5 py-1 inline-flex text-xs font-semibold rounded-full bg-amber-100 text-amber-800">Tạm khóa</span>
+                                <% } else { %>
+                                    <span class="px-2.5 py-1 inline-flex text-xs font-semibold rounded-full bg-slate-100 text-slate-700"><%= client.status || 'Không rõ' %></span>
+                                <% } %>
+                            </td>
+                            <td class="p-4 text-center text-sm text-slate-700 font-mono">
+                                <%= client.referralCode || '-' %>
+                            </td>
+                            <td class="p-4 text-center text-sm text-slate-600">
+                                <%= client.createdAt ? new Date(client.createdAt).toLocaleDateString('vi-VN') : '-' %>
+                            </td>
+                            <td class="p-4 text-center">
+                                <div class="flex items-center justify-center gap-2">
+                                    <a href="/admin/clients/detail/<%= client._id %>" class="text-slate-400 hover:text-emerald-600 transition-colors" title="Xem chi tiết">
+                                        <span class="material-symbols-outlined text-[20px]">visibility</span>
+                                    </a>
+                                    <a href="/admin/clients/edit/<%= client._id %>" class="text-slate-400 hover:text-blue-600 transition-colors" title="Chỉnh sửa">
+                                        <span class="material-symbols-outlined text-[20px]">edit</span>
+                                    </a>
+                                    <button type="button" class="text-slate-400 hover:text-amber-600 transition-colors client-gift-btn" title="Tặng voucher"
+                                        data-client-id="<%= client._id %>"
+                                        data-client-name="<%= encodeURIComponent(client.name || '') %>">
+                                        <span class="material-symbols-outlined text-[20px]">card_giftcard</span>
+                                    </button>
+                                    <% if (user && (user.role === 'SA' || user.role === 'Admin')) { %>
+                                    <form action="/admin/clients/delete/<%= client._id %>" method="POST" class="inline-block" onsubmit="return confirm('Xác nhận xóa vĩnh viễn khách hàng này? Chỉ thực hiện được khi khách không còn hợp đồng trong hệ thống.');">
+                                        <button type="submit" class="text-slate-400 hover:text-red-600 transition-colors" title="Xóa khách hàng">
+                                            <span class="material-symbols-outlined text-[20px]">delete</span>
+                                        </button>
+                                    </form>
+                                    <% } %>
+                                </div>
+                            </td>
+                        </tr>
+                    <% }) %>
+                <% } else { %>
+                    <tr>
+                        <td colspan="6" class="p-8 text-center text-slate-500">
+                            Chưa có khách hàng nào phù hợp bộ lọc.
+                        </td>
+                    </tr>
+                <% } %>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal: tặng voucher từ danh sách khách hàng -->
+<div id="client-gift-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[9999] hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md border border-slate-200 overflow-hidden">
+        <div class="px-5 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+            <div>
+                <h3 class="text-lg font-bold text-slate-800">Tặng voucher</h3>
+                <p class="text-xs text-slate-500 mt-0.5">Khách: <span id="client-gift-name" class="font-semibold text-slate-700"></span></p>
+            </div>
+            <button type="button" onclick="closeClientGiftModal()" class="p-2 rounded-full text-slate-400 hover:bg-white hover:text-slate-600">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <form action="/admin/coupons/assign-reward" method="POST" class="p-5 space-y-4">
+            <input type="hidden" name="clientId" id="client-gift-client-id" value="">
+            <div>
+                <label class="block text-xs font-bold text-slate-600 mb-1.5">Chọn mã</label>
+                <% const giftCoupons = typeof assignableCoupons !== 'undefined' ? assignableCoupons : []; %>
+                <% if (giftCoupons.length > 0) { %>
+                <select name="couponId" required class="w-full border border-slate-300 rounded-lg text-sm py-2.5 px-3 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none">
+                    <option value="">— Chọn voucher —</option>
+                    <% giftCoupons.forEach(function (c) { %>
+                        <option value="<%= c._id %>">
+                            <%= c.code %>
+                            <% if (c.type === 'FreeSessions') { %> — <%= c.value %> buổi tập<% } else if (c.type === 'Percentage') { %> — <%= c.value %>%<% } else { %> — <%= new Intl.NumberFormat('vi-VN').format(c.value) %> đ<% } %>
+                        </option>
+                    <% }) %>
+                </select>
+                <% } else { %>
+                <p class="text-sm text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">Chưa có mã khả dụng (hết hạn hoặc hết lượt). Hãy tạo mã tại Khuyến mãi &amp; Coupon.</p>
+                <% } %>
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-slate-600 mb-1.5">Ghi chú</label>
+                <textarea name="notes" rows="2" class="w-full border border-slate-300 rounded-lg text-sm py-2 px-3 focus:ring-2 focus:ring-amber-500 outline-none" placeholder="Lý do tặng (tuỳ chọn)"></textarea>
+            </div>
+            <div class="flex gap-2 pt-1">
+                <button type="button" onclick="closeClientGiftModal()" class="flex-1 px-4 py-2.5 border border-slate-200 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50">Hủy</button>
+                <button type="submit" class="flex-1 px-4 py-2.5 bg-amber-500 text-white rounded-lg text-sm font-bold hover:bg-amber-600 disabled:opacity-50" <%= giftCoupons.length === 0 ? 'disabled' : '' %>>Xác nhận tặng</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<%- include('../../partials/pagination') %>
+<%- include('../../partials/footer') %>
+
+<script>
+(function () {
+    var modal = document.getElementById('client-gift-modal');
+    var idInput = document.getElementById('client-gift-client-id');
+    var nameEl = document.getElementById('client-gift-name');
+
+    window.openClientGiftModal = function (clientId, encodedName) {
+        idInput.value = clientId;
+        try {
+            nameEl.textContent = decodeURIComponent(encodedName || '');
+        } catch (e) {
+            nameEl.textContent = encodedName || '';
+        }
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    };
+
+    window.closeClientGiftModal = function () {
+        modal.classList.add('hidden');
+        document.body.style.overflow = '';
+    };
+
+    document.querySelectorAll('.client-gift-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            openClientGiftModal(btn.getAttribute('data-client-id'), btn.getAttribute('data-client-name'));
+        });
+    });
+
+    modal.addEventListener('click', function (e) {
+        if (e.target === modal) closeClientGiftModal();
+    });
+})();
+</script>

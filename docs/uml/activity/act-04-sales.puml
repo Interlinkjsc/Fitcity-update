@@ -1,0 +1,51 @@
+@startuml ACT_Sales
+title Activity — Sales (Lead → Convert → Hợp đồng)
+skinparam activityStyle rectangle
+
+start
+:Đăng nhập /admin;
+
+partition "Phễu Lead" {
+  :GET /admin/leads;
+  :Cập nhật status\nF → Contacted → Qualified;
+  note right
+    Không dùng Signed = đã ký HĐ
+    Signed → Qualified (R3)
+  end note
+}
+
+partition "Tạo hội viên" {
+  if (Lead sẵn có?) then (ưu tiên)
+    :<<planned>> Convert Lead → Client\nUC-CRM15;
+  else (Walk-in)
+    :POST /admin/clients/store\nUC-CLI21\n<<planned>> +branch;
+  endif
+  if (phone/email trùng?) then (<<planned>> R6)
+    :Cảnh báo trùng — mở hồ sơ cũ;
+  endif
+}
+
+partition "Hợp đồng" {
+  :GET /admin/contracts/create;
+  :Chọn Client (User), package, PT, branch;
+  :POST store → Draft;
+  :Theo dõi paymentStatus;
+  note right
+    Ghi thu: Accountant hoặc Sales
+    (contract.manage)
+    Deposit / Paid → Active
+  end note
+}
+
+partition "Báo cáo" {
+  :Daily report submit;
+}
+
+stop
+
+note right
+  UC-CRM*, UC-CTR*
+  contractScope: Sales = sales field
+end note
+
+@enduml

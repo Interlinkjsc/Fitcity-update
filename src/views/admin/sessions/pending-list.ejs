@@ -1,0 +1,238 @@
+<%- include('../../partials/header', { title: 'Lịch tập chờ duyệt', activePage: 'session-approval' }) %>
+
+<div class="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div>
+        <h2 class="text-2xl font-bold text-slate-800">Lịch tập chờ duyệt</h2>
+        <p class="text-slate-500 text-sm mt-1">Xem xét và phê duyệt các lịch tập do PT tạo</p>
+    </div>
+    <span class="inline-flex items-center gap-2 px-3 py-1.5 bg-amber-100 text-amber-800 text-sm font-semibold rounded-full border border-amber-200">
+        <span class="w-2 h-2 bg-amber-500 rounded-full"></span>
+        <%= sessions.length %> chờ duyệt
+    </span>
+</div>
+
+<div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+    <% if (sessions.length === 0) { %>
+    <div class="flex flex-col items-center justify-center py-20 text-slate-400">
+        <svg class="w-14 h-14 mb-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+        </svg>
+        <p class="text-base font-medium">Không có lịch tập nào đang chờ duyệt</p>
+        <p class="text-sm mt-1">Tất cả lịch tập đã được xử lý</p>
+    </div>
+    <% } else { %>
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead class="bg-slate-50 border-b border-slate-200">
+                <tr>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider w-10">STT</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Khách hàng</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Huấn luyện viên</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Chi nhánh</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Thời gian dự kiến</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Ngày tạo</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Ghi chú</th>
+                    <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">Hành động</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+                <% sessions.forEach((session, index) => { %>
+                <%
+                    const scheduledISO = session.scheduledTime
+                        ? new Date(session.scheduledTime).toISOString().slice(0, 16)
+                        : '';
+                %>
+                <tr class="hover:bg-slate-50 transition-colors">
+                    <td class="px-4 py-3 text-slate-500 font-medium"><%= index + 1 %></td>
+
+                    <!-- Khách hàng -->
+                    <td class="px-4 py-3">
+                        <div class="flex items-center gap-2.5">
+                            <% if (session.client && session.client.avatar) { %>
+                            <img src="<%= session.client.avatar %>" class="w-8 h-8 rounded-full object-cover border border-slate-200" alt="">
+                            <% } else { %>
+                            <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-xs border border-blue-200">
+                                <%= session.client ? session.client.name.charAt(0).toUpperCase() : '?' %>
+                            </div>
+                            <% } %>
+                            <div>
+                                <p class="font-medium text-slate-800"><%= session.client ? session.client.name : 'N/A' %></p>
+                                <p class="text-xs text-slate-400"><%= session.client ? session.client.email : '' %></p>
+                            </div>
+                        </div>
+                    </td>
+
+                    <!-- PT -->
+                    <td class="px-4 py-3">
+                        <div class="flex items-center gap-2">
+                            <% if (session.pt && session.pt.avatar) { %>
+                            <img src="<%= session.pt.avatar %>" class="w-7 h-7 rounded-full object-cover border border-slate-200" alt="">
+                            <% } else { %>
+                            <div class="w-7 h-7 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 font-bold text-xs border border-emerald-200">
+                                <%= session.pt ? session.pt.name.charAt(0).toUpperCase() : 'P' %>
+                            </div>
+                            <% } %>
+                            <span class="text-slate-700"><%= session.pt ? session.pt.name : 'N/A' %></span>
+                        </div>
+                    </td>
+
+                    <!-- Chi nhánh -->
+                    <td class="px-4 py-3 text-slate-600">
+                        <%= session.branch ? session.branch.name : '—' %>
+                    </td>
+
+                    <!-- Thời gian dự kiến -->
+                    <td class="px-4 py-3">
+                        <span class="inline-flex items-center gap-1 text-slate-700 font-medium">
+                            <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                            <%= session.scheduledTime ? new Date(session.scheduledTime).toLocaleString('vi-VN') : '—' %>
+                        </span>
+                    </td>
+
+                    <!-- Ngày tạo -->
+                    <td class="px-4 py-3 text-slate-500 text-xs">
+                        <%= session.createdAt ? new Date(session.createdAt).toLocaleDateString('vi-VN') : '—' %>
+                    </td>
+
+                    <!-- Ghi chú -->
+                    <td class="px-4 py-3 text-slate-500 max-w-[160px] truncate" title="<%= session.notes || '' %>">
+                        <%= session.notes || '—' %>
+                    </td>
+
+                    <!-- Hành động -->
+                    <td class="px-4 py-3">
+                        <div class="flex items-center justify-center gap-2 flex-wrap">
+                            <!-- Nút Duyệt -->
+                            <form action="/admin/sessions/<%= session._id %>/approve" method="POST"
+                                  onsubmit="return confirm('Xác nhận phê duyệt lịch tập này?')">
+                                <button type="submit"
+                                        class="inline-flex items-center gap-1 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold rounded-lg transition-colors shadow-sm">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                    </svg>
+                                    Duyệt
+                                </button>
+                            </form>
+
+                            <!-- Nút Sửa & Duyệt -->
+                            <button type="button"
+                                    onclick="openEditModal('<%= session._id %>', '<%= scheduledISO %>', `<%= (session.notes || '').replace(/`/g, '\\`') %>`)"
+                                    class="inline-flex items-center gap-1 px-3 py-1.5 bg-orange-500 hover:bg-orange-600 text-white text-xs font-semibold rounded-lg transition-colors shadow-sm">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                </svg>
+                                Sửa & Duyệt
+                            </button>
+
+                            <!-- Nút Từ chối -->
+                            <button type="button"
+                                    onclick="openRejectModal('<%= session._id %>')"
+                                    class="inline-flex items-center gap-1 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-lg transition-colors shadow-sm">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                                Từ chối
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                <% }) %>
+            </tbody>
+        </table>
+    </div>
+    <% } %>
+</div>
+
+<!-- ===== MODAL: Sửa & Duyệt ===== -->
+<div id="modal-edit-approve" class="fixed inset-0 z-50 flex items-center justify-center p-4 hidden" role="dialog" aria-modal="true">
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeEditModal()"></div>
+    <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+        <button onclick="closeEditModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+        </button>
+        <h3 class="text-lg font-bold text-slate-800 mb-5">Sửa & Duyệt lịch tập</h3>
+        <form id="form-edit-approve" method="POST" action="">
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Thời gian dự kiến</label>
+                    <input type="datetime-local" name="scheduledTime" id="edit-scheduledTime"
+                           class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-orange-400 focus:border-transparent outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Ghi chú</label>
+                    <textarea name="notes" id="edit-notes" rows="3"
+                              class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-orange-400 focus:border-transparent outline-none resize-none"
+                              placeholder="Ghi chú thêm (tùy chọn)"></textarea>
+                </div>
+            </div>
+            <div class="flex gap-3 mt-6">
+                <button type="button" onclick="closeEditModal()"
+                        class="flex-1 px-4 py-2 border border-slate-300 text-slate-700 text-sm font-semibold rounded-lg hover:bg-slate-50 transition-colors">
+                    Huỷ
+                </button>
+                <button type="submit"
+                        class="flex-1 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white text-sm font-bold rounded-lg transition-colors shadow-sm">
+                    Xác nhận
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ===== MODAL: Từ chối ===== -->
+<div id="modal-reject" class="fixed inset-0 z-50 flex items-center justify-center p-4 hidden" role="dialog" aria-modal="true">
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeRejectModal()"></div>
+    <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+        <button onclick="closeRejectModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+        </button>
+        <h3 class="text-lg font-bold text-slate-800 mb-2">Từ chối lịch tập</h3>
+        <p class="text-sm text-slate-500 mb-5">Lý do từ chối sẽ được gửi đến PT và khách hàng.</p>
+        <form id="form-reject" method="POST" action="">
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Lý do từ chối</label>
+                <textarea name="reason" id="reject-reason" rows="4"
+                          class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-400 focus:border-transparent outline-none resize-none"
+                          placeholder="Nhập lý do từ chối (tùy chọn)"></textarea>
+            </div>
+            <div class="flex gap-3 mt-6">
+                <button type="button" onclick="closeRejectModal()"
+                        class="flex-1 px-4 py-2 border border-slate-300 text-slate-700 text-sm font-semibold rounded-lg hover:bg-slate-50 transition-colors">
+                    Huỷ
+                </button>
+                <button type="submit"
+                        class="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-bold rounded-lg transition-colors shadow-sm">
+                    Xác nhận từ chối
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function openEditModal(id, scheduledTime, notes) {
+    document.getElementById('form-edit-approve').action = '/admin/sessions/' + id + '/edit-approve';
+    document.getElementById('edit-scheduledTime').value = scheduledTime;
+    document.getElementById('edit-notes').value = notes;
+    document.getElementById('modal-edit-approve').classList.remove('hidden');
+}
+function closeEditModal() {
+    document.getElementById('modal-edit-approve').classList.add('hidden');
+}
+function openRejectModal(id) {
+    document.getElementById('form-reject').action = '/admin/sessions/' + id + '/reject';
+    document.getElementById('reject-reason').value = '';
+    document.getElementById('modal-reject').classList.remove('hidden');
+}
+function closeRejectModal() {
+    document.getElementById('modal-reject').classList.add('hidden');
+}
+</script>
+
+<%- include('../../partials/footer') %>

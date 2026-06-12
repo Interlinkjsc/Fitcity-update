@@ -1,0 +1,63 @@
+<%- include('../../partials/header', { title: item ? 'Sửa CMS' : 'Tạo CMS', activePage: 'cms' }) %>
+<% const isEdit = !!item; %>
+
+<div class="mb-6">
+    <h2 class="text-2xl font-bold text-slate-800"><%= isEdit ? 'Sửa nội dung' : 'Tạo nội dung CMS' %></h2>
+    <a href="/admin/cms" class="text-sm text-blue-600 hover:underline">Quay lại</a>
+</div>
+
+<div class="bg-white rounded-xl border border-slate-200 shadow-sm max-w-3xl p-6 md:p-8">
+    <form action="<%= isEdit ? '/admin/cms/update/' + item._id : '/admin/cms/store' %>" method="POST" class="space-y-5">
+        <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">Loại nội dung</label>
+            <select name="type" required class="w-full border border-slate-300 rounded-lg py-2 px-3 text-sm">
+                <% ['banner','post','seo','section'].forEach(t => { %>
+                <option value="<%= t %>" <%= (item && item.type === t) ? 'selected' : '' %>><%= t %></option>
+                <% }) %>
+            </select>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">Tiêu đề</label>
+            <input type="text" name="title" required value="<%= item ? item.title : '' %>" class="w-full border border-slate-300 rounded-lg py-2 px-3 text-sm">
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Key (SEO home: home)</label>
+                <input type="text" name="key" value="<%= item && item.key ? item.key : '' %>" class="w-full border border-slate-300 rounded-lg py-2 px-3 text-sm">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Slug (bài viết)</label>
+                <input type="text" name="slug" value="<%= item && item.slug ? item.slug : '' %>" class="w-full border border-slate-300 rounded-lg py-2 px-3 text-sm">
+            </div>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">Tóm tắt</label>
+            <textarea name="excerpt" rows="2" class="w-full border border-slate-300 rounded-lg py-2 px-3 text-sm"><%= item && item.excerpt ? item.excerpt : '' %></textarea>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">Nội dung (HTML/text)</label>
+            <textarea name="body" rows="8" class="w-full border border-slate-300 rounded-lg py-2 px-3 text-sm font-mono"><%= item && item.body ? item.body : '' %></textarea>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">URL ảnh</label>
+            <input type="url" name="imageUrl" value="<%= item && item.imageUrl ? item.imageUrl : '' %>" class="w-full border border-slate-300 rounded-lg py-2 px-3 text-sm">
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">SEO title</label>
+                <input type="text" name="seoTitle" value="<%= item && item.seoTitle ? item.seoTitle : '' %>" class="w-full border border-slate-300 rounded-lg py-2 px-3 text-sm">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">SEO description</label>
+                <input type="text" name="seoDescription" value="<%= item && item.seoDescription ? item.seoDescription : '' %>" class="w-full border border-slate-300 rounded-lg py-2 px-3 text-sm">
+            </div>
+        </div>
+        <label class="inline-flex items-center gap-2 text-sm font-medium text-slate-700">
+            <input type="checkbox" name="published" <%= item && item.published ? 'checked' : '' %> class="rounded border-slate-300">
+            Xuất bản
+        </label>
+        <button type="submit" class="px-6 py-2.5 bg-green-600 text-white font-bold rounded-lg text-sm">Lưu</button>
+    </form>
+</div>
+
+<%- include('../../partials/footer') %>

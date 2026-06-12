@@ -1,0 +1,30 @@
+@startuml SEQ_Auth_RBAC
+title SEQ-09: Login & Permission check
+autonumber
+
+actor User
+participant "authController" as AC
+database "User" as U
+participant "session" as S
+participant "authMiddleware" as AM
+participant "permissionService" as PS
+database "RolePermission" as RP
+participant "Controller" as Ctrl
+
+User -> AC : POST /auth/login
+AC -> U : findBy emailHash + password
+AC -> S : startUserSession(user)
+AC --> User : redirect by role\n/client | /pt | /admin
+
+User -> AM : GET /admin/contracts/list
+AM -> S : require login
+AM -> PS : checkPermission('contract','view')
+PS -> RP : load overrides or registry suggested
+alt allowed
+  AM -> Ctrl : getContractList()
+  Ctrl --> User : HTML
+else denied
+  AM --> User : 403 / redirect
+end
+
+@enduml

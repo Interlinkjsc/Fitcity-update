@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <title>Nhập chỉ số cơ thể - FitCity</title>
+    <%- include('../../partials/client-head') %>
+</head>
+<body class="p-6 md:p-12 mb-20 overflow-x-hidden">
+    <%- include('../../partials/flash') %>
+
+    <header class="flex justify-between items-start mb-8">
+        <div>
+            <h1 class="text-3xl font-black italic tracking-tighter uppercase leading-none"><span class="text-primary">NHẬP</span> CHỈ SỐ</h1>
+            <p class="text-slate-500 text-sm mt-1">Cập nhật chỉ số cơ thể sau buổi tập của bạn.</p>
+            <% if (contract && contract.pt) { %>
+            <p class="text-xs text-slate-400 mt-0.5">PT phụ trách: <span class="font-semibold text-slate-600"><%= contract.pt.name %></span></p>
+            <% } %>
+        </div>
+        <a href="/client/progress" aria-label="Quay lại"
+           class="w-12 h-12 glass rounded-full flex items-center justify-center hover:bg-slate-50 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60">
+            <span class="material-symbols-outlined">close</span>
+        </a>
+    </header>
+
+    <form action="/client/metrics/add" method="POST" class="space-y-6 max-w-lg">
+
+        <!-- Cân nặng & Chiều cao -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-4">
+            <h2 class="text-xs font-black text-slate-400 tracking-widest uppercase">Thông số cơ bản</h2>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label for="weight" class="block text-sm font-semibold text-slate-700 mb-1">
+                        Cân nặng (kg) <span class="text-red-500">*</span>
+                    </label>
+                    <input type="number" id="weight" name="weight" step="0.1" min="0" required
+                           class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/30"
+                           placeholder="VD: 68.5">
+                </div>
+                <div>
+                    <label for="height" class="block text-sm font-semibold text-slate-700 mb-1">Chiều cao (cm)</label>
+                    <input type="number" id="height" name="height" step="0.1" min="0"
+                           class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/30"
+                           placeholder="VD: 172">
+                </div>
+            </div>
+        </div>
+
+        <!-- Thành phần cơ thể -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-4">
+            <h2 class="text-xs font-black text-slate-400 tracking-widest uppercase">Thành phần cơ thể</h2>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label for="bodyFat" class="block text-sm font-semibold text-slate-700 mb-1">Mỡ cơ thể (%)</label>
+                    <input type="number" id="bodyFat" name="bodyFat" step="0.1" min="0" max="100"
+                           class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/30"
+                           placeholder="VD: 18.5">
+                </div>
+                <div>
+                    <label for="muscleMass" class="block text-sm font-semibold text-slate-700 mb-1">Cơ bắp (kg)</label>
+                    <input type="number" id="muscleMass" name="muscleMass" step="0.1" min="0"
+                           class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/30"
+                           placeholder="VD: 32.0">
+                </div>
+                <div>
+                    <label for="visceralFat" class="block text-sm font-semibold text-slate-700 mb-1">Mỡ nội tạng (level)</label>
+                    <input type="number" id="visceralFat" name="visceralFat" step="1" min="0"
+                           class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/30"
+                           placeholder="VD: 7">
+                </div>
+                <div>
+                    <label for="waist" class="block text-sm font-semibold text-slate-700 mb-1">Vòng eo (cm)</label>
+                    <input type="number" id="waist" name="waist" step="0.1" min="0"
+                           class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/30"
+                           placeholder="VD: 78">
+                </div>
+            </div>
+        </div>
+
+        <!-- Ghi chú -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+            <label for="notes" class="block text-sm font-semibold text-slate-700 mb-1">Ghi chú</label>
+            <textarea id="notes" name="notes" rows="3"
+                      class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none"
+                      placeholder="Cảm nhận sau buổi tập, tình trạng sức khỏe..."></textarea>
+        </div>
+
+        <div class="flex gap-3 pt-2">
+            <a href="/client/progress"
+               class="flex-1 text-center py-3 border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors">
+                Huỷ
+            </a>
+            <button type="submit"
+                    class="flex-1 py-3 bg-primary hover:bg-primary/90 text-white text-sm font-black rounded-xl transition-colors shadow-sm uppercase tracking-wide">
+                Lưu chỉ số
+            </button>
+        </div>
+    </form>
+
+    <%- include('../../partials/client-bottom-nav', { activePage }) %>
+</body>
+</html>

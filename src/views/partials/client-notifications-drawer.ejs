@@ -1,0 +1,170 @@
+<!-- Notification Drawer (Slide-over) -->
+<div id="notiOverlay" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] opacity-0 pointer-events-none transition-opacity duration-300" onclick="closeNotifications()"></div>
+
+<div id="notiDrawer" class="fixed top-0 bottom-0 right-0 w-full max-w-sm bg-white z-[110] transform translate-x-full transition-transform duration-300 shadow-[-10px_0_40px_rgba(0,0,0,0.1)] flex flex-col">
+    <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-white sticky top-0 z-10">
+        <h2 class="text-xl font-black italic tracking-tighter uppercase text-slate-900">
+            <span class="text-primary tracking-normal">Thông</span> báo
+        </h2>
+        <div class="flex items-center gap-2">
+            <button type="button" onclick="markAllRead()" class="text-[10px] font-bold text-primary uppercase tracking-widest px-3 py-1.5 bg-primary/10 rounded-lg hover:bg-primary/20 transition-colors">
+                Đánh dấu đã đọc
+            </button>
+            <button type="button" class="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-200 transition-all" onclick="closeNotifications()">
+                <span class="material-symbols-outlined text-[18px]">close</span>
+            </button>
+        </div>
+    </div>
+    
+    <div id="notiList" class="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50/50">
+        <!-- Loader -->
+        <div id="notiLoading" class="flex flex-col items-center justify-center h-40">
+            <div class="w-8 h-8 border-4 border-slate-200 border-t-primary rounded-full animate-spin mb-3"></div>
+            <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Đang tải...</p>
+        </div>
+        <!-- Notifications injected here via JS -->
+    </div>
+</div>
+
+<script>
+    // ----- NOTIFICATION LOGIC -----
+    document.addEventListener('DOMContentLoaded', () => {
+        if (typeof fetchUnreadCount === 'function') fetchUnreadCount();
+    });
+
+    async function fetchUnreadCount() {
+        try {
+            const res = await fetch('/client/notifications');
+            const data = await res.json();
+            const badge = document.getElementById('unreadBadge');
+            if (!badge) return;
+            if (data.success && data.unreadCount > 0) {
+                badge.classList.remove('hidden');
+                badge.classList.add('animate-pulse');
+            } else {
+                badge.classList.add('hidden');
+                badge.classList.remove('animate-pulse');
+            }
+        } catch (err) {
+            console.error('Lỗi lấy số thông báo', err);
+        }
+    }
+
+    async function openNotifications() {
+        const overlay = document.getElementById('notiOverlay');
+        const drawer = document.getElementById('notiDrawer');
+        const list = document.getElementById('notiList');
+        const loading = document.getElementById('notiLoading');
+        
+        if (!overlay || !drawer || !list || !loading) return;
+
+        overlay.classList.remove('opacity-0', 'pointer-events-none');
+        overlay.classList.add('opacity-100');
+        drawer.classList.remove('translate-x-full');
+        
+        // Show loading, clear old list
+        list.innerHTML = '';
+        list.appendChild(loading);
+        loading.style.display = 'flex';
+        
+        try {
+            const res = await fetch('/client/notifications');
+            const data = await res.json();
+            
+            loading.style.display = 'none';
+            
+            if (data.success) {
+                if (data.notifications.length === 0) {
+                    list.innerHTML = `
+                        <div class="flex flex-col items-center justify-center h-40 text-slate-400">
+                            <span class="material-symbols-outlined text-[40px] mb-2 opacity-50">notifications_off</span>
+                            <p class="text-[10px] font-bold uppercase tracking-widest">Không có thông báo nào</p>
+                        </div>
+                    `;
+                } else {
+                    data.notifications.forEach(noti => {
+                        const iconMap = {
+                            'Info': 'info',
+                            'Alert': 'warning',
+                            'Success': 'check_circle',
+                            'Warning': 'error'
+                        };
+                        const colorMap = {
+                            'Info': 'text-blue-500 bg-blue-50 border-blue-100',
+                            'Alert': 'text-accent bg-accent/10 border-accent/20',
+                            'Success': 'text-emerald-500 bg-emerald-50 border-emerald-100',
+                            'Warning': 'text-amber-500 bg-amber-50 border-amber-100'
+                        };
+                        
+                        const icon = iconMap[noti.type] || 'notifications';
+                        const colorClass = colorMap[noti.type] || colorMap['Info'];
+                        const isUnread = !noti.read;
+                        const dateObj = new Date(noti.createdAt);
+                        const timeStr = dateObj.toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'}) + ' ' + dateObj.toLocaleDateString('vi-VN');
+                        
+                        const itemHtml = `
+                            <div class="relative p-4 rounded-2xl bg-white border ${isUnread ? 'border-primary/30 shadow-md shadow-primary/5' : 'border-slate-100 shadow-sm opacity-80'} transition-all hover:border-primary/50 cursor-pointer" onclick="readNotification('${noti._id}', '${noti.link || ''}')">
+                                ${isUnread ? '<div class="absolute top-4 right-4 w-2 h-2 rounded-full bg-primary animate-pulse"></div>' : ''}
+                                <div class="flex gap-3">
+                                    <div class="w-10 h-10 shrink-0 rounded-xl flex items-center justify-center border ${colorClass}">
+                                        <span class="material-symbols-outlined text-[20px]">${icon}</span>
+                                    </div>
+                                    <div class="pr-4">
+                                        <h4 class="text-xs font-bold text-slate-900 ${isUnread ? '' : 'font-semibold'}">${noti.title}</h4>
+                                        <p class="text-[10px] text-slate-500 mt-1 line-clamp-2 leading-relaxed">${noti.message}</p>
+                                        <span class="block text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-2">${timeStr}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        list.insertAdjacentHTML('beforeend', itemHtml);
+                    });
+                }
+            } else {
+                list.innerHTML = `<p class="text-center text-xs text-red-500 p-4">Lỗi tải dữ liệu</p>`;
+            }
+        } catch (err) {
+            loading.style.display = 'none';
+            list.innerHTML = `<p class="text-center text-xs text-red-500 p-4">Lỗi kết nối</p>`;
+        }
+    }
+
+    function closeNotifications() {
+        const overlay = document.getElementById('notiOverlay');
+        const drawer = document.getElementById('notiDrawer');
+        if (!overlay || !drawer) return;
+        
+        overlay.classList.remove('opacity-100');
+        overlay.classList.add('opacity-0', 'pointer-events-none');
+        drawer.classList.add('translate-x-full');
+        
+        // Refresh unread count when closing
+        fetchUnreadCount();
+    }
+
+    async function readNotification(id, link) {
+        try {
+            await fetch(`/client/notifications/${id}/read`, { method: 'POST' });
+            if (link && link !== 'undefined') {
+                window.location.href = link;
+            } else {
+                openNotifications();
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    async function markAllRead() {
+        try {
+            await fetch(`/client/notifications/all/read`, { method: 'POST' });
+            openNotifications();
+            const badge = document.getElementById('unreadBadge');
+            if (badge) badge.classList.add('hidden');
+        } catch (err) {
+            console.error(err);
+        }
+    }
+    // ----- END NOTIFICATION LOGIC -----
+</script>
+

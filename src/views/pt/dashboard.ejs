@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <title>FITCITY - KPI CÁ NHÂN</title>
+    <%- include('../partials/pt-head') %>
+</head>
+<body class="bg-[#F8FAF7] text-slate-900 min-h-screen pb-24">
+<%- include('../partials/flash') %>
+
+<header class="flex items-center justify-between px-6 py-4 sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-200">
+    <div class="flex flex-col">
+        <h1 class="text-primary text-xl font-black tracking-tighter uppercase italic">KPI CÁ NHÂN</h1>
+        <span class="text-[10px] text-slate-400 font-bold uppercase tracking-widest -mt-1"><%= new Date().toLocaleDateString('vi-VN', { month: 'long', year: 'numeric' }) %></span>
+    </div>
+    <div class="flex items-center gap-3">
+        <button type="button" class="relative p-2 text-slate-400 hover:text-primary transition-colors">
+            <span class="material-symbols-outlined text-[24px]">notifications</span>
+            <% if (typeof violations !== 'undefined' && violations.length > 0) { %>
+                <span class="absolute top-2 right-2 flex h-2 w-2 rounded-full bg-red-500 border border-white"></span>
+            <% } %>
+        </button>
+        <a href="/auth/profile" class="h-10 w-10 rounded-full border-2 border-primary/30 overflow-hidden shadow-sm hover:scale-105 transition-transform">
+            <img alt="PT Avatar" class="h-full w-full object-cover" src="<%= user && user.avatar ? user.avatar : 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.name) + '&background=ccff00&color=121212' %>"/>
+        </a>
+    </div>
+</header>
+
+<main class="px-6 py-6 space-y-6">
+
+    <!-- 1. KPI MASTER CARD (PUSHED TOP & RENAMED) -->
+    <section class="relative overflow-hidden bg-slate-900 rounded-[40px] p-8 text-white shadow-2xl shadow-slate-900/20">
+        <div class="absolute top-0 right-0 w-64 h-64 bg-primary/20 rounded-full blur-[100px] -mr-32 -mt-32"></div>
+        <div class="absolute bottom-0 left-0 w-32 h-32 bg-accent/20 rounded-full blur-[60px] -ml-16 -mb-16"></div>
+        
+        <div class="relative z-10">
+            <div class="flex justify-between items-start mb-8">
+                <div>
+                    <p class="text-primary text-[12px] font-black uppercase tracking-[0.3em] mb-2">KPI CÁ NHÂN</p>
+                    <h2 class="text-5xl font-black tracking-tighter italic">
+                        <%= new Intl.NumberFormat('vi-VN').format(Math.round(newContractRevenue)) %>
+                        <span class="text-base font-normal text-slate-400 uppercase tracking-normal ml-1">VND</span>
+                    </h2>
+                </div>
+                <div class="bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/10">
+                    <span class="material-symbols-outlined text-primary text-3xl">trending_up</span>
+                </div>
+            </div>
+
+            <div class="space-y-4">
+                <div class="flex justify-between items-end">
+                    <span class="text-xs font-bold text-slate-300">Tiến độ mục tiêu tháng</span>
+                    <span class="text-2xl font-black text-primary"><%= ((newContractRevenue / revenueTarget) * 100).toFixed(1) %>%</span>
+                </div>
+                <div class="h-4 w-full bg-white/10 rounded-full overflow-hidden border border-white/5 p-1">
+                    <div class="h-full bg-gradient-to-r from-primary to-accent rounded-full shadow-[0_0_20px_rgba(204,255,0,0.6)] transition-all duration-1000 ease-out" style="width: <%= Math.min(100, (newContractRevenue / revenueTarget) * 100) %>%"></div>
+                </div>
+                <div class="flex justify-between text-[10px] font-black uppercase tracking-widest text-slate-500">
+                    <span>0 VND</span>
+                    <span class="text-slate-300">Mục tiêu: <%= (revenueTarget / 1000000) %>M VND</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <a href="/pt/attendance" class="block glass p-5 rounded-[28px] border border-primary/30 bg-primary/5 hover:bg-primary/10 transition-colors">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-[10px] font-black uppercase tracking-widest text-primary mb-1">Chấm công ca dạy</p>
+                <p class="text-sm font-bold text-slate-700">Check-in / Check-out & theo dõi ca</p>
+            </div>
+            <span class="material-symbols-outlined text-3xl text-primary">schedule</span>
+        </div>
+    </a>
+    <a href="/pt/daily-report" class="block glass p-5 rounded-[28px] border border-slate-200">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Daily report</p>
+                <p class="text-sm font-bold text-slate-700">Nộp báo cáo ngày</p>
+            </div>
+            <span class="material-symbols-outlined text-3xl text-slate-400">description</span>
+        </div>
+    </a>
+    <a href="/pt/leave" class="block glass p-5 rounded-[28px] border border-amber-200/60 bg-amber-50/50">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-[10px] font-black uppercase tracking-widest text-amber-700 mb-1">Nghỉ giữa kỳ</p>
+                <p class="text-sm font-bold text-slate-700">Yêu cầu nghỉ</p>
+            </div>
+            <span class="material-symbols-outlined text-3xl text-amber-600">event_busy</span>
+        </div>
+    </a>
+
+    <!-- 2. DETAILED KPI CARDS (PUSHED UP) -->
+    <section class="grid grid-cols-2 gap-4">
+        <div class="glass p-6 rounded-[32px] border border-slate-200/60 shadow-sm relative overflow-hidden group">
+            <div class="absolute -right-4 -top-4 size-16 bg-primary/5 rounded-full blur-xl group-hover:bg-primary/10 transition-colors"></div>
+            <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-2">Số buổi dạy</p>
+            <div class="text-3xl font-black text-slate-900 italic"><%= completedSessions %></div>
+            <p class="text-[9px] text-slate-500 mt-1 font-bold uppercase tracking-tighter">Hoàn thành tháng này</p>
+        </div>
+        <div class="glass p-6 rounded-[32px] border-2 border-primary/20 shadow-sm relative overflow-hidden group">
+            <div class="absolute -right-4 -top-4 size-16 bg-primary/10 rounded-full blur-xl"></div>
+            <p class="text-[10px] text-primary font-black uppercase tracking-widest mb-2">Hợp đồng mới</p>
+            <div class="text-3xl font-black text-slate-900 italic"><%= Math.floor(newContractRevenue / 1000000) %>M</div>
+            <p class="text-[9px] text-slate-500 mt-1 font-bold uppercase tracking-tighter">Doanh số thực tế</p>
+        </div>
+    </section>
+
+    <!-- 3. INCOME CARD WITH VIOLATIONS (REORGANIZED) -->
+    <section class="glass p-8 rounded-[40px] bg-gradient-to-br from-white to-primary/5 border border-slate-200 shadow-sm">
+        <div class="flex justify-between items-start mb-6">
+            <div>
+                <p class="text-[10px] text-primary font-black uppercase tracking-[0.2em] mb-1">Thu nhập dự kiến</p>
+                <h3 class="text-3xl font-black text-slate-900 tracking-tighter"><%= new Intl.NumberFormat('vi-VN').format(Math.round(totalEstimatedIncome)) %> <span class="text-sm font-normal text-slate-400 italic ml-1">VNĐ</span></h3>
+            </div>
+            <div class="bg-primary text-slate-900 p-3 rounded-2xl shadow-lg shadow-primary/20">
+                <span class="material-symbols-outlined text-2xl">account_balance_wallet</span>
+            </div>
+        </div>
+
+        <div class="space-y-4">
+            <div class="flex justify-between items-center text-sm py-3 border-b border-slate-100">
+                <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-slate-400 text-lg">payments</span>
+                    <span class="text-slate-500 font-bold">Lương cơ bản</span>
+                </div>
+                <span class="font-black text-slate-900">+<%= (baseSalary/1000).toLocaleString() %>K</span>
+            </div>
+            <div class="flex justify-between items-center text-sm py-3 border-b border-slate-100">
+                <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-green-500 text-lg">history_edu</span>
+                    <span class="text-slate-500 font-bold">Hoa hồng dạy (<%= completedSessions %> buổi)</span>
+                </div>
+                <span class="font-black text-green-600">+<%= (estimatedCommission/1000).toLocaleString() %>K</span>
+            </div>
+            
+            <!-- TIỀN VI PHẠM (ADDED AS REQUESTED) -->
+            <div class="flex justify-between items-center text-sm py-3 border-b border-slate-100">
+                <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-red-500 text-lg">warning</span>
+                    <span class="text-slate-500 font-bold italic">Tiền vi phạm (khấu trừ)</span>
+                </div>
+                <span class="font-black text-red-600">-<%= (totalDeductions/1000).toLocaleString() %>K</span>
+            </div>
+        </div>
+
+        <!-- Violation Details (If any) -->
+        <% if (typeof violations !== 'undefined' && violations.length > 0) { %>
+            <div class="mt-6 pt-6 border-t-2 border-dashed border-slate-100 space-y-3">
+                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Chi tiết vi phạm gần đây</p>
+                <% violations.forEach(v => { %>
+                    <div class="flex justify-between items-center bg-red-50/50 p-3 rounded-2xl border border-red-100">
+                        <div class="flex flex-col">
+                            <span class="text-[11px] font-black text-slate-900"><%= v.type %></span>
+                            <span class="text-[9px] text-slate-400 font-bold"><%= new Date(v.date).toLocaleDateString('vi-VN') %></span>
+                        </div>
+                        <span class="text-[11px] font-black text-red-600">-<%= new Intl.NumberFormat('vi-VN').format(Math.round(v.penaltyAmount)) %></span>
+                    </div>
+                <% }) %>
+            </div>
+        <% } %>
+
+        <div class="mt-8 p-4 bg-slate-100/50 rounded-2xl flex items-center gap-4">
+            <span class="material-symbols-outlined text-slate-400 text-xl">info</span>
+            <p class="text-[10px] text-slate-500 font-medium leading-relaxed italic">Thu nhập dự kiến dựa trên số buổi đã dạy và doanh số hiện tại. Quyết toán chính thức vào cuối tháng.</p>
+        </div>
+    </section>
+
+    <!-- 4. TODAY'S SCHEDULE -->
+    <section class="space-y-4">
+        <div class="flex items-center justify-between">
+            <h3 class="text-xl font-black italic tracking-tighter uppercase text-slate-900">Lịch tập hôm nay</h3>
+            <div class="flex items-center gap-2">
+                <span class="text-[10px] font-black text-primary bg-primary/10 px-4 py-1.5 rounded-full uppercase tracking-widest shadow-sm"><%= rosterCount %> BUỔI</span>
+            </div>
+        </div>
+        <div class="space-y-4">
+            <% if (roster && roster.length > 0) { %>
+                <% roster.forEach((session, index) => { %>
+                    <div class="glass p-5 rounded-[32px] flex items-center justify-between group hover:border-primary transition-all duration-300 shadow-sm border border-slate-200/60">
+                        <div class="flex items-center gap-4">
+                            <div class="relative">
+                                <div class="h-14 w-14 rounded-[20px] overflow-hidden border-2 border-white shadow-md">
+                                    <img alt="Client" class="h-full w-full object-cover" src="<%= session.client && session.client.avatar ? session.client.avatar : 'https://ui-avatars.com/api/?name=' + encodeURIComponent(session.client.name) %>"/>
+                                </div>
+                                <% if (session.status === 'In_Progress') { %>
+                                    <div class="absolute -bottom-1 -right-1 w-5 h-5 bg-accent border-4 border-white rounded-full animate-pulse shadow-sm"></div>
+                                <% } %>
+                            </div>
+                            <div>
+                                <h4 class="text-base font-black text-slate-900 tracking-tight"><%= session.client.name %></h4>
+                                <div class="flex items-center gap-3 text-[10px] text-slate-400 font-bold uppercase mt-1">
+                                    <span class="flex items-center gap-1.5 bg-slate-100 px-2 py-0.5 rounded-lg"><span class="material-symbols-outlined text-[16px]">schedule</span> <%= new Date(session.scheduledTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false }) %></span>
+                                    <span class="flex items-center gap-1.5 px-2 py-0.5 rounded-lg <%= session.status === 'Completed' ? 'bg-emerald-50 text-emerald-600' : (session.status === 'In_Progress' ? 'bg-accent/10 text-accent' : 'bg-slate-50 text-slate-400') %> italic">
+                                        <%= session.status %>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <button onclick="openScanModal()" class="w-12 h-12 rounded-[18px] bg-slate-900 text-primary flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-xl shadow-slate-900/20">
+                            <span class="material-symbols-outlined text-[24px]">qr_code_scanner</span>
+                        </button>
+                    </div>
+                <% }) %>
+            <% } else { %>
+                <div class="glass p-12 rounded-[40px] text-center border-dashed border-2 border-slate-200 bg-slate-50/50">
+                    <span class="material-symbols-outlined text-5xl text-slate-200 mb-3">calendar_today</span>
+                    <p class="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Hôm nay không có lịch dạy</p>
+                </div>
+            <% } %>
+        </div>
+    </section>
+
+</main>
+
+<%- include('../partials/nav_pt', { activePage: 'dashboard' }) %>
+
+</body>
+</html>

@@ -1,0 +1,58 @@
+<%- include('../../partials/header', { title: 'Yêu cầu Slot', activePage: 'slots' }) %>
+
+<div class="p-6">
+    <div class="flex items-start justify-between gap-4 mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-white">Yêu cầu đặt/đổi lịch (Pending)</h1>
+            <p class="text-slate-400 text-sm mt-1">Giám sát các yêu cầu đang chờ PT duyệt.</p>
+        </div>
+        <a href="/admin/slots" class="px-4 py-2 rounded-lg bg-slate-800 text-slate-200 hover:bg-slate-700 transition-colors text-sm font-semibold">
+            Quay lại danh sách slot
+        </a>
+    </div>
+
+    <div class="bg-slate-900/50 border border-slate-800 rounded-xl overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full text-sm">
+                <thead class="bg-slate-950/50 text-slate-400">
+                    <tr>
+                        <th class="text-left px-4 py-3 font-semibold">RequestedAt</th>
+                        <th class="text-left px-4 py-3 font-semibold">Slot time</th>
+                        <th class="text-left px-4 py-3 font-semibold">PT</th>
+                        <th class="text-left px-4 py-3 font-semibold">Client</th>
+                        <th class="text-left px-4 py-3 font-semibold">Type</th>
+                        <th class="text-left px-4 py-3 font-semibold">Branch</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-800 text-slate-200">
+                    <% if (pendingSlots && pendingSlots.length > 0) { %>
+                        <% pendingSlots.forEach(s => { %>
+                            <tr class="hover:bg-slate-950/40">
+                                <td class="px-4 py-3 whitespace-nowrap">
+                                    <%= s.pending && s.pending.requestedAt ? new Date(s.pending.requestedAt).toLocaleString('vi-VN') : '-' %>
+                                </td>
+                                <td class="px-4 py-3 whitespace-nowrap"><%= new Date(s.startTime).toLocaleString('vi-VN') %></td>
+                                <td class="px-4 py-3"><%= s.pt ? s.pt.name : '-' %></td>
+                                <td class="px-4 py-3"><%= s.pending && s.pending.client ? s.pending.client.name : '-' %></td>
+                                <td class="px-4 py-3">
+                                    <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-bold bg-amber-500/10 text-amber-300 border border-amber-500/20">
+                                        <%= s.pending && s.pending.type ? s.pending.type : 'Book' %>
+                                    </span>
+                                </td>
+                                <td class="px-4 py-3"><%= s.branch ? s.branch.name : '-' %></td>
+                            </tr>
+                        <% }) %>
+                    <% } else { %>
+                        <tr>
+                            <td class="px-4 py-8 text-center text-slate-500" colspan="6">Không có yêu cầu pending.</td>
+                        </tr>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <%- include('../../partials/pagination') %>
+</div>
+
+<%- include('../../partials/footer') %>
+

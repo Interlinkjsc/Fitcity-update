@@ -1,0 +1,67 @@
+@startuml FitCity_Actors_Overview
+title FitCity FMS — Actors & Module Map
+left to right direction
+skinparam packageStyle rectangle
+skinparam actorStyle awesome
+
+actor "Guest" as Guest
+actor "Client" as Client
+actor "PT" as PT
+actor "Sales" as Sales
+actor "Marketing" as MKT
+actor "Manager" as MGR
+actor "Accountant" as ACC
+actor "Admin" as ADM
+actor "CEO" as CEO
+actor "SA" as SA
+
+rectangle "Public & Auth" as M_AUTH {
+}
+rectangle "CRM" as M_CRM {
+}
+rectangle "Contracts" as M_CTR {
+}
+rectangle "Clients" as M_CLI {
+}
+rectangle "PT Ops" as M_PT {
+}
+rectangle "Finance" as M_FIN {
+}
+rectangle "Programs" as M_PRG {
+}
+rectangle "Platform" as M_PLT {
+}
+rectangle "Users & Org" as M_USR {
+}
+
+Guest --> M_AUTH
+Guest --> M_CRM
+Client --> M_CLI
+Client --> M_PRG
+Client --> M_CTR
+PT --> M_PT
+PT --> M_PRG
+PT --> M_CTR
+Sales --> M_CTR
+Sales --> M_CRM
+Sales --> M_FIN
+MKT --> M_CRM
+MGR --> M_PLT
+MGR --> M_PT
+MGR --> M_CTR
+MGR --> M_FIN
+ACC --> M_FIN
+ACC --> M_CTR
+ADM --> M_PLT
+ADM --> M_USR
+ADM --> M_FIN
+CEO --> M_PLT
+CEO --> M_FIN
+SA --> M_USR
+
+note bottom of M_AUTH
+  /, /contact, /blog
+  /auth/*
+end note
+
+@enduml

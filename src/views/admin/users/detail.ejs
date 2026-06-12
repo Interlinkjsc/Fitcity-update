@@ -1,0 +1,410 @@
+<%- include('../../partials/header', { title: 'Hồ sơ Nhân sự', activePage: 'users' }) %>
+
+<div class="max-w-5xl mx-auto">
+    <!-- Header Page -->
+    <div class="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+            <a href="/admin/users/list" class="text-sm text-slate-500 hover:text-lime-600 transition-colors flex items-center gap-1 mb-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                Quay lại Danh sách Nhân sự
+            </a>
+            <h2 class="text-2xl font-bold text-slate-800">Hồ sơ Nhân Sự</h2>
+        </div>
+        <div class="flex gap-2">
+            <a href="/admin/users/edit/<%= userData._id %>" class="inline-flex items-center justify-center px-4 py-2 bg-blue-50 text-blue-700 hover:bg-blue-100 font-semibold rounded-lg transition-colors shadow-sm">
+                <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                Chỉnh sửa Hồ sơ
+            </a>
+            <% if (user && (user.role === 'SA' || user.role === 'Admin')) { %>
+                <form action="/admin/users/delete/<%= userData._id %>" method="POST" onsubmit="return confirm('CẢNH BÁO CAO ĐỘ: Xác nhận xoá cứng nhân sự này? Thao tác này sẽ dọn dẹp vĩnh viễn.');" class="inline-block">
+                    <button type="submit" class="inline-flex items-center justify-center px-4 py-2 bg-rose-50 text-rose-700 hover:bg-rose-100 font-semibold rounded-lg transition-colors shadow-sm">
+                        <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        Xóa
+                    </button>
+                </form>
+            <% } %>
+        </div>
+    </div>
+
+    <!-- Main Profile Card -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-6">
+        <div class="h-32 bg-gradient-to-r from-slate-800 to-slate-700 relative">
+            <div class="absolute -bottom-16 left-8 flex items-end">
+                <img src="<%= userData.avatar || '/images/default-avatar.png' %>" alt="Avatar" class="w-32 h-32 rounded-full border-4 border-white shadow-lg object-cover bg-white"
+                     onerror="this.src='https://ui-avatars.com/api/?name=<%= encodeURIComponent(userData.name) %>&background=e2e8f0&color=475569'">
+            </div>
+            <div class="absolute top-4 right-4 flex gap-2">
+                <span class="px-3 py-1 bg-white/20 backdrop-blur-md text-white text-xs font-bold rounded-full uppercase tracking-wider shadow-sm">
+                    <%= userData.role %>
+                </span>
+                <% if(userData.status === 'Active') { %>
+                    <span class="px-3 py-1 bg-emerald-500/90 backdrop-blur-md text-white text-xs font-bold rounded-full shadow-sm">Hoạt động</span>
+                <% } else if(userData.status === 'Inactive') { %>
+                    <span class="px-3 py-1 bg-slate-500/90 backdrop-blur-md text-white text-xs font-bold rounded-full shadow-sm">Nghỉ việc</span>
+                <% } else { %>
+                    <span class="px-3 py-1 bg-rose-500/90 backdrop-blur-md text-white text-xs font-bold rounded-full shadow-sm">Bị Cấm</span>
+                <% } %>
+            </div>
+        </div>
+        <div class="pt-20 px-8 pb-8">
+            <div class="flex flex-col md:flex-row md:justify-between items-start md:items-end border-b border-slate-100 pb-6 mb-6">
+                <div>
+                    <h1 class="text-3xl font-black text-slate-800 tracking-tight"><%= userData.name %></h1>
+                    <div class="text-slate-500 font-medium flex items-center gap-2 mt-1">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"></path></svg>
+                        <%= userData.email %>
+                    </div>
+                    <% if(userData.phone) { %>
+                    <div class="text-slate-500 font-medium flex items-center gap-2 mt-1">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
+                        <%= userData.phone %>
+                    </div>
+                    <% } %>
+                </div>
+            </div>
+
+            <!-- Details Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Group: Job Info -->
+                <div class="space-y-4">
+                    <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2">Thông tin Công việc</h3>
+                    
+                    <div class="flex gap-3">
+                        <div class="flex-shrink-0 mt-1">
+                            <div class="w-8 h-8 rounded-full bg-indigo-50 flex justify-center items-center text-indigo-500">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                            </div>
+                        </div>
+                        <div>
+                            <span class="block text-sm text-slate-500">Chi nhánh làm việc</span>
+                            <span class="font-semibold text-slate-800">
+                                <% if(userData.role === 'SA' || userData.role === 'Admin') { %>
+                                    Toàn hệ thống
+                                <% } else if(userData.branch) { %>
+                                    <%= userData.branch.name %>
+                                    <div class="text-xs text-slate-500 font-normal mt-0.5"><%= userData.branch.address %></div>
+                                <% } else { %>
+                                    <span class="italic text-slate-400">Chưa xếp chi nhánh</span>
+                                <% } %>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-3">
+                        <div class="flex-shrink-0 mt-1">
+                            <div class="w-8 h-8 rounded-full bg-amber-50 flex justify-center items-center text-amber-500">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                            </div>
+                        </div>
+                        <div>
+                            <span class="block text-sm text-slate-500">Ngày gia nhập</span>
+                            <span class="font-semibold text-slate-800">
+                                <%= new Date(userData.createdAt).toLocaleDateString('vi-VN') %>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Group: Personal info -->
+                <div class="space-y-4">
+                    <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2">Thông tin cá nhân</h3>
+                    
+                    <div class="flex gap-3">
+                        <div class="flex-shrink-0 mt-1">
+                            <div class="w-8 h-8 rounded-full bg-slate-50 flex justify-center items-center text-slate-500">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"></path></svg>
+                            </div>
+                        </div>
+                        <div>
+                            <span class="block text-sm text-slate-500">Số CCCD / Định danh</span>
+                            <span class="font-mono font-bold text-slate-800"><%= userData.cccdNumber || 'Chưa cập nhật' %></span>
+                            <% if(userData.cccdIssueDate) { %>
+                                <div class="text-[11px] text-slate-500 mt-0.5">
+                                    Cấp ngày: <span class="font-semibold"><%= new Date(userData.cccdIssueDate).toLocaleDateString('vi-VN') %></span>
+                                    <% if(userData.cccdIssuePlace) { %>
+                                        • Tại: <span class="font-semibold"><%= userData.cccdIssuePlace %></span>
+                                    <% } %>
+                                </div>
+                            <% } %>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-3">
+                        <div class="flex-shrink-0 mt-1">
+                            <div class="w-8 h-8 rounded-full bg-slate-50 flex justify-center items-center text-slate-500">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                            </div>
+                        </div>
+                        <div>
+                            <span class="block text-sm text-slate-500">Địa chỉ thường trú</span>
+                            <span class="font-semibold text-slate-800 text-sm leading-relaxed"><%= userData.address || 'Chưa cập nhật' %></span>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-3">
+                        <div class="flex-shrink-0 mt-1">
+                            <div class="w-8 h-8 rounded-full bg-slate-50 flex justify-center items-center text-slate-500">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
+                            </div>
+                        </div>
+                        <div>
+                            <span class="block text-sm text-slate-500">Thông tin Ngân hàng</span>
+                            <span class="font-mono font-bold text-slate-800"><%= (userData.bankInfo && userData.bankInfo.accountNumber) ? userData.bankInfo.accountNumber : 'Chưa cập nhật' %></span>
+                            <% if(userData.bankInfo && userData.bankInfo.bankName) { %>
+                                <span class="text-xs text-slate-500 block mt-0.5"><%= userData.bankInfo.bankName %></span>
+                            <% } %>
+                        </div>
+                    </div>
+                    
+                    <div class="flex gap-3">
+                        <div class="flex-shrink-0 mt-1">
+                            <div class="w-8 h-8 rounded-full bg-slate-50 flex justify-center items-center text-slate-500">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            </div>
+                        </div>
+                        <div>
+                            <span class="block text-sm text-slate-500">Cập nhật lần cuối</span>
+                            <span class="font-semibold text-slate-800">
+                                <%= new Date(userData.updatedAt).toLocaleString('vi-VN') %>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div> <!-- /Profile Card -->
+
+    <% if (typeof user !== 'undefined' && user && ['SA', 'Admin'].includes(user.role) && userData.role !== 'Client') { %>
+    <div class="bg-white rounded-xl shadow-sm border border-lime-200 p-5 mb-6">
+        <h3 class="text-sm font-bold text-slate-700 uppercase tracking-wider mb-3">Thông tin HR (chỉ Admin/SA)</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+            <div><span class="text-slate-500 block">Lương cứng</span><span class="font-bold"><%= userData.baseSalary ? new Intl.NumberFormat('vi-VN').format(userData.baseSalary) + ' đ/tháng' : '—' %></span></div>
+            <% if (userData.role === 'PT') { %>
+            <div><span class="text-slate-500 block">HH PT</span><span class="font-bold"><%= userData.ptCommissionRate != null ? userData.ptCommissionRate + '% netAmount' : '10% (mặc định)' %></span></div>
+            <% } %>
+            <% if (['Sales', 'Manager'].includes(userData.role)) { %>
+            <div><span class="text-slate-500 block">HH Sales/QL</span><span class="font-bold"><%= userData.salesCommissionRate != null ? userData.salesCommissionRate + '% netAmount (HĐ Paid)' : '5% (mặc định)' %></span></div>
+            <% } %>
+            <div><span class="text-slate-500 block">MST</span><span class="font-mono"><%= userData.taxDocumentId || '—' %></span></div>
+            <div><span class="text-slate-500 block">BHXH</span><span class="font-mono"><%= userData.insuranceDocumentId || '—' %></span></div>
+        </div>
+    </div>
+    <% } %>
+
+    <% if (userData.role === 'PT') { %>
+    <!-- Contracts managed by this PT -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+            <h3 class="font-bold text-slate-800 flex items-center gap-2">
+                <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                Hợp đồng Đang phụ trách (<%= managedContracts.length %>)
+            </h3>
+        </div>
+        <div class="divide-y divide-slate-100 max-h-96 overflow-y-auto">
+            <% if(managedContracts && managedContracts.length > 0) { %>
+                <% managedContracts.forEach(contract => { %>
+                    <div class="px-6 py-4 hover:bg-slate-50 transition-colors flex justify-between items-center">
+                        <div>
+                            <div class="font-bold text-slate-800 mb-0.5"><a href="/admin/contracts/detail/<%= contract._id %>" class="hover:text-indigo-600 transition-colors"><%= contract.contractCode || contract._id %></a></div>
+                            <div class="text-sm text-slate-500">
+                                Học viên: <span class="font-semibold"><%= contract.client ? contract.client.name : 'N/A' %></span>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <span class="block text-sm font-bold text-emerald-600"><%= new Intl.NumberFormat('vi-VN').format(contract.netAmount || contract.totalAmount || 0) %> đ</span>
+                            <span class="text-xs text-slate-400 capitalize"><%= contract.contractStatus %> · <%= contract.paymentStatus %></span>
+                        </div>
+                    </div>
+                <% }) %>
+            <% } else { %>
+                <div class="p-8 text-center text-slate-500 text-sm">
+                    PT này hiện chưa phụ trách hợp đồng khóa tập nào.
+                </div>
+            <% } %>
+        </div>
+    </div>
+    <% } %>
+
+    <!-- Phase 3: KPI Performance Tab for PT, Sales, Manager -->
+    <% if (typeof employeeKPI !== 'undefined' && employeeKPI && (userData.role === 'PT' || userData.role === 'Sales' || userData.role === 'Manager')) { %>
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+            <h3 class="font-bold text-slate-800 flex items-center gap-2">
+                <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                </svg>
+                KPI & Hiệu suất
+            </h3>
+            <form method="GET" action="/admin/users/detail/<%= userData._id %>" class="flex flex-wrap items-end gap-2">
+                <div>
+                    <label class="text-[10px] font-bold text-slate-400 uppercase">Tháng</label>
+                    <select name="kpiMonth" class="block border border-slate-200 rounded-lg text-sm py-1.5 px-2">
+                        <% for (let m = 1; m <= 12; m++) { %>
+                        <option value="<%= m %>" <%= (typeof kpiMonth !== 'undefined' ? kpiMonth : new Date().getMonth() + 1) === m ? 'selected' : '' %>><%= m %></option>
+                        <% } %>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-slate-400 uppercase">Năm</label>
+                    <input type="number" name="kpiYear" value="<%= typeof kpiYear !== 'undefined' ? kpiYear : new Date().getFullYear() %>" class="w-24 border border-slate-200 rounded-lg text-sm py-1.5 px-2">
+                </div>
+                <button type="submit" class="px-3 py-1.5 text-xs font-bold bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Xem</button>
+            </form>
+        </div>
+        <div class="px-6 pb-2 text-xs text-slate-500">
+            Kỳ: Tháng <%= typeof kpiMonth !== 'undefined' ? kpiMonth : new Date().getMonth() + 1 %>/<%= typeof kpiYear !== 'undefined' ? kpiYear : new Date().getFullYear() %>
+            <% if (employeeKPI && employeeKPI.targetSource) { %>
+            · Chỉ tiêu: <span class="font-semibold"><%= employeeKPI.targetSource === 'employee' ? 'Cá nhân' : (employeeKPI.targetSource === 'branch' ? 'Theo chi nhánh' : 'Chưa gán') %></span>
+            <% } %>
+        </div>
+        <% if (typeof canSetEmployeeKPI !== 'undefined' && canSetEmployeeKPI && ['PT','Sales'].includes(userData.role)) { %>
+        <div class="px-6 pb-4 border-b border-slate-100">
+            <form method="POST" action="/admin/users/detail/<%= userData._id %>/kpi-target" class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                <input type="hidden" name="kpiMonth" value="<%= kpiMonth %>">
+                <input type="hidden" name="kpiYear" value="<%= kpiYear %>">
+                <div>
+                    <label class="text-[10px] font-bold text-slate-400 uppercase">DT mục tiêu</label>
+                    <input type="number" name="revenueTarget" min="0" value="<%= employeeKPITarget ? employeeKPITarget.revenueTarget : '' %>" class="w-full border rounded-lg px-2 py-1.5">
+                </div>
+                <% if (userData.role === 'Sales') { %>
+                <div>
+                    <label class="text-[10px] font-bold text-slate-400 uppercase">HĐ mục tiêu</label>
+                    <input type="number" name="contractTarget" min="0" value="<%= employeeKPITarget ? employeeKPITarget.contractTarget : '' %>" class="w-full border rounded-lg px-2 py-1.5">
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-slate-400 uppercase">Lead mục tiêu</label>
+                    <input type="number" name="newLeadTarget" min="0" value="<%= employeeKPITarget ? employeeKPITarget.newLeadTarget : '' %>" class="w-full border rounded-lg px-2 py-1.5">
+                </div>
+                <% } %>
+                <% if (userData.role === 'PT') { %>
+                <div>
+                    <label class="text-[10px] font-bold text-slate-400 uppercase">Buổi mục tiêu</label>
+                    <input type="number" name="sessionTarget" min="0" value="<%= employeeKPITarget ? employeeKPITarget.sessionTarget : '' %>" class="w-full border rounded-lg px-2 py-1.5">
+                </div>
+                <% } %>
+                <div class="col-span-2 md:col-span-4 flex justify-end">
+                    <button type="submit" class="px-4 py-2 text-xs font-bold bg-lime-500 text-slate-900 rounded-lg hover:bg-lime-600">Lưu chỉ tiêu cá nhân</button>
+                </div>
+            </form>
+        </div>
+        <% } %>
+        <div class="p-6 pt-2">
+            <% if (userData.role === 'PT' && employeeKPI.sessionCount !== undefined) { %>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="bg-indigo-50 rounded-lg p-4 text-center">
+                        <p class="text-xs text-indigo-600 font-semibold uppercase tracking-wider">Buổi đã dạy</p>
+                        <p class="text-2xl font-extrabold text-indigo-700 mt-1"><%= employeeKPI.sessionCount %></p>
+                        <p class="text-[10px] text-indigo-400 mt-1"><%= employeeKPI.workingDays %> ngày làm<% if (employeeKPI.sessionTarget) { %> · MT <%= employeeKPI.sessionTarget %> buổi<% } %></p>
+                    </div>
+                    <div class="bg-emerald-50 rounded-lg p-4 text-center">
+                        <p class="text-xs text-emerald-600 font-semibold uppercase tracking-wider">Hoa hồng (HĐ Paid)</p>
+                        <p class="text-lg font-extrabold text-emerald-700 mt-1"><%= new Intl.NumberFormat('vi-VN').format(employeeKPI.commission) %>đ</p>
+                        <p class="text-[10px] text-emerald-400 mt-1"><%= employeeKPI.paidContractCount || 0 %> hợp đồng</p>
+                    </div>
+                    <div class="bg-amber-50 rounded-lg p-4 text-center">
+                        <p class="text-xs text-amber-600 font-semibold uppercase tracking-wider">DT HĐ mới</p>
+                        <p class="text-lg font-extrabold text-amber-700 mt-1"><%= new Intl.NumberFormat('vi-VN').format(employeeKPI.newContractRevenue) %>đ</p>
+                        <div class="flex items-center justify-center gap-2 mt-1">
+                            <div class="w-16 h-1.5 bg-amber-200 rounded-full overflow-hidden">
+                                <div class="h-full bg-amber-500 rounded-full" style="width: <%= Math.min(100, employeeKPI.revenuePercent) %>%"></div>
+                            </div>
+                            <span class="text-[10px] font-bold text-amber-600"><%= employeeKPI.revenuePercent %>%</span>
+                        </div>
+                    </div>
+                </div>
+            <% } else if (userData.role === 'Sales' && employeeKPI.contractActual !== undefined) { %>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+                    <div class="bg-blue-50 rounded-lg p-4 text-center">
+                        <p class="text-xs text-blue-600 font-semibold uppercase tracking-wider">Hợp đồng</p>
+                        <p class="text-2xl font-extrabold text-blue-700 mt-1"><%= employeeKPI.contractActual %></p>
+                        <p class="text-[10px] text-blue-400 mt-1">Mục tiêu: <%= employeeKPI.contractTarget %></p>
+                    </div>
+                    <div class="bg-amber-50 rounded-lg p-4 text-center">
+                        <p class="text-xs text-amber-600 font-semibold uppercase tracking-wider">Lead mới</p>
+                        <p class="text-2xl font-extrabold text-amber-700 mt-1"><%= employeeKPI.newLeadActual %></p>
+                        <p class="text-[10px] text-amber-400 mt-1">Mục tiêu: <%= employeeKPI.newLeadTarget %></p>
+                    </div>
+                    <div class="bg-emerald-50 rounded-lg p-4 text-center">
+                        <p class="text-xs text-emerald-600 font-semibold uppercase tracking-wider">Doanh thu</p>
+                        <p class="text-lg font-extrabold text-emerald-700 mt-1"><%= new Intl.NumberFormat('vi-VN').format(employeeKPI.revenueActual) %>đ</p>
+                        <p class="text-[10px] text-emerald-400 mt-1">MT: <%= new Intl.NumberFormat('vi-VN').format(employeeKPI.revenueTarget || 0) %></p>
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    <div>
+                        <div class="flex justify-between text-[11px] mb-1">
+                            <span class="font-medium text-slate-600">Tiến độ HĐ</span>
+                            <span class="font-bold <%= employeeKPI.contractPercent >= 100 ? 'text-green-600' : 'text-amber-600' %>"><%= employeeKPI.contractPercent %>%</span>
+                        </div>
+                        <div class="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                            <div class="h-full bg-blue-500 rounded-full" style="width: <%= Math.min(100, employeeKPI.contractPercent) %>%"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-[11px] mb-1">
+                            <span class="font-medium text-slate-600">Tiến độ Lead</span>
+                            <span class="font-bold <%= employeeKPI.leadPercent >= 100 ? 'text-green-600' : 'text-amber-600' %>"><%= employeeKPI.leadPercent %>%</span>
+                        </div>
+                        <div class="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                            <div class="h-full bg-amber-500 rounded-full" style="width: <%= Math.min(100, employeeKPI.leadPercent) %>%"></div>
+                        </div>
+                    </div>
+                </div>
+            <% } else if (userData.role === 'Manager' && employeeKPI.branch) { %>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="bg-purple-50 rounded-lg p-4 text-center">
+                        <p class="text-xs text-purple-600 font-semibold uppercase tracking-wider">Doanh thu CN</p>
+                        <p class="text-lg font-extrabold text-purple-700 mt-1"><%= new Intl.NumberFormat('vi-VN').format(employeeKPI.branch.revenueActual) %>đ</p>
+                        <p class="text-[10px] text-purple-400 mt-1">Mục tiêu: <%= new Intl.NumberFormat('vi-VN').format(employeeKPI.branch.revenueTarget) %>đ</p>
+                        <div class="flex items-center justify-center gap-2 mt-1">
+                            <div class="w-20 h-1.5 bg-purple-200 rounded-full overflow-hidden">
+                                <div class="h-full bg-purple-500 rounded-full" style="width: <%= Math.min(100, employeeKPI.branch.revenuePercent) %>%"></div>
+                            </div>
+                            <span class="text-[10px] font-bold text-purple-600"><%= employeeKPI.branch.revenuePercent %>%</span>
+                        </div>
+                    </div>
+                    <div class="bg-indigo-50 rounded-lg p-4 text-center">
+                        <p class="text-xs text-indigo-600 font-semibold uppercase tracking-wider">HĐ / Lead</p>
+                        <p class="text-lg font-extrabold text-indigo-700 mt-1"><%= employeeKPI.branch.contractActual %>/<%= employeeKPI.branch.newLeadActual %></p>
+                        <p class="text-[10px] text-indigo-400 mt-1">MT: <%= employeeKPI.branch.contractTarget %> HĐ / <%= employeeKPI.branch.newLeadTarget %> Lead</p>
+                    </div>
+                </div>
+                <% if (employeeKPI.staff && (employeeKPI.staff.sales?.length || employeeKPI.staff.pt?.length)) { %>
+                <div class="mt-6 border-t border-slate-100 pt-6">
+                    <h4 class="text-sm font-bold text-slate-700 mb-3">Nhân viên chi nhánh (kỳ đã chọn)</h4>
+                    <% if (employeeKPI.staff.sales && employeeKPI.staff.sales.length) { %>
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Kinh doanh</p>
+                    <div class="overflow-x-auto mb-4">
+                        <table class="w-full text-left text-xs">
+                            <thead><tr class="text-slate-400 border-b"><th class="py-2 pr-2">Tên</th><th class="py-2 text-right">HĐ</th><th class="py-2 text-right">Lead</th><th class="py-2 text-right">Doanh thu</th></tr></thead>
+                            <tbody>
+                            <% employeeKPI.staff.sales.forEach(function(s) { %>
+                                <tr class="border-b border-slate-50"><td class="py-2 font-medium text-slate-700"><%= s.name %></td><td class="py-2 text-right"><%= s.contractActual %>/<%= s.contractTarget %></td><td class="py-2 text-right"><%= s.newLeadActual %>/<%= s.newLeadTarget %></td><td class="py-2 text-right font-semibold text-emerald-600"><%= new Intl.NumberFormat('vi-VN').format(s.revenueActual) %></td></tr>
+                            <% }); %>
+                            </tbody>
+                        </table>
+                    </div>
+                    <% } %>
+                    <% if (employeeKPI.staff.pt && employeeKPI.staff.pt.length) { %>
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">PT</p>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs">
+                            <thead><tr class="text-slate-400 border-b"><th class="py-2 pr-2">Tên</th><th class="py-2 text-right">Buổi</th><th class="py-2 text-right">Hoa hồng</th><th class="py-2 text-right">DT HĐ</th></tr></thead>
+                            <tbody>
+                            <% employeeKPI.staff.pt.forEach(function(p) { %>
+                                <tr class="border-b border-slate-50"><td class="py-2 font-medium text-slate-700"><%= p.name %></td><td class="py-2 text-right"><%= p.sessionCount %></td><td class="py-2 text-right font-semibold text-emerald-600"><%= new Intl.NumberFormat('vi-VN').format(p.commission) %></td><td class="py-2 text-right"><%= new Intl.NumberFormat('vi-VN').format(p.newContractRevenue) %></td></tr>
+                            <% }); %>
+                            </tbody>
+                        </table>
+                    </div>
+                    <% } %>
+                </div>
+                <% } %>
+            <% } %>
+        </div>
+    </div>
+    <% } %>
+
+</div>
+
+<%- include('../../partials/footer') %>

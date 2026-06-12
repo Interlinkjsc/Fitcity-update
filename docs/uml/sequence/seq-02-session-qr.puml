@@ -1,0 +1,37 @@
+@startuml SEQ_Session_QR
+title SEQ-02: Buổi tập QR (Client ↔ PT)
+autonumber
+
+actor Client
+participant "clientRoutes" as CR
+participant "WorkoutSession" as WS
+actor PT
+participant "ptRoutes" as PR
+participant "workoutService" as WSvc
+participant "notificationService" as NS
+
+== Client hiển thị QR ==
+Client -> CR : GET /client/sessions/:id/qr?action=start
+CR -> WS : findById + validate client
+CR --> Client : session-qr.ejs (token)
+
+== PT quét bắt đầu ==
+PT -> PR : POST /pt/sessions/scan-qr {sid, token}
+PR -> WSvc : processQrScan(sessionId, ptId)
+WSvc -> WS : status = In_Progress
+WSvc --> PR : success
+PR --> PT : JSON OK
+
+== PT quét kết thúc ==
+PT -> PR : POST /pt/sessions/scan-qr (end)
+WSvc -> WS : status = Completed
+PR --> PT : success
+
+== Client xác nhận & đánh giá ==
+Client -> CR : POST /client/sessions/confirm/:id
+CR -> WS : clientConfirmed = true
+Client -> CR : POST /client/sessions/:id/feedback {rating, notes}
+CR -> WS : save rating
+CR -> NS : (optional) notify PT
+
+@enduml

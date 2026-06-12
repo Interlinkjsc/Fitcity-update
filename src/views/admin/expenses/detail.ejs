@@ -1,0 +1,76 @@
+<%- include('../../partials/header', { title: 'Chi tiết Chi phí', activePage: 'expenses' }) %>
+
+<div class="max-w-4xl mx-auto">
+    <div class="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+            <a href="/admin/expenses" class="text-sm text-slate-500 hover:text-lime-600 transition-colors flex items-center gap-1 mb-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                Quay lại Sổ chi nội bộ
+            </a>
+            <h2 class="text-2xl font-bold text-slate-800">Chi tiết Khoản chi</h2>
+        </div>
+        <form action="/admin/expenses/delete/<%= expense._id %>" method="POST" onsubmit="return confirm('Xác nhận xóa khoản chi này?');">
+            <button type="submit" class="inline-flex items-center px-4 py-2 bg-rose-50 text-rose-700 hover:bg-rose-100 font-semibold rounded-lg text-sm">Xóa khoản chi</button>
+        </form>
+    </div>
+
+    <% const total = expense.total ?? expense.amount ?? 0; const before = expense.amountBeforeVat ?? total; %>
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-6">
+        <div class="p-6 md:p-8">
+            <div class="flex flex-col md:flex-row justify-between border-b border-slate-100 pb-6 mb-6 gap-4">
+                <div>
+                    <span class="block text-xs font-bold text-slate-400 uppercase mb-2">Tổng thanh toán</span>
+                    <h1 class="text-4xl font-black text-rose-600">
+                        -<%= new Intl.NumberFormat('vi-VN').format(total) %> <span class="text-xl text-rose-400">VNĐ</span>
+                    </h1>
+                    <p class="text-sm text-slate-500 mt-2">
+                        Trước VAT: <%= new Intl.NumberFormat('vi-VN').format(before) %> ·
+                        VAT (<%= expense.vatRate ?? 0 %>%): <%= new Intl.NumberFormat('vi-VN').format(expense.vatAmount || 0) %>
+                    </p>
+                </div>
+                <div class="px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-center">
+                    <span class="block text-xs text-slate-500 uppercase">Chứng từ thuế</span>
+                    <span class="font-bold text-slate-800"><%= typeof taxDocumentLabels !== 'undefined' && expense.taxDocumentType ? taxDocumentLabels[expense.taxDocumentType] : (expense.taxDocumentType || '—') %></span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <span class="text-sm text-slate-500">Ngày chi</span>
+                    <p class="font-semibold text-slate-800"><%= new Date(expense.date).toLocaleDateString('vi-VN') %></p>
+                </div>
+                <div>
+                    <span class="text-sm text-slate-500">Danh mục</span>
+                    <p class="font-semibold text-slate-800"><%= expense.category %></p>
+                </div>
+                <div>
+                    <span class="text-sm text-slate-500">Chi nhánh</span>
+                    <p class="font-semibold text-indigo-700"><%= expense.branch ? expense.branch.name : '—' %></p>
+                </div>
+                <div>
+                    <span class="text-sm text-slate-500">Người ghi</span>
+                    <p class="font-semibold text-slate-800"><%= expense.recordedBy ? expense.recordedBy.name : 'Hệ thống' %></p>
+                </div>
+                <div class="md:col-span-2">
+                    <span class="text-sm text-slate-500">Mô tả</span>
+                    <p class="p-4 bg-slate-50 rounded-lg border border-slate-100 mt-1"><%= expense.description || 'Không có ghi chú.' %></p>
+                </div>
+                <% if (driveUrl || expense.invoiceImage) { %>
+                <div class="md:col-span-2">
+                    <span class="text-sm text-slate-500">Chứng từ đính kèm</span>
+                    <div class="mt-2 flex flex-wrap gap-3">
+                        <% if (driveUrl) { %>
+                        <a href="<%= driveUrl %>" target="_blank" class="inline-flex items-center px-4 py-2 bg-blue-50 text-blue-700 rounded-lg text-sm font-semibold hover:bg-blue-100">Mở trên Google Drive</a>
+                        <% } %>
+                        <% if (expense.invoiceImage && expense.invoiceImage !== driveUrl) { %>
+                        <a href="<%= expense.invoiceImage %>" target="_blank" class="inline-flex items-center px-4 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm font-semibold">Link chứng từ</a>
+                        <% } %>
+                    </div>
+                </div>
+                <% } %>
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- include('../../partials/footer') %>

@@ -1,0 +1,41 @@
+@startuml ACT_Guest
+title Activity — Guest (2 đường vào tách biệt — R5)
+skinparam activityStyle rectangle
+
+start
+partition "Khám phá & Lead (đường A)" {
+  :GET /, /blog, /contact;
+  :POST /register-lead;
+  if (Email đã là Client?) then (R1 / implemented)
+    :Flash: đã có tài khoản → đăng nhập;
+    stop
+  else (OK)
+    :Tạo Lead (F) + SEQ-01 notify;
+  endif
+  note right
+    **Không** tạo User
+    Marketing follow-up → Convert (staff)
+  end note
+}
+
+partition "Đăng ký hội viên (đường D)" {
+  note right
+    CTA riêng: /auth/register
+    Không dùng cùng form Lead (R5)
+  end note
+  :POST /auth/register\nbranch + referralCode?;
+  if (Email trùng?) then (<<implemented>>)
+    :Lỗi duplicate email;
+    stop
+  endif
+  :User Client + session → /client;
+}
+
+stop
+
+note right
+  UC-G02/G03, UC-A02
+  SEQ-01, SEQ-09
+end note
+
+@enduml

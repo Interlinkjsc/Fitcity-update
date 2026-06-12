@@ -1,0 +1,38 @@
+@startuml SEQ_Lead_To_Notify
+title SEQ-01: Guest đăng ký Lead → Noti Marketing\n(đường A — không tạo Client)
+autonumber
+
+actor Guest
+participant "leadRoutes" as Web
+participant "leadController" as LC
+database "MongoDB\nLead / User" as DB
+participant "notificationService" as NS
+actor "Marketing/\nManager/Admin" as Staff
+
+Guest -> Web : POST /register-lead\n(name, phone, email?, branch, metrics...)
+Web -> LC : registerLead()
+
+opt <<planned>> UC-CRM16 / R1
+  LC -> DB : User.findOne(emailHash)
+  alt email đã là Client
+    LC --> Web : flash + redirect (không tạo Lead)
+    Web --> Guest
+  end
+end
+
+LC -> DB : Lead.create(status=F)
+LC -> DB : User.find(Marketing|Manager|Admin)
+loop each notify user
+  LC -> NS : pushNotification(userId, "Lead mới", link)
+  NS -> Staff : in-app notification
+end
+LC --> Web : redirect + flash success
+Web --> Guest : Landing / Contact
+
+note over Guest, Staff
+  Sau đó: Sales Convert (UC-CRM15 <<planned>>)
+  hoặc POST /admin/clients/store (UC-CLI21)
+  — xem act-11
+end note
+
+@enduml

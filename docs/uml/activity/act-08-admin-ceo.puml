@@ -1,0 +1,28 @@
+@startuml ACT_Admin_CEO
+title Activity — Admin & CEO
+skinparam activityStyle rectangle
+
+start
+if (Role?) then (Admin)
+  partition "Admin — Toàn hệ thống" {
+    :Users CRUD + JD + branch assign;
+    :System settings VAT/commission;
+    :Permissions UI (xem);
+    :All modules CRUD theo RBAC;
+  }
+else (CEO)
+  partition "CEO — Chiến lược" {
+    :Multi-branch dashboard;
+    :Work report export\n(checklist + daily);
+    :Branch comparison;
+    :Read-only hoặc approve cấp cao;
+  }
+endif
+stop
+
+note right
+  UC-USR*, UC-PLT08-09
+  CEO: branch_dashboard, reports
+end note
+
+@enduml

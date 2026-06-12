@@ -1,0 +1,162 @@
+@startuml ACT_Client_Contract_Lifecycle
+title Activity — Vòng đời Khách hàng & Hợp đồng (4 đường vào + quy tắc R1–R7)\n<<implemented>> = code hiện tại | <<planned>> = spec mục tiêu
+skinparam activityStyle rectangle
+skinparam backgroundColor #FAFAFA
+skinparam partition {
+  BorderColor #2563EB
+  BackgroundColor #EFF6FF
+  FontColor #1E3A8A
+  FontSize 13
+}
+skinparam activity {
+  BorderColor #1D4ED8
+  BackgroundColor #DBEAFE
+  FontSize 11
+}
+
+start
+
+note right
+  **Nguyên tắc**
+  • Chỉ User role=Client mới login / ký HĐ
+  • Lead ≠ Client (collection tách)
+  • Email = khóa chính Client (unique)
+  • "Đã ký HĐ" = Contract Paid/Active (không = Lead Signed)
+end note
+
+partition "0. Bốn đường vào — tạo hội viên (User Client)" {
+
+  partition "A — Phễu Lead (Guest)" {
+    :POST /register-lead\n(Landing / Contact);
+    if (Email đã là Client?) then (R1 / implemented)
+      :Không tạo Lead;\nGợi ý đăng nhập / mở hồ sơ Client;
+      stop
+    else (OK)
+      :Tạo Lead (status **F**)\n+ metrics thể trạng, branch;
+      :Notify MKT/Manager/Admin\n(SEQ-01);
+    endif
+    note right
+      <<implemented>>
+      Không tạo User, không password
+    end note
+  }
+
+  partition "B — CRM Lead (Staff)" {
+    :GET /admin/leads/detail/:id;
+    :POST .../status\nF → Contacted → Qualified;
+    note right
+      <<implemented>> UC-CRM12
+      **Signed** đổi thành **Qualified**
+      (không nghĩa đã có HĐ trong DB)
+    end note
+    if (Sẵn sàng thành hội viên?) then (R2 / implemented)
+      :POST /admin/leads/detail/:id/convert\nCopy name, phone, email, branch;
+      :Tạo User Client + Lead.status=**Converted**\n+ convertedClientId;
+    else (Walk-in / không qua A)
+    endif
+  }
+
+  partition "C — Admin tạo Client (Staff)" {
+    if (Lead mở trùng email/SĐT?) then (R6 / implemented)
+      :Flash + redirect chi tiết Lead\nPOST /admin/clients/store;
+    else (Không có Lead mở)
+      :GET /admin/clients/create;
+      :POST /admin/clients/store\n<<implemented>> UC-CLI21;
+      note right
+        Bắt buộc: name, email, password, branch
+        phone dùng để đối chiếu Lead mở (R6)
+        R2 / implemented: gửi welcome email nếu có cấu hình SMTP
+      end note
+    endif
+  }
+
+  partition "D — Tự đăng ký (Guest)" {
+    :GET /auth/login?view=register;
+    if (Email đã tồn tại?) then (<<implemented>> R1)
+      :Từ chối — email đã dùng;
+      stop
+    else (OK)
+      :POST /auth/register\nbranch bắt buộc, referralCode?;
+      :createClient → User Client;
+      :Auto login → /client\n<<implemented>> UC-A02;
+    endif
+    note right
+      R5 / implemented:
+      CTA "Đăng ký hội viên" → D
+      Form Lead A chỉ còn mục đích tư vấn
+    end note
+  }
+}
+
+partition "1. Chuẩn hóa trước Hợp đồng (R4, R7)" {
+  if (Client có branch + email?) then (đủ)
+    :Sẵn sàng chọn trong wizard HĐ;
+  else (thiếu branch)
+    :Chặn tạo HĐ và yêu cầu cập nhật branch ở hồ sơ Client (R4 / implemented);
+  endif
+  note right
+    HĐ chỉ gắn clientId (User)
+    Không ký trên Lead
+  end note
+}
+
+partition "2. Ký kết Hợp đồng (Sales / PT / Admin / SA)" {
+  :GET /admin/contracts/create\n(hoặc /pt/contracts/create);
+  :Chọn **Client**, Package, PT, Branch, Sales;
+  :contractService.createContract\n<<implemented>> UC-CTR02;
+  :contractStatus = **Draft**\npaymentStatus = **Unpaid**;
+
+  if (Thu tiền ngay trên form?) then (paymentStatus=Paid <<implemented>>)
+    :paidAmount = totalAmount\ncontractStatus = **Active**;
+  else (Thu sau)
+    :POST .../payments/store\n<<implemented>> UC-CTR08, SEQ-03;
+    if (paidAmount >= totalAmount?) then (Đủ)
+      :paymentStatus = **Paid**\ncontractStatus = **Active**;
+      if (Client.referredBy?) then (có)
+        :Affiliate reward F1;
+      endif
+    else (Chưa đủ)
+      :paymentStatus = **Deposit**\nHĐ thường vẫn **Draft**;
+      stop
+    endif
+  endif
+  note right
+    Không có bước "Kế toán duyệt"
+    Accountant/Sales/Admin cùng quyền ghi thu
+  end note
+}
+
+partition "3. Vận hành & Tập luyện (Client & PT)" {
+  fork
+    :PT: Meal plan, Workout\nUC-PT17, UC-PT18;
+  fork again
+    :Client: lịch, slot\nUC-CLI05;
+  end fork
+  :Buổi tập Scheduled;
+  :PT quét QR → In_Progress → Completed\n(SEQ-02);
+  :Client xác nhận trên App\nUC-CLI02;
+  note right
+    <<planned>> SA Force check-in/confirm
+    (act-12) — chưa có API
+  end note
+}
+
+partition "4. Vòng đời Hợp đồng (Manager / Admin)" {
+  if (Sự kiện?) then (Hết hạn)
+    :contractStatus = **Expired**;
+  elseif (Bảo lưu) then (Pause)
+    :Client xin bảo lưu / Admin pause;
+    :POST pause / unpause\ncontractStatus **Paused** → **Active**;
+  else (Hủy)
+    :contractStatus = **Cancelled**\nhoặc **Liquidated**;
+    note right
+      Model: không có Terminated
+      (đồng bộ code)
+    end note
+  endif
+  :CRM KPI "Đã ký HĐ"\nđếm theo Contract Active/Paid (R3/R7 / implemented);
+}
+
+stop
+
+@enduml

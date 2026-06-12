@@ -1,0 +1,365 @@
+<%- include('../../partials/header', { title: 'Chi tiết Khách hàng', activePage: 'clients' }) %>
+
+<%
+const sessionStatusVi = { Scheduled: 'Đã lên lịch', In_Progress: 'Đang tập', Completed: 'Hoàn thành', Cancelled: 'Huỷ', No_Show: 'Vắng' };
+const mealGoalVi = { 'Weight Loss': 'Giảm cân', 'Muscle Gain': 'Tăng cơ', Maintenance: 'Duy trì', Endurance: 'Sức bền' };
+%>
+
+<div class="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div>
+        <h2 class="text-2xl font-bold text-slate-800">Hồ sơ khách hàng</h2>
+        <p class="text-slate-500 text-sm mt-1">Hợp đồng, lịch tập, lịch sử buổi tập, tiến độ chỉ số và dinh dưỡng.</p>
+    </div>
+    <div class="flex flex-wrap gap-2">
+        <a href="/admin/clients/edit/<%= clientData._id %>" class="inline-flex items-center px-4 py-2 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50">
+            Chỉnh sửa
+        </a>
+        <% if (user && (user.role === 'SA' || user.role === 'Admin')) { %>
+        <form action="/admin/clients/delete/<%= clientData._id %>" method="POST" class="inline-flex" onsubmit="return confirm('Xác nhận xóa vĩnh viễn khách hàng này? Chỉ thực hiện được khi khách không còn hợp đồng trong hệ thống.');">
+            <button type="submit" class="inline-flex items-center px-4 py-2 border border-rose-200 rounded-lg text-sm font-medium text-rose-700 hover:bg-rose-50">
+                Xóa khách hàng
+            </button>
+        </form>
+        <% } %>
+        <a href="/admin/clients/list" class="inline-flex items-center px-4 py-2 bg-lime-500 hover:bg-lime-600 text-slate-900 font-semibold rounded-lg">
+            Quay lại danh sách
+        </a>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-1 bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+        <div class="flex flex-col items-center text-center">
+            <img class="h-24 w-24 rounded-full border border-slate-200 object-cover" src="<%= clientData.avatar || '/images/default-avatar.png' %>" alt="">
+            <h3 class="mt-4 text-lg font-bold text-slate-800"><%= clientData.name || 'Chưa cập nhật' %></h3>
+            <p class="text-sm text-slate-500"><%= clientData.email || '-' %></p>
+            <div class="mt-3">
+                <% if (clientData.status === 'Active') { %>
+                    <span class="px-2.5 py-1 inline-flex text-xs font-semibold rounded-full bg-emerald-100 text-emerald-800">Hoạt động</span>
+                <% } else if (clientData.status === 'Suspended') { %>
+                    <span class="px-2.5 py-1 inline-flex text-xs font-semibold rounded-full bg-amber-100 text-amber-800">Tạm khóa</span>
+                <% } else { %>
+                    <span class="px-2.5 py-1 inline-flex text-xs font-semibold rounded-full bg-slate-100 text-slate-700"><%= clientData.status || 'Không rõ' %></span>
+                <% } %>
+            </div>
+        </div>
+
+        <div class="mt-6 space-y-3 text-sm">
+            <div class="flex justify-between gap-3">
+                <span class="text-slate-500">Số điện thoại</span>
+                <span class="font-medium text-slate-700"><%= clientData.phone || '-' %></span>
+            </div>
+            <div class="flex justify-between gap-3">
+                <span class="text-slate-500">Mã giới thiệu</span>
+                <span class="font-mono text-slate-700"><%= clientData.referralCode || '-' %></span>
+            </div>
+            <div class="flex justify-between gap-3">
+                <span class="text-slate-500">Ngày sinh</span>
+                <span class="font-medium text-slate-700"><%= clientData.dob ? new Date(clientData.dob).toLocaleDateString('vi-VN') : '-' %></span>
+            </div>
+            <div class="flex justify-between gap-3">
+                <span class="text-slate-500">Tham gia từ</span>
+                <span class="font-medium text-slate-700"><%= clientData.createdAt ? new Date(clientData.createdAt).toLocaleDateString('vi-VN') : '-' %></span>
+            </div>
+        </div>
+
+        <div class="mt-6 pt-4 border-t border-slate-100">
+            <p class="text-xs text-slate-500">Địa chỉ</p>
+            <p class="text-sm text-slate-700 mt-1"><%= clientData.address || 'Chưa cập nhật' %></p>
+        </div>
+    </div>
+
+    <div class="lg:col-span-2 space-y-6">
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="px-5 py-4 border-b border-slate-200 bg-slate-50">
+                <h4 class="font-semibold text-slate-800">Hợp đồng gần đây</h4>
+            </div>
+            <div class="p-5">
+                <% if (typeof contracts !== 'undefined' && contracts.length > 0) { %>
+                    <div class="space-y-3">
+                        <% contracts.forEach(contract => { %>
+                            <a href="/admin/contracts/detail/<%= contract._id %>" class="block border border-slate-200 rounded-lg p-4 hover:bg-slate-50 transition-colors">
+                                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                                    <div>
+                                        <p class="font-semibold text-slate-800"><%= contract.contractCode || ('HD-' + contract._id) %></p>
+                                        <p class="text-sm text-slate-500">
+                                            <%= contract.servicePackage && contract.servicePackage.name ? contract.servicePackage.name : 'Chưa gắn gói tập' %>
+                                        </p>
+                                    </div>
+                                    <div class="text-sm text-slate-600">
+                                        <span class="font-medium"><%= contract.totalAmount ? new Intl.NumberFormat('vi-VN').format(contract.totalAmount) + ' đ' : '-' %></span>
+                                    </div>
+                                </div>
+                            </a>
+                        <% }) %>
+                    </div>
+                <% } else { %>
+                    <p class="text-sm text-slate-500">Khách hàng này chưa có hợp đồng nào.</p>
+                <% } %>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="px-5 py-4 border-b border-slate-200 bg-slate-50">
+                <h4 class="font-semibold text-slate-800">Tổng quan nhanh</h4>
+            </div>
+            <div class="p-5 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="rounded-lg border border-slate-200 p-4">
+                    <p class="text-xs uppercase tracking-wide text-slate-500">Tổng hợp đồng</p>
+                    <p class="text-2xl font-bold text-slate-800 mt-1"><%= stats && typeof stats.totalContracts !== 'undefined' ? stats.totalContracts : (contracts ? contracts.length : 0) %></p>
+                </div>
+                <div class="rounded-lg border border-slate-200 p-4">
+                    <p class="text-xs uppercase tracking-wide text-slate-500">HĐ đang active</p>
+                    <p class="text-2xl font-bold text-emerald-600 mt-1"><%= stats && typeof stats.activeContracts !== 'undefined' ? stats.activeContracts : '-' %></p>
+                </div>
+                <div class="rounded-lg border border-slate-200 p-4">
+                    <p class="text-xs uppercase tracking-wide text-slate-500">Số buổi hoàn thành</p>
+                    <p class="text-2xl font-bold text-indigo-600 mt-1"><%= stats && typeof stats.completedSessions !== 'undefined' ? stats.completedSessions : '-' %></p>
+                </div>
+                <% if (stats && typeof stats.cancelledSessions !== 'undefined') { %>
+                <div class="rounded-lg border border-slate-200 p-4 sm:col-span-3 grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div>
+                        <p class="text-xs uppercase tracking-wide text-slate-500">Buổi sắp tới (đã lên lịch)</p>
+                        <p class="text-lg font-bold text-amber-600 mt-0.5"><%= stats.upcomingCount != null ? stats.upcomingCount : (upcomingSessions ? upcomingSessions.length : 0) %></p>
+                    </div>
+                    <div>
+                        <p class="text-xs uppercase tracking-wide text-slate-500">Huỷ buổi</p>
+                        <p class="text-lg font-bold text-slate-600 mt-0.5"><%= stats.cancelledSessions %></p>
+                    </div>
+                    <div>
+                        <p class="text-xs uppercase tracking-wide text-slate-500">Vắng (No-show)</p>
+                        <p class="text-lg font-bold text-rose-600 mt-0.5"><%= stats.noShowSessions %></p>
+                    </div>
+                    <div>
+                        <p class="text-xs uppercase tracking-wide text-slate-500">Lần đo gần nhất</p>
+                        <p class="text-sm font-semibold text-slate-800 mt-1"><%= progressInsight && progressInsight.latestMetric && progressInsight.latestMetric.date ? new Date(progressInsight.latestMetric.date).toLocaleDateString('vi-VN') : '—' %></p>
+                    </div>
+                </div>
+                <% } %>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Lịch tập & lịch sử -->
+<div class="mt-8 grid grid-cols-1 xl:grid-cols-2 gap-6">
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="px-5 py-4 border-b border-slate-200 bg-indigo-50/80 flex justify-between items-center">
+            <h4 class="font-semibold text-slate-800 flex items-center gap-2">
+                <span class="material-symbols-outlined text-indigo-600 text-[22px]">event_upcoming</span>
+                Lịch tập sắp tới
+            </h4>
+            <span class="text-xs font-bold text-indigo-700 bg-white px-2 py-0.5 rounded-full border border-indigo-100"><%= typeof upcomingSessions !== 'undefined' ? upcomingSessions.length : 0 %> buổi</span>
+        </div>
+        <div class="p-0 overflow-x-auto max-h-[420px] overflow-y-auto">
+            <% if (typeof upcomingSessions !== 'undefined' && upcomingSessions.length > 0) { %>
+            <table class="w-full text-left text-sm">
+                <thead class="bg-slate-50 text-slate-500 text-xs uppercase sticky top-0">
+                    <tr>
+                        <th class="p-3 font-semibold">Thời gian</th>
+                        <th class="p-3 font-semibold">PT</th>
+                        <th class="p-3 font-semibold">Chi nhánh</th>
+                        <th class="p-3 font-semibold">Hợp đồng</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    <% upcomingSessions.forEach(s => { %>
+                    <tr class="hover:bg-slate-50/80">
+                        <td class="p-3 text-slate-800 whitespace-nowrap">
+                            <%= new Date(s.scheduledTime).toLocaleString('vi-VN', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) %>
+                        </td>
+                        <td class="p-3 text-slate-700"><%= s.pt && s.pt.name ? s.pt.name : '—' %></td>
+                        <td class="p-3 text-slate-600"><%= s.branch && s.branch.name ? s.branch.name : '—' %></td>
+                        <td class="p-3">
+                            <% if (s.contract && s.contract._id) { %>
+                            <a href="/admin/contracts/detail/<%= s.contract._id %>" class="text-indigo-600 hover:underline font-mono text-xs"><%= s.contract.contractCode || s.contract._id %></a>
+                            <% } else { %>—<% } %>
+                        </td>
+                    </tr>
+                    <% }) %>
+                </tbody>
+            </table>
+            <% } else { %>
+            <p class="p-8 text-center text-slate-500 text-sm">Chưa có buổi tập nào được lên lịch phía trước.</p>
+            <% } %>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="px-5 py-4 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
+            <h4 class="font-semibold text-slate-800 flex items-center gap-2">
+                <span class="material-symbols-outlined text-slate-600 text-[22px]">history</span>
+                Lịch sử buổi tập
+            </h4>
+            <span class="text-xs text-slate-500">40 buổi gần nhất</span>
+        </div>
+        <div class="p-0 overflow-x-auto max-h-[420px] overflow-y-auto">
+            <% if (typeof sessionHistory !== 'undefined' && sessionHistory.length > 0) { %>
+            <table class="w-full text-left text-sm">
+                <thead class="bg-slate-50 text-slate-500 text-xs uppercase sticky top-0">
+                    <tr>
+                        <th class="p-3 font-semibold">Thời gian</th>
+                        <th class="p-3 font-semibold">Trạng thái</th>
+                        <th class="p-3 font-semibold">PT</th>
+                        <th class="p-3 font-semibold hidden sm:table-cell">Đánh giá</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    <% sessionHistory.forEach(s => { %>
+                    <tr class="hover:bg-slate-50/80">
+                        <td class="p-3 text-slate-800 whitespace-nowrap">
+                            <%= new Date(s.scheduledTime).toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) %>
+                        </td>
+                        <td class="p-3">
+                            <span class="px-2 py-0.5 rounded-full text-xs font-semibold <%= s.status === 'Completed' ? 'bg-emerald-100 text-emerald-800' : (s.status === 'Cancelled' ? 'bg-slate-200 text-slate-700' : (s.status === 'No_Show' ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-900')) %>">
+                                <%= sessionStatusVi[s.status] || s.status %>
+                            </span>
+                        </td>
+                        <td class="p-3 text-slate-700"><%= s.pt && s.pt.name ? s.pt.name : '—' %></td>
+                        <td class="p-3 text-slate-600 hidden sm:table-cell">
+                            <% if (s.feedback && s.feedback.rating) { %>
+                            ★ <%= s.feedback.rating %>/5
+                            <% if (s.feedback.comment) { %><span class="text-xs text-slate-400 block truncate max-w-[140px]" title="<%= s.feedback.comment %>"><%= s.feedback.comment %></span><% } %>
+                            <% } else { %>—<% } %>
+                        </td>
+                    </tr>
+                    <% }) %>
+                </tbody>
+            </table>
+            <% } else { %>
+            <p class="p-8 text-center text-slate-500 text-sm">Chưa có lịch sử buổi tập.</p>
+            <% } %>
+        </div>
+    </div>
+</div>
+
+<!-- Tiến độ & Dinh dưỡng -->
+<div class="mt-6 grid grid-cols-1 xl:grid-cols-2 gap-6">
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="px-5 py-4 border-b border-slate-200 bg-emerald-50/80">
+            <h4 class="font-semibold text-slate-800 flex items-center gap-2">
+                <span class="material-symbols-outlined text-emerald-600 text-[22px]">monitor_weight</span>
+                Tiến độ &amp; chỉ số cơ thể
+            </h4>
+            <% if (progressInsight && progressInsight.latestMetric) { %>
+            <p class="text-xs text-slate-600 mt-2">
+                So sánh gần nhất (<%= new Date(progressInsight.latestMetric.date).toLocaleDateString('vi-VN') %>)
+                <% if (progressInsight.oldestMetric && progressInsight.metricCount > 1) { %>
+                · Đo đầu tiên trong danh sách: <%= new Date(progressInsight.oldestMetric.date).toLocaleDateString('vi-VN') %>
+                <% } %>
+            </p>
+            <% } %>
+        </div>
+        <% if (progressInsight && progressInsight.latestMetric && progressInsight.oldestMetric && progressInsight.metricCount > 1 && progressInsight.latestMetric.weight && progressInsight.oldestMetric.weight) { %>
+        <div class="px-5 py-3 bg-slate-50 border-b border-slate-100 text-sm text-slate-700">
+            <% const dw = progressInsight.latestMetric.weight - progressInsight.oldestMetric.weight; %>
+            <span class="font-semibold">Cân nặng:</span>
+            <%= progressInsight.oldestMetric.weight %> kg → <%= progressInsight.latestMetric.weight %> kg
+            <span class="<%= dw <= 0 ? 'text-emerald-600' : 'text-amber-700' %> font-bold">(<%= dw >= 0 ? '+' : '' %><%= dw.toFixed(1) %> kg)</span>
+        </div>
+        <% } %>
+        <div class="p-0 overflow-x-auto max-h-[380px] overflow-y-auto">
+            <% if (typeof bodyMetrics !== 'undefined' && bodyMetrics.length > 0) { %>
+            <table class="w-full text-left text-sm">
+                <thead class="bg-slate-50 text-slate-500 text-xs uppercase sticky top-0">
+                    <tr>
+                        <th class="p-3 font-semibold">Ngày</th>
+                        <th class="p-3 font-semibold">Cân (kg)</th>
+                        <th class="p-3 font-semibold hidden md:table-cell">Mỡ %</th>
+                        <th class="p-3 font-semibold hidden lg:table-cell">BMI</th>
+                        <th class="p-3 font-semibold">PT</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    <% bodyMetrics.forEach(m => { %>
+                    <tr class="hover:bg-slate-50/80">
+                        <td class="p-3 whitespace-nowrap"><%= m.date ? new Date(m.date).toLocaleDateString('vi-VN') : '—' %></td>
+                        <td class="p-3 font-semibold text-slate-800"><%= m.weight != null ? m.weight : '—' %></td>
+                        <td class="p-3 hidden md:table-cell"><%= m.bodyFat != null ? m.bodyFat + '%' : '—' %></td>
+                        <td class="p-3 hidden lg:table-cell"><%= m.bmi != null ? m.bmi : '—' %></td>
+                        <td class="p-3 text-slate-600"><%= m.pt && m.pt.name ? m.pt.name : '—' %></td>
+                    </tr>
+                    <% }) %>
+                </tbody>
+            </table>
+            <% } else { %>
+            <p class="p-8 text-center text-slate-500 text-sm">Chưa có bản ghi InBody / chỉ số cho khách này.</p>
+            <% } %>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="px-5 py-4 border-b border-slate-200 bg-amber-50/80">
+            <h4 class="font-semibold text-slate-800 flex items-center gap-2">
+                <span class="material-symbols-outlined text-amber-600 text-[22px]">restaurant</span>
+                Dinh dưỡng (kế hoạch bữa ăn)
+            </h4>
+        </div>
+        <div class="p-5 space-y-5 max-h-[480px] overflow-y-auto">
+            <% if (typeof mealPlans !== 'undefined' && mealPlans.length > 0) { %>
+                <% mealPlans.forEach(mp => { %>
+                <div class="border border-slate-200 rounded-xl p-4 <%= mp.active ? 'ring-2 ring-amber-200 bg-amber-50/30' : 'bg-slate-50/50' %>">
+                    <div class="flex flex-wrap justify-between gap-2 items-start">
+                        <div>
+                            <p class="text-xs font-black uppercase tracking-widest text-slate-500">Mục tiêu</p>
+                            <p class="font-bold text-slate-900 mt-0.5"><%= mealGoalVi[mp.goal] || mp.goal || '—' %></p>
+                            <p class="text-xs text-slate-500 mt-1">PT: <%= mp.pt && mp.pt.name ? mp.pt.name : '—' %></p>
+                        </div>
+                        <div class="text-right">
+                            <% if (mp.active) { %>
+                            <span class="text-[10px] font-bold uppercase bg-amber-500 text-white px-2 py-0.5 rounded-full">Đang áp dụng</span>
+                            <% } %>
+                            <p class="text-xs text-slate-500 mt-2">
+                                <%= mp.startDate ? new Date(mp.startDate).toLocaleDateString('vi-VN') : '' %>
+                                — <%= mp.endDate ? new Date(mp.endDate).toLocaleDateString('vi-VN') : '' %>
+                            </p>
+                        </div>
+                    </div>
+                    <div class="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+                        <div class="rounded-lg bg-white border border-slate-100 p-2">
+                            <p class="text-[10px] text-slate-500 uppercase">Calo / ngày</p>
+                            <p class="font-bold text-slate-800"><%= mp.dailyCalories != null ? mp.dailyCalories.toLocaleString('vi-VN') : '—' %></p>
+                        </div>
+                        <% if (mp.macros) { %>
+                        <div class="rounded-lg bg-white border border-slate-100 p-2">
+                            <p class="text-[10px] text-slate-500 uppercase">Đạm</p>
+                            <p class="font-bold text-slate-800"><%= mp.macros.protein != null ? mp.macros.protein + '%' : '—' %></p>
+                        </div>
+                        <div class="rounded-lg bg-white border border-slate-100 p-2">
+                            <p class="text-[10px] text-slate-500 uppercase">Tinh bột</p>
+                            <p class="font-bold text-slate-800"><%= mp.macros.carbs != null ? mp.macros.carbs + '%' : '—' %></p>
+                        </div>
+                        <div class="rounded-lg bg-white border border-slate-100 p-2">
+                            <p class="text-[10px] text-slate-500 uppercase">Béo</p>
+                            <p class="font-bold text-slate-800"><%= mp.macros.fat != null ? mp.macros.fat + '%' : '—' %></p>
+                        </div>
+                        <% } %>
+                    </div>
+                    <% if (mp.meals && mp.meals.length > 0) { %>
+                    <div class="mt-4 border-t border-slate-100 pt-3">
+                        <p class="text-xs font-bold text-slate-600 mb-2">Gợi ý bữa (<%= mp.meals.length %>)</p>
+                        <ul class="space-y-2 text-xs text-slate-700 max-h-40 overflow-y-auto">
+                            <% mp.meals.slice(0, 8).forEach(meal => { %>
+                            <li class="border border-slate-100 rounded-lg p-2 bg-white">
+                                <span class="font-semibold text-slate-800"><%= meal.time || 'Bữa' %></span>
+                                <% if (meal.foodItems && meal.foodItems.length) { %>
+                                <span class="text-slate-500"> — <%= meal.foodItems.map(f => f.name + (f.quantity ? ' (' + f.quantity + ')' : '')).join(', ') %></span>
+                                <% } %>
+                            </li>
+                            <% }) %>
+                            <% if (mp.meals.length > 8) { %>
+                            <li class="text-slate-400 italic">… và <%= mp.meals.length - 8 %> bữa khác</li>
+                            <% } %>
+                        </ul>
+                    </div>
+                    <% } %>
+                </div>
+                <% }) %>
+            <% } else { %>
+            <p class="text-center text-slate-500 text-sm py-6">Chưa có kế hoạch dinh dưỡng nào cho khách này.</p>
+            <% } %>
+        </div>
+    </div>
+</div>
+
+<%- include('../../partials/footer') %>

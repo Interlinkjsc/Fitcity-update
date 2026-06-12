@@ -1,0 +1,58 @@
+@startuml ACT_PT
+title Activity — Personal Trainer
+skinparam activityStyle rectangle
+
+start
+:Đăng nhập → /pt/dashboard;
+fork
+  partition "Lịch & slot" {
+    :Chọn khách hàng từ Hợp đồng được gán;
+    :Tạo lịch tập trực tiếp cho khách hàng (Scheduled);
+    if (Nhận yêu cầu hủy lịch tập của khách?) then (Có)
+      :Liên hệ khách hàng offline (Zalo/Call...);
+      if (Kết quả liên hệ?) then (Đồng ý hủy (Accept))
+        :Bấm Accept trên App PT;
+        :Trạng thái đổi thành Cancelled;
+        :Tạo lịch tập mới trên hệ thống;
+      else (Không đồng ý / Từ chối (Cancel))
+        :Bấm Reject trên App PT;
+        :Trạng thái giữ nguyên Scheduled;
+      endif
+    else (Không)
+      :Client đi tập đúng giờ;
+    endif
+  }
+fork again
+  partition "Buổi tập QR" {
+    :POST /pt/sessions/scan-qr;
+    :In_Progress → Completed;
+  }
+fork again
+  partition "Chấm công" {
+    :POST check-in / check-out;
+    :Chờ Manager approve timesheet;
+  }
+fork again
+  partition "Nghỉ phép" {
+    :POST /pt/leave;
+    :Chờ approve + reassign HĐ;
+  }
+fork again
+  partition "Chương trình" {
+    :CRUD meal plans → assign client;
+    :GET /pt/meal-plans/:id detail;
+    :Workout assignments tuần;
+    :Body metrics cho client;
+  }
+fork again
+  partition "Báo cáo" {
+    :Nộp daily report /pt;
+  }
+end fork
+stop
+
+note right
+  UC-PT*, SEQ-02,05,06,07,08
+end note
+
+@enduml

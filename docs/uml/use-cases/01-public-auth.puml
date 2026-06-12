@@ -1,0 +1,68 @@
+@startuml UC_Public_Auth_Full
+title Module: Public & Auth (đầy đủ)
+left to right direction
+skinparam packageStyle rectangle
+skinparam usecase {
+  BackgroundColor #F8FAFC
+  BorderColor #334155
+}
+skinparam actorStyle awesome
+
+actor Guest
+actor Client
+actor "Staff\n(Admin/Manager/...)" as Staff
+actor SA
+
+package "Public — leadRoutes" {
+  usecase "UC-G01\nXem landing" as G01
+  usecase "UC-G02\nĐăng ký lead\n(metrics thể trạng)" as G02
+  usecase "UC-G03\nTrang Contact" as G03
+  usecase "UC-G04\nBlog list" as G04
+  usecase "UC-G05\nBlog detail" as G05
+}
+
+package "Auth — /auth" {
+  usecase "UC-A01\nLogin" as A01
+  usecase "UC-A02\nRegister Client\n(+ referralCode)" as A02
+  usecase "UC-A03\nProfile GET/POST" as A03
+  usecase "UC-A04\nChange password" as A04
+  usecase "UC-A05\nLogout" as A05
+}
+
+Guest --> G01
+Guest --> G02
+Guest --> G03
+Guest --> G04
+Guest --> G05
+Guest --> A02
+
+Client --> A01
+Client --> A03
+Client --> A04
+Staff --> A01
+Staff --> A03
+SA --> A01
+
+A02 ..> A03 : <<include>> đăng nhập sau ĐK
+
+note bottom of G02
+  **Routes**
+  GET /
+  POST /register-lead
+  → Lead (F) + noti MKT/Manager/Admin
+  **Không** tạo User (đường A — R5)
+  <<planned>> R1: từ chối nếu email đã Client
+end note
+
+note bottom of G03
+  GET /contact
+  POST /register-lead (source=Contact)
+end note
+
+note bottom of A02
+  GET /auth/login?view=register
+  POST /auth/register
+  referredBy nếu có mã hợp lệ
+end note
+
+@enduml

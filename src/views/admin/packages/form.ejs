@@ -1,0 +1,148 @@
+<%- include('../../partials/header', { title: isEdit ? 'Chỉnh sửa Gói tậpo' : 'Thêm mới Gói tập', activePage: 'packages' }) %>
+
+<div class="mb-6 flex items-center justify-between">
+    <div>
+        <h2 class="text-2xl font-bold text-slate-800"><%= isEdit ? 'Cập nhật' : 'Tạo mới' %> Dịch vụ</h2>
+        <p class="text-slate-500 text-sm mt-1">
+            <a href="/admin/packages/list" class="text-blue-600 hover:underline">Quay lại danh sách</a> / 
+            <span><%= isEdit ? 'Chỉnh sửa' : 'Tạo mới' %></span>
+        </p>
+    </div>
+</div>
+
+<div class="bg-white rounded-xl border border-slate-200 shadow-sm max-w-3xl overflow-hidden pb-8">
+    <div class="px-6 py-4 border-b border-slate-200 bg-slate-50">
+        <h3 class="font-semibold text-slate-800 flex items-center gap-2">
+            <svg class="h-5 w-5 text-lime-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            Thông tin chi tiết Gói tập
+        </h3>
+    </div>
+    <form action="/admin/packages/<%= isEdit ? 'update/' + pkg._id : 'store' %>" method="POST" class="p-6 md:p-8 space-y-6">
+        
+        <!-- Tên gói tập -->
+        <div>
+            <label for="name" class="block text-sm font-medium text-slate-700 mb-1">Tên gói tập <span class="text-red-500">*</span></label>
+            <input type="text" id="name" name="name" required value="<%= typeof pkg !== 'undefined' ? pkg.name : '' %>"
+                class="block w-full rounded-md border-slate-300 shadow-sm focus:border-lime-500 focus:ring focus:ring-lime-500 focus:ring-opacity-50 text-sm py-2 px-3 border"
+                placeholder="VD: Gói Yoga 3 Tháng Cơ Bản">
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <!-- Loại hình dịch vụ -->
+            <div>
+                <label for="type" class="block text-sm font-medium text-slate-700 mb-1">Phân loại Dịch vụ <span class="text-red-500">*</span></label>
+                <select id="type" name="type" required
+                    class="block w-full rounded-md border-slate-300 shadow-sm focus:border-lime-500 focus:ring focus:ring-lime-500 focus:ring-opacity-50 text-sm py-2 px-3 border bg-white">
+                    <% const types = ['Gym', 'Gym Kids', 'Pilates']; %>
+                    <% types.forEach(t => { %>
+                        <option value="<%= t %>" <%= (typeof pkg !== 'undefined' && pkg.type === t) ? 'selected' : '' %>><%= t %></option>
+                    <% }) %>
+                </select>
+            </div>
+
+            <!-- Mục tiêu tập luyện -->
+            <div>
+                <% 
+                    const standardTargets = ['Giảm cân', 'Tăng cơ', 'Sức bền', 'Dẻo dai', 'Duy trì'];
+                    const currentTarget = (typeof pkg !== 'undefined') ? pkg.target : 'Giảm cân';
+                    const isOther = currentTarget && !standardTargets.includes(currentTarget) && currentTarget !== 'Khác';
+                %>
+                <label for="targetSelect" class="block text-sm font-medium text-slate-700 mb-1">Mục tiêu Gói tập</label>
+                <select id="targetSelect" onchange="toggleTargetCustom(this.value)"
+                    class="block w-full rounded-md border-slate-300 shadow-sm focus:border-lime-500 focus:ring focus:ring-lime-500 focus:ring-opacity-50 text-sm py-2 px-3 border bg-white">
+                    <option value="Giảm cân" <%= currentTarget === 'Giảm cân' ? 'selected' : '' %>>Giảm cân & Đốt mỡ</option>
+                    <option value="Tăng cơ" <%= currentTarget === 'Tăng cơ' ? 'selected' : '' %>>Tăng cơ & Sức mạnh</option>
+                    <option value="Sức bền" <%= currentTarget === 'Sức bền' ? 'selected' : '' %>>Tăng sức bền & Tim mạch</option>
+                    <option value="Dẻo dai" <%= currentTarget === 'Dẻo dai' ? 'selected' : '' %>>Dẻo dai & Phục hồi</option>
+                    <option value="Duy trì" <%= currentTarget === 'Duy trì' ? 'selected' : '' %>>Duy trì & Sức khỏe</option>
+                    <option value="Khác" <%= isOther ? 'selected' : '' %>>Mục tiêu khác</option>
+                </select>
+                
+                <!-- Hidden real input for target -->
+                <input type="hidden" id="target" name="target" value="<%= currentTarget %>">
+
+                <!-- Other target input -->
+                <div id="targetCustomContainer" class="mt-2 <%= isOther ? '' : 'hidden' %>">
+                    <input type="text" id="targetCustom" value="<%= isOther ? currentTarget : '' %>"
+                        class="block w-full rounded-md border-slate-300 shadow-sm focus:border-lime-500 focus:ring focus:ring-lime-500 text-sm py-2 px-3 border bg-amber-50/30"
+                        placeholder="Nhập mục tiêu cụ thể khác..."
+                        oninput="document.getElementById('target').value = this.value">
+                </div>
+            </div>
+
+            <script>
+                function toggleTargetCustom(value) {
+                    const container = document.getElementById('targetCustomContainer');
+                    const customInput = document.getElementById('targetCustom');
+                    const realInput = document.getElementById('target');
+                    
+                    if (value === 'Khác') {
+                        container.classList.remove('hidden');
+                        realInput.value = customInput.value;
+                        customInput.focus();
+                    } else {
+                        container.classList.add('hidden');
+                        realInput.value = value;
+                    }
+                }
+            </script>
+
+            <!-- Giá tiền -->
+            <div>
+                <label for="price" class="block text-sm font-medium text-slate-700 mb-1">Giá / buổi (VNĐ) <span class="text-red-500">*</span></label>
+                <div class="relative">
+                    <input type="number" id="price" name="price" required min="0" value="<%= typeof pkg !== 'undefined' ? pkg.price : '' %>"
+                        class="block w-full rounded-md border-slate-300 shadow-sm focus:border-lime-500 focus:ring focus:ring-lime-500 text-sm py-2 pl-3 pr-10 border bg-slate-50/50"
+                        placeholder="VD: 500000 (mỗi buổi)">
+                    <span class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-400 font-medium text-sm">₫</span>
+                </div>
+            </div>
+
+            <!-- Số ngày hiệu lực -->
+            <div>
+                <label for="durationMonths" class="block text-sm font-medium text-slate-700 mb-1">Thời hạn sử dụng (tháng) <span class="text-red-500">*</span></label>
+                <input type="number" id="durationMonths" name="durationMonths" required min="1" value="<%= typeof pkg !== 'undefined' ? (pkg.durationMonths || Math.max(1, Math.round((pkg.duration || 30) / 30))) : 1 %>"
+                    class="block w-full rounded-md border-slate-300 shadow-sm focus:border-lime-500 focus:ring focus:ring-lime-500 text-sm py-2 px-3 border"
+                    placeholder="Đơn vị: Ngày (VD: 30, 90, 365)">
+            </div>
+
+            <!-- Phân bổ số buổi (tuỳ chọn) -->
+            <div>
+                <label for="sessions" class="block text-sm font-medium text-slate-700 mb-1">Số buổi trong gói (mẫu HĐ) <span class="text-red-500">*</span></label>
+                <input type="number" id="sessions" name="sessions" min="1" required value="<%= typeof pkg !== 'undefined' ? pkg.sessions : '' %>"
+                    class="block w-full rounded-md border-slate-300 shadow-sm focus:border-lime-500 focus:ring focus:ring-lime-500 text-sm py-2 px-3 border bg-white"
+                    placeholder="VD: 10, 20, 30">
+                <p class="text-xs text-slate-500 mt-1">Tổng giá gói tham chiếu = giá/buổi × số buổi (khi tạo hợp đồng).</p>
+            </div>
+
+            <!-- Hình thức tập -->
+            <div>
+                <label for="sessionType" class="block text-sm font-medium text-slate-700 mb-1">Hình thức tập</label>
+                <select id="sessionType" name="sessionType"
+                    class="block w-full rounded-md border-slate-300 shadow-sm focus:border-lime-500 focus:ring focus:ring-lime-500 focus:ring-opacity-50 text-sm py-2 px-3 border bg-white">
+                    <option value="1-1" <%= (typeof pkg !== 'undefined' && pkg.sessionType === '1-1') ? 'selected' : '' %>>Tập 1 kèm 1</option>
+                    <option value="1-2" <%= (typeof pkg !== 'undefined' && pkg.sessionType === '1-2') ? 'selected' : '' %>>Tập 1 kèm 2</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Mô tả -->
+        <div>
+            <label for="description" class="block text-sm font-medium text-slate-700 mb-1">Mô tả và Quảng cáo cho gói tập</label>
+            <textarea id="description" name="description" rows="4"
+                class="block w-full rounded-md border-slate-300 shadow-sm focus:border-lime-500 focus:ring focus:ring-lime-500 text-sm py-2 px-3 border"
+                placeholder="Nhập thông tin giới thiệu để hiển thị cho Sale chốt Sale..."><%= typeof pkg !== 'undefined' ? pkg.description : '' %></textarea>
+        </div>
+
+        <div class="flex justify-end gap-3 pt-6 border-t border-slate-100">
+            <a href="/admin/packages/list" class="px-5 py-2 text-sm font-medium rounded-md border border-slate-300 text-slate-700 hover:bg-slate-50 transition-colors">Hủy</a>
+            <button type="submit" class="px-5 py-2 text-sm font-medium rounded-md bg-lime-500 text-slate-900 border border-transparent shadow hover:bg-lime-600 focus:outline-none focus:ring-2 focus:ring-lime-500 focus:ring-offset-2 transition-colors">
+                <%= isEdit ? 'Lưu chỉnh sửa' : 'Xác nhận Thêm Gói' %>
+            </button>
+        </div>
+    </form>
+</div>
+
+<%- include('../../partials/footer') %>

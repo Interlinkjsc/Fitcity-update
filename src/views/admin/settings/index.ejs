@@ -1,0 +1,43 @@
+<%- include('../../partials/header', { title: 'Cài đặt hệ thống', activePage: 'settings' }) %>
+
+<div class="mb-6">
+    <h2 class="text-2xl font-bold text-slate-800">Cài đặt hệ thống</h2>
+    <p class="text-slate-500 text-sm mt-1">VAT, hoa hồng PT, chế độ tính lương theo chấm công (CEO / Admin)</p>
+</div>
+
+<div class="bg-white rounded-xl border border-slate-200 shadow-sm max-w-lg p-6 md:p-8">
+    <form action="/admin/settings" method="POST" class="space-y-6">
+        <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">VAT mặc định (%)</label>
+            <input type="number" name="defaultVat" min="0" max="100" step="0.1" required
+                value="<%= settings.defaultVat != null ? settings.defaultVat : 10 %>"
+                class="w-full border border-slate-300 rounded-lg py-2 px-3 text-sm">
+            <p class="text-xs text-slate-500 mt-1">Áp dụng khi tạo hợp đồng mới (HĐ cũ giữ nguyên).</p>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">% Hoa hồng PT mặc định</label>
+            <input type="number" name="defaultPtCommissionRate" min="0" max="100" step="0.1" required
+                value="<%= settings.defaultPtCommissionRate != null ? settings.defaultPtCommissionRate : 10 %>"
+                class="w-full border border-slate-300 rounded-lg py-2 px-3 text-sm">
+            <p class="text-xs text-slate-500 mt-1">Fallback nếu PT chưa cấu hình % riêng trên hồ sơ.</p>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">Chế độ hoa hồng PT (payroll)</label>
+            <select name="ptPayrollMode" class="w-full border border-slate-300 rounded-lg py-2 px-3 text-sm">
+                <option value="contract" <%= (settings.ptPayrollMode || 'contract') === 'contract' ? 'selected' : '' %>>Theo hợp đồng đã thanh toán</option>
+                <option value="timesheet" <%= settings.ptPayrollMode === 'timesheet' ? 'selected' : '' %>>Theo ca chấm công đã duyệt</option>
+                <option value="hybrid" <%= settings.ptPayrollMode === 'hybrid' ? 'selected' : '' %>>Kết hợp (trung bình HĐ + chấm công)</option>
+            </select>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">Đơn giá / ca dạy đã duyệt (VNĐ)</label>
+            <input type="number" name="timesheetRatePerShift" min="0" step="1000"
+                value="<%= settings.timesheetRatePerShift != null ? settings.timesheetRatePerShift : 120000 %>"
+                class="w-full border border-slate-300 rounded-lg py-2 px-3 text-sm">
+            <p class="text-xs text-slate-500 mt-1">Dùng khi chế độ timesheet hoặc hybrid.</p>
+        </div>
+        <button type="submit" class="px-6 py-2.5 bg-green-600 text-white font-bold rounded-lg text-sm hover:bg-green-700">Lưu cài đặt</button>
+    </form>
+</div>
+
+<%- include('../../partials/footer') %>

@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>FitCity - <%= typeof title !=='undefined' ? title : 'Hệ thống quản lý' %>
+    </title>
+    <link rel="icon" type="image/png" href="/images/default-avatar.png">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script src="/js/admin-sidebar-nav.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+    <%- include('./theme-light') %>
+    <!-- Socket.io Client -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script id="user-data" type="application/json"><%- typeof user !== 'undefined' && user ? JSON.stringify({ _id: user._id, role: user.role }) : 'null' %></script>
+    <script>
+        const socket = io();
+        try {
+            const userData = JSON.parse(document.getElementById('user-data').textContent);
+            if (userData && userData._id) {
+                socket.emit('identify', { userId: userData._id, role: userData.role });
+            }
+        } catch (e) {
+            console.error('Error parsing user data:', e);
+        }
+
+        // Listen for online count updates
+        socket.on('onlineCount', (count) => {
+            const el = document.getElementById('realtime-online-count');
+            if (el) {
+                el.innerText = count;
+                // Premium animation
+                el.classList.add('transition-all', 'duration-300', 'scale-125', 'text-green-500');
+                setTimeout(() => el.classList.remove('scale-125', 'text-green-500'), 500);
+            }
+        });
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .sidebar-active {
+            background-color: rgba(22, 163, 74, 0.08);
+            border-left: 4px solid #16A34A;
+            color: #166534;
+        }
+
+        /* Force hide all scrollbars globally with maximum priority */
+        html, body, *, *::before, *::after {
+            -ms-overflow-style: none !important;
+            scrollbar-width: none !important;
+        }
+        *::-webkit-scrollbar {
+            display: none !important;
+            width: 0 !important;
+            height: 0 !important;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 text-gray-800">
+    <div x-data="{ 
+        mobileMenuOpen: false, 
+        sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true' 
+    }" 
+    x-init="$watch('sidebarCollapsed', value => localStorage.setItem('sidebarCollapsed', value))"
+    class="flex min-h-screen relative">
+        <!-- Mobile menu overlay -->
+        <div x-show="mobileMenuOpen" x-transition.opacity
+            class="fixed inset-0 bg-slate-900/60 z-40 md:hidden backdrop-blur-sm" @click="mobileMenuOpen = false"
+            style="display: none;"></div>
+
+        <!-- BEGIN: Sidebar -->
+        <aside :class="{
+                'translate-x-0': mobileMenuOpen,
+                '-translate-x-full': !mobileMenuOpen,
+                'md:w-64': !sidebarCollapsed,
+                'md:w-20': sidebarCollapsed
+            }"
+            class="fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-slate-200 flex-shrink-0 flex flex-col text-slate-700 transition-all duration-300 ease-in-out md:sticky md:top-0 md:h-screen md:translate-x-0">
+            <div class="h-16 px-6 border-b border-slate-200 flex items-center justify-between overflow-hidden">
+                <h1 x-show="!sidebarCollapsed" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+                    class="text-xl font-bold flex items-center gap-2 flex-1 text-primary whitespace-nowrap">
+                    FITCITY
+                </h1>
+                <button @click="sidebarCollapsed = !sidebarCollapsed" class="hidden md:flex p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 transition-colors">
+                    <span class="material-symbols-outlined transition-transform duration-300" :class="sidebarCollapsed ? 'rotate-180' : ''">menu_open</span>
+                </button>
+                <button @click="mobileMenuOpen = false" class="md:hidden text-slate-400 hover:text-slate-600">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <nav class="flex-1 mt-6 px-3 space-y-1 overflow-y-auto no-scrollbar">
+                <%- include('./admin-sidebar-nav') %>
+
+                <form action="/auth/logout" method="POST" id="logout-form-sidebar" class="hidden"></form>
+                <div class="mt-4 pt-4 border-t border-slate-100">
+                    <a class="flex items-center px-4 py-3 text-sm font-semibold rounded-lg text-rose-500 hover:bg-rose-50 transition-colors cursor-pointer group"
+                        onclick="if(confirm('Bạn có chắc chắn muốn đăng xuất?')) document.getElementById('logout-form-sidebar').submit();" title="Đăng xuất">
+                        <span class="material-symbols-outlined flex-shrink-0 mr-3 text-rose-400 group-hover:text-rose-500">logout</span>
+                        <span x-show="!sidebarCollapsed" class="whitespace-nowrap overflow-hidden transition-all duration-300">Đăng xuất</span>
+                    </a>
+                </div>
+            </nav>
+            <div class="p-4 border-t border-slate-100 text-[10px] font-bold text-slate-400 text-center uppercase tracking-widest overflow-hidden">
+                <span x-show="!sidebarCollapsed">© 2026 FITCITY SYSTEM</span>
+                <span x-show="sidebarCollapsed">FC</span>
+            </div>
+        </aside>
+        <!-- END: Sidebar -->
+
+        <!-- BEGIN: Main Content Area -->
+        <main class="flex-1 flex flex-col min-w-0">
+            <!-- BEGIN: Top Bar -->
+            <header
+                class="h-16 bg-white/80 backdrop-blur-md border-b border-gray-200 flex items-center justify-between px-4 sm:px-8 z-40 sticky top-0">
+                <div class="flex items-center gap-3">
+                    <button @click="mobileMenuOpen = true"
+                        class="md:hidden p-2 -ml-2 text-slate-500 hover:text-slate-800 focus:outline-none">
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                    </button>
+                    <div class="hidden sm:block">
+                        <h2 class="text-lg font-semibold text-gray-800 truncate max-w-[200px] lg:max-w-md">
+                            <%= typeof title !=='undefined' ? title : 'Quản lý hệ thống' %>
+                        </h2>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 sm:gap-4 right-elements">
+                    <!-- Notification Bell & Dropdown -->
+                    <div class="relative" x-data="{ open: false }">
+                        <button id="notification-bell" @click="open = !open"
+                            class="relative p-2 text-gray-400 hover:text-lime-600 transition-colors">
+                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9">
+                                </path>
+                            </svg>
+                            <% if (typeof notifications !=='undefined' && notifications.length> 0) { %>
+                                <span
+                                    class="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full border-2 border-white"></span>
+                                <% } %>
+                        </button>
+
+                        <div x-show="open" @click.away="open = false"
+                            class="absolute -right-10 sm:right-0 mt-2 w-[85vw] max-w-[320px] sm:w-80 bg-white border border-gray-100 rounded-xl shadow-2xl z-50 overflow-hidden">
+                            <div class="p-4 border-b border-gray-50 flex justify-between items-center bg-gray-50/50">
+                                <span class="text-xs font-bold uppercase tracking-widest text-slate-500 font-bold">Thông
+                                    báo mới</span>
+                                <span class="text-[10px] bg-red-500 text-white px-2 py-0.5 rounded-full">
+                                    <%= typeof notifications !=='undefined' ? notifications.length : 0 %>
+                                </span>
+                            </div>
+                            <div class="max-h-96 overflow-y-auto">
+                                <% if (typeof notifications !=='undefined' && notifications.length> 0) { %>
+                                    <% notifications.forEach(noti=> { %>
+                                        <a href="<%= noti.link || '#' %>"
+                                            class="block p-4 hover:bg-gray-50 border-b border-gray-50 transition-all">
+                                            <div class="flex gap-3">
+                                                <div
+                                                    class="w-2 h-2 mt-1.5 rounded-full flex-shrink-0 
+                                                            <%= noti.type === 'Alert' ? 'bg-red-500' : (noti.type === 'Success' ? 'bg-green-500' : (noti.type === 'Warning' ? 'bg-amber-400' : 'bg-blue-500')) %>">
+                                                </div>
+                                                <div>
+                                                    <p class="text-xs font-bold text-gray-800">
+                                                        <%= noti.title %>
+                                                    </p>
+                                                    <p class="text-[11px] text-gray-500 mt-0.5 line-clamp-2">
+                                                        <%= noti.message %>
+                                                    </p>
+                                                    <p class="text-[9px] text-gray-400 mt-1 uppercase font-medium">Vừa
+                                                        xong</p>
+                                                </div>
+                                            </div>
+                                        </a>
+                                        <% }) %>
+                                            <% } else { %>
+                                                <div class="p-8 text-center opacity-40">
+                                                    <p class="text-xs font-medium">Không có thông báo mới</p>
+                                                </div>
+                                                <% } %>
+                            </div>
+                            <div class="p-3 bg-gray-50 text-center">
+                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Danh sách
+                                    thông báo sắp ra mắt</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <a href="/auth/profile" class="flex items-center gap-2 sm:gap-3 pl-3 sm:pl-4 sm:border-l border-gray-200 group hover:opacity-80 transition-all">
+                        <div class="hidden sm:block text-right">
+                            <p class="text-sm font-bold text-gray-800 leading-none group-hover:text-primary transition-colors"><%= user.name %></p>
+                            <p class="text-[10px] font-medium text-gray-400 mt-1 uppercase tracking-wider"><%= user.role %></p>
+                        </div>
+                        <% if (user.avatar) { %>
+                            <img src="<%= user.avatar %>" class="h-9 w-9 rounded-full object-cover border-2 border-white shadow-sm ring-1 ring-gray-100" alt="Avatar">
+                        <% } else { %>
+                            <div class="h-9 w-9 rounded-full bg-gradient-to-br from-lime-400 to-green-500 flex items-center justify-center text-white font-black text-xs shadow-sm ring-1 ring-white">
+                                <%= user.name.split(' ').pop().slice(0, 2).toUpperCase() %>
+                            </div>
+                        <% } %>
+                    </a>
+
+                    <div class="flex items-center gap-1 ml-2">
+                        <form action="/auth/logout" method="POST" id="logout-form-top" class="hidden"></form>
+                        <button
+                            onclick="if(confirm('Bạn có chắc chắn muốn đăng xuất?')) document.getElementById('logout-form-top').submit();"
+                            class="p-2 text-gray-400 hover:text-red-600 transition-colors" title="Đăng xuất">
+                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1">
+                                </path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </header>
+            <!-- END: Top Bar -->
+
+            <!-- BEGIN: Page Body -->
+            <div class="flex-1 p-4 sm:p-6 md:p-8">
+                <%- include('./flash') %>

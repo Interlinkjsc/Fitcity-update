@@ -1,0 +1,121 @@
+<%- include('../../partials/header', { title: 'Chi tiết Gói Tập', activePage: 'packages' }) %>
+
+<div class="max-w-4xl mx-auto">
+    <!-- Header Page -->
+    <div class="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+            <a href="/admin/packages/list" class="text-sm text-slate-500 hover:text-lime-600 transition-colors flex items-center gap-1 mb-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                Quay lại danh sách Gói tập
+            </a>
+            <h2 class="text-2xl font-bold text-slate-800">Chi tiết Gói - <%= pkg.name %></h2>
+        </div>
+        <div class="flex gap-2">
+            <a href="/admin/packages/edit/<%= pkg._id %>" class="inline-flex items-center justify-center px-4 py-2 bg-blue-50 text-blue-700 hover:bg-blue-100 font-semibold rounded-lg transition-colors shadow-sm">
+                <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                Chỉnh sửa
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Detail Section -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-slate-200">
+            <!-- Col 1: Overview -->
+            <div class="p-6">
+                <h4 class="text-sm font-bold text-slate-500 uppercase tracking-wide mb-4">Thông tin cơ bản</h4>
+                
+                <div class="space-y-4">
+                    <div>
+                        <span class="block text-xs text-slate-400 mb-1">Tên gói tập</span>
+                        <div class="font-bold text-slate-800 text-lg"><%= pkg.name %></div>
+                    </div>
+                    <div>
+                        <span class="block text-xs text-slate-400 mb-1">Loại dịch vụ</span>
+                        <span class="px-2.5 py-1 text-xs font-semibold rounded-full 
+                            <%= pkg.type === 'Gym' ? 'bg-blue-100 text-blue-700' : 
+                               (pkg.type === 'Gym Kids' ? 'bg-emerald-100 text-emerald-700' : 
+                               (pkg.type === 'Pilates' ? 'bg-purple-100 text-purple-700' : 'bg-slate-100 text-slate-700')) %>">
+                            <%= pkg.type %>
+                        </span>
+                    </div>
+                    <div>
+                        <span class="block text-xs text-slate-400 mb-1">Mô tả gói tập</span>
+                        <p class="text-sm text-slate-700"><%= pkg.description || 'Không có bình luận.' %></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Col 2: Specifications -->
+            <div class="p-6 bg-slate-50">
+                <h4 class="text-sm font-bold text-slate-500 uppercase tracking-wide mb-4">Chi tiết Thông số</h4>
+                
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+                        <span class="text-sm text-slate-600">Thời hạn sử dụng</span>
+                        <span class="font-bold text-slate-800"><%= pkg.durationMonths || Math.max(1, Math.round((pkg.duration || 30) / 30)) %> tháng</span>
+                    </div>
+                    <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+                        <span class="text-sm text-slate-600">Số lượng buổi</span>
+                        <span class="font-bold text-slate-800"><%= pkg.sessions ? pkg.sessions + ' buổi' : 'Không giới hạn' %></span>
+                    </div>
+                    <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+                        <span class="text-sm text-slate-600">Loại hình thức</span>
+                        <span class="px-2 py-0.5 text-xs font-bold rounded
+                            <%= (pkg.sessionType === '1-1') ? 'bg-emerald-100 text-emerald-700' : 
+                               (pkg.sessionType === '1-2' ? 'bg-sky-100 text-sky-700' : 'bg-orange-100 text-orange-700') %>"
+                        ><%= pkg.sessionType === '1-1' ? 'Khách tập 1-1' : (pkg.sessionType === '1-2' ? 'Khách tập 1-2' : pkg.sessionType) %></span>
+                    </div>
+                    <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+                        <span class="text-sm text-slate-600">Giá / buổi</span>
+                        <span class="font-extrabold text-indigo-600 text-lg"><%= new Intl.NumberFormat('vi-VN').format(pkg.price) %> đ</span>
+                    </div>
+                    <% if (pkg.sessions && pkg.sessions > 0) { %>
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-slate-600">Tổng tham chiếu (× <%= pkg.sessions %> buổi)</span>
+                        <span class="font-bold text-slate-800"><%= new Intl.NumberFormat('vi-VN').format(pkg.price * pkg.sessions) %> đ</span>
+                    </div>
+                    <% } %>
+                </div>
+            </div>
+
+            <!-- Col 3: Usage Stats -->
+            <div class="p-6">
+                <h4 class="text-sm font-bold text-slate-500 uppercase tracking-wide mb-4">Thống kê Sử dụng</h4>
+                
+                <div class="grid grid-cols-1 gap-4">
+                    <!-- Current Active Contracts -->
+                    <div class="bg-emerald-50 rounded-lg p-4 border border-emerald-100 flex items-center justify-between">
+                        <div>
+                            <p class="text-xs text-emerald-600 font-semibold uppercase">Hợp đồng đang hoạt động</p>
+                            <h3 class="text-3xl font-black text-emerald-700 mt-1"><%= activeContractsCount %></h3>
+                        </div>
+                        <div class="p-3 bg-emerald-100 rounded-full text-emerald-600">
+                            <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        </div>
+                    </div>
+                    
+                    <!-- Total Contracts Historical -->
+                    <div class="bg-blue-50 rounded-lg p-4 border border-blue-100 flex items-center justify-between">
+                        <div>
+                            <p class="text-xs text-blue-600 font-semibold uppercase">Tổng hợp đồng đã bán</p>
+                            <h3 class="text-2xl font-bold text-blue-700 mt-1"><%= totalContractsCount %></h3>
+                        </div>
+                        <div class="p-2 bg-blue-100 rounded-full text-blue-600">
+                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
+                        </div>
+                    </div>
+                    
+                    <!-- Potential Revenue (Total Sold * Price) -->
+                    <div class="bg-purple-50 rounded-lg p-4 border border-purple-100 mt-2">
+                        <p class="text-xs text-purple-600 font-semibold uppercase mb-1">Dự phóng Doanh thu từ Gói này</p>
+                        <p class="text-xl font-bold text-purple-700"><%= new Intl.NumberFormat('vi-VN').format(typeof totalRevenueFromContracts !== 'undefined' ? totalRevenueFromContracts : 0) %> VNĐ</p>
+                        <p class="text-[10px] text-purple-500 mt-1">* Tổng basePrice từ <%= totalContractsCount %> hợp đồng đã bán (trước VAT)</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- include('../../partials/footer') %>

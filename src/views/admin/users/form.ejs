@@ -1,0 +1,408 @@
+<%- include('../../partials/header', { title: isEdit ? 'Chỉnh sửa Tài khoản' : 'Tạo Tài khoản mới', activePage: 'users' }) %>
+
+<div class="mb-6 flex flex-col sm:flex-row justify-between items-start gap-4">
+    <div>
+        <h2 class="text-2xl font-bold text-slate-800"><%= isEdit ? 'Điều chỉnh Hồ sơ Nhân viên' : 'Đăng ký Nhân sự mới' %></h2>
+        <p class="text-slate-500 text-sm mt-1">
+            <a href="/admin/users/list" class="text-blue-600 hover:underline">Quay lại danh bạ</a> / 
+            <span><%= isEdit ? 'Chỉnh sửa' : 'Tạo mới' %></span>
+        </p>
+    </div>
+</div>
+
+<div class="bg-white rounded-xl border border-slate-200 shadow-sm max-w-4xl overflow-hidden pb-8">
+    <div class="px-6 py-4 border-b border-slate-200 bg-slate-50">
+        <h3 class="font-semibold text-slate-800 flex items-center gap-2">
+            <svg class="h-5 w-5 text-lime-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+            Biểu mẫu Hồ sơ Nhan sự
+        </h3>
+    </div>
+    
+    <form action="/admin/users/<%= isEdit ? 'update/' + userData._id : 'store' %>" method="POST" class="p-6 md:p-8 space-y-6" x-data="userRolePermissions()" x-init="init()">
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <!-- Họ Tên -->
+            <div>
+                <label for="name" class="block text-sm font-medium text-slate-700 mb-1">Họ và Tên <span class="text-red-500">*</span></label>
+                <input type="text" id="name" name="name" required value="<%= typeof userData !== 'undefined' ? userData.name : '' %>"
+                    class="block w-full rounded-md border-slate-300 shadow-sm focus:border-lime-500 focus:ring focus:ring-lime-500 focus:ring-opacity-50 text-sm py-2 px-3 border bg-white"
+                    placeholder="Nguyễn Văn A">
+            </div>
+
+            <!-- Email (Login ID) -->
+            <div>
+                <label for="email" class="block text-sm font-medium text-slate-700 mb-1">Email Đăng nhập <span class="text-red-500">*</span></label>
+                <input type="email" id="email" name="email" required value="<%= typeof userData !== 'undefined' ? userData.email : '' %>"
+                    class="block w-full rounded-md border-slate-300 shadow-sm focus:border-lime-500 focus:ring focus:ring-lime-500 text-sm py-2 px-3 border bg-white"
+                    placeholder="nguyenvana@fitcity.com">
+            </div>
+
+            <!-- Mật khẩu -->
+            <div>
+                <label for="password" class="block text-sm font-medium text-slate-700 mb-1">
+                    Mật khẩu
+                    <% if (isEdit) { %><span class="text-slate-500 font-normal">(Chỉ điền nếu muốn cấp lại)</span><% } else { %><span class="text-red-500">*</span><% } %>
+                </label>
+                <input type="password" id="password" name="password" minlength="6" <%= isEdit ? '' : 'required' %>
+                    class="block w-full rounded-md border-slate-300 shadow-sm focus:border-lime-500 focus:ring focus:ring-lime-500 text-sm py-2 px-3 border bg-white"
+                    placeholder="Mật khẩu phải tối thiểu 6 ký tự">
+            </div>
+
+            <!-- Số điện thoại -->
+            <div>
+                <label for="phone" class="block text-sm font-medium text-slate-700 mb-1">Số điện thoại <span class="text-red-500">*</span></label>
+                <input type="text" id="phone" name="phone" required value="<%= typeof userData !== 'undefined' ? userData.phone : '' %>"
+                    class="block w-full rounded-md border-slate-300 shadow-sm focus:border-lime-500 focus:ring focus:ring-lime-500 text-sm py-2 px-3 border bg-white"
+                    placeholder="09xx...">
+            </div>
+            
+            <!-- Trạng thái (chỉ hiện khi sửa) -->
+            <% if(isEdit) { %>
+            <div>
+                <label for="status" class="block text-sm font-medium text-slate-700 mb-1">Trạng Thái Làm Việc</label>
+                <select id="status" name="status" class="block w-full rounded-md border-slate-300 shadow-sm focus:border-lime-500 focus:ring focus:ring-lime-500 text-sm py-2 px-3 border bg-white">
+                    <option value="Active" <%= userData.status === 'Active' ? 'selected' : '' %>>Đang làm việc</option>
+                    <option value="Inactive" <%= userData.status === 'Inactive' ? 'selected' : '' %>>Nghỉ việc / Tạm hoãn</option>
+                    <option value="Banned" <%= userData.status === 'Banned' ? 'selected' : '' %>>Vô hiệu hoá tài khoản</option>
+                </select>
+            </div>
+            <% } %>
+
+            <!-- Chức vụ & Quyền thao tác -->
+            <div>
+                <label for="role" class="block text-sm font-bold text-indigo-900 mb-1">Vai trò (Phân quyền Hệ thống) <span class="text-red-500">*</span></label>
+                <select id="role" name="role" required x-model="selectedRole" @change="loadPermissions()"
+                    class="block w-full rounded-md border-indigo-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 text-sm py-2 px-3 border bg-indigo-50 font-medium">
+                    <% (typeof assignableRoles !== 'undefined' ? assignableRoles : ['PT','Sales','Manager']).forEach(function(r) { %>
+                    <option value="<%= r %>" <%= (typeof userData !== 'undefined' && userData.role === r) ? 'selected' : '' %>>
+                        <%= (typeof roleLabels !== 'undefined' && roleLabels[r]) ? roleLabels[r] : r %> (<%= r %>)
+                    </option>
+                    <% }); %>
+                </select>
+                <p class="text-[11px] text-slate-500 mt-1">Mặc định theo <strong>vai trò</strong>. Có thể bật quyền riêng từng người bên dưới.</p>
+            </div>
+
+            <div>
+                <label for="jobDescriptionTemplateId" class="block text-sm font-medium text-slate-700 mb-1">Mẫu mô tả công việc (JD)</label>
+                <select id="jobDescriptionTemplateId" name="jobDescriptionTemplateId" class="block w-full rounded-md border-slate-300 text-sm py-2 px-3 border bg-white">
+                    <option value="">Không áp dụng mẫu</option>
+                </select>
+                <p class="text-[11px] text-slate-500 mt-1">Chọn mẫu JD theo vai trò — <a href="/admin/job-descriptions" class="text-blue-600 hover:underline">quản lý JD</a></p>
+            </div>
+
+            <% if (typeof canEditUserPermissions !== 'undefined' && canEditUserPermissions) { %>
+            <div class="sm:col-span-2 flex items-start gap-3 p-4 rounded-lg border border-violet-200 bg-violet-50/50">
+                <input type="checkbox" id="useCustomPermissions" name="useCustomPermissions" value="on"
+                    x-model="useCustomPermissions" @change="onCustomToggle()"
+                    class="mt-1 rounded border-violet-300 text-violet-600 focus:ring-violet-500"
+                    <%= (typeof userData !== 'undefined' && userData.useCustomPermissions) ? 'checked' : '' %>>
+                <label for="useCustomPermissions" class="text-sm text-violet-900 cursor-pointer">
+                    <span class="font-bold">Quyền riêng cho tài khoản này</span>
+                    <span class="block text-[11px] text-violet-700/80 mt-0.5">Bật để tick quyền khác với role (Admin/SA).</span>
+                </label>
+            </div>
+            <% } %>
+
+            <div class="sm:col-span-2 border border-indigo-100 rounded-xl bg-indigo-50/40 overflow-hidden">
+                <div class="px-4 py-3 border-b border-indigo-100 flex flex-wrap justify-between items-center gap-2 bg-white/60">
+                    <div>
+                        <h4 class="text-sm font-bold text-indigo-900">Quyền hạn khi đăng nhập</h4>
+                        <p class="text-[11px] text-slate-500">
+                            <span x-text="effectiveCount"></span> quyền · <span x-text="sourceLabel"></span>
+                        </p>
+                    </div>
+                    <div class="flex gap-2">
+                        <button type="button" @click="loadPermissions(true)"
+                            class="text-xs font-semibold px-3 py-1.5 rounded-lg border border-indigo-200 text-indigo-700 hover:bg-indigo-50">Làm mới</button>
+                        <% if (typeof isSa !== 'undefined' && isSa) { %>
+                        <a :href="'/admin/permissions?role=' + encodeURIComponent(selectedRole)"
+                            class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700">Chỉnh quyền role (SA)</a>
+                        <% } %>
+                    </div>
+                </div>
+                <p class="p-4 text-sm text-slate-500" x-show="loading">Đang tải quyền…</p>
+                <div class="p-4 max-h-48 overflow-y-auto space-y-3" x-show="!loading && !useCustomPermissions && displayGrouped">
+                    <template x-for="(items, groupName) in displayGrouped" :key="groupName">
+                        <div>
+                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1" x-text="groupName"></p>
+                            <ul class="flex flex-wrap gap-1.5">
+                                <template x-for="item in items" :key="item.id">
+                                    <li class="text-[11px] px-2 py-0.5 rounded-full bg-white border border-indigo-100 text-slate-700"
+                                        :title="item.id" x-text="item.label"></li>
+                                </template>
+                            </ul>
+                        </div>
+                    </template>
+                </div>
+                <% if (typeof canEditUserPermissions !== 'undefined' && canEditUserPermissions && typeof permissionGroups !== 'undefined') { %>
+                <div class="p-4 max-h-72 overflow-y-auto space-y-4 border-t border-indigo-100" x-show="useCustomPermissions" x-cloak>
+                    <% Object.keys(permissionGroups).forEach(function(groupName) { %>
+                    <section>
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2"><%= groupName %></p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-1.5">
+                            <% permissionGroups[groupName].forEach(function(perm) { %>
+                            <label class="flex items-start gap-2 p-2 rounded-lg border border-slate-100 bg-white hover:border-violet-200 cursor-pointer text-xs">
+                                <input type="checkbox" name="customPermissionIds" value="<%= perm.id %>"
+                                    class="mt-0.5 rounded text-violet-600"
+                                    x-model="customCheckedList"
+                                    :disabled="!useCustomPermissions">
+                                <span><%= perm.label %></span>
+                            </label>
+                            <% }); %>
+                        </div>
+                    </section>
+                    <% }); %>
+                    <button type="button" @click="copyRoleToCustom()"
+                        class="text-xs font-semibold text-violet-700 hover:underline">Sao chép quyền từ role hiện tại</button>
+                </div>
+                <% } %>
+            </div>
+
+            <!-- Điều chuyển Công tác về Chi nhánh -->
+            <div class="sm:col-span-2 bg-slate-50 p-4 border border-slate-200 rounded-lg">
+                <label for="branch" class="block text-sm font-bold text-slate-800 mb-2">Điều chuyển Công tác (Phân bổ Chi nhánh)</label>
+                <select id="branch" name="branch" class="block w-full rounded-md border-slate-300 shadow-sm focus:border-lime-500 focus:ring focus:ring-lime-500 text-sm py-2 px-3 border bg-white">
+                    <option value="">-- [Tùy chọn] Chọn Một Chi nhánh (Dành cho cấp nhân viên) --</option>
+                    <% if (typeof branches !== 'undefined' && branches.length > 0) { %>
+                        <% branches.forEach(br => { %>
+                            <option value="<%= br._id %>" <%= (typeof userData !== 'undefined' && userData.branch && userData.branch.toString() === br._id.toString()) ? 'selected' : '' %>>
+                                <%= br.name %> - <%= br.address %>
+                            </option>
+                        <% }) %>
+                    <% } %>
+                </select>
+                <p class="mt-2 text-xs text-slate-500">Có thể bỏ trống khi tạo mới và gán chi nhánh sau (ví dụ: tạo Manager trước, thiết lập chi nhánh, rồi cập nhật phân bổ).</p>
+            </div>
+
+            <!-- HR / Payroll Data (For Staff Only) -->
+            <% if ((typeof userData === 'undefined' || userData.role !== 'Client') && ['SA', 'Admin'].includes(user.role)) { %>
+            <div class="sm:col-span-2 border-t border-slate-200 pt-6 mt-4">
+                <h4 class="text-sm font-bold text-slate-800 uppercase tracking-widest mb-4 flex items-center gap-2">
+                    <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    Thông tin Nhân sự & Thanh toán (Bảo mật)
+                </h4>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div class="sm:col-span-2">
+                        <label for="address" class="block text-sm font-medium text-slate-700 mb-1">Địa chỉ thường trú (Theo CCCD/Sổ hộ khẩu)</label>
+                        <input type="text" id="address" name="address" value="<%= typeof userData !== 'undefined' ? userData.address : '' %>"
+                            class="block w-full rounded-md border-slate-300 shadow-sm focus:border-lime-500 focus:ring focus:ring-lime-500 text-sm py-2 px-3 border bg-white"
+                            placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành phố">
+                    </div>
+                    <div>
+                        <label for="cccdNumber" class="block text-sm font-medium text-slate-700 mb-1">Số CCCD / Định danh</label>
+                        <input type="text" id="cccdNumber" name="cccdNumber" value="<%= typeof userData !== 'undefined' ? userData.cccdNumber : '' %>"
+                            class="block w-full rounded-md border-slate-300 shadow-sm focus:border-lime-500 focus:ring focus:ring-lime-500 text-sm py-2 px-3 border bg-white"
+                            placeholder="Số định danh cá nhân">
+                    </div>
+                    <div>
+                        <label for="cccdIssueDate" class="block text-sm font-medium text-slate-700 mb-1">Ngày cấp CCCD</label>
+                        <input type="date" id="cccdIssueDate" name="cccdIssueDate" 
+                            value="<%= (typeof userData !== 'undefined' && userData.cccdIssueDate) ? new Date(userData.cccdIssueDate).toISOString().split('T')[0] : '' %>"
+                            class="block w-full rounded-md border-slate-300 shadow-sm focus:border-lime-500 focus:ring focus:ring-lime-500 text-sm py-2 px-3 border bg-white">
+                    </div>
+                    <div>
+                        <label for="cccdIssuePlace" class="block text-sm font-medium text-slate-700 mb-1">Nơi cấp CCCD</label>
+                        <input type="text" id="cccdIssuePlace" name="cccdIssuePlace" value="<%= typeof userData !== 'undefined' ? userData.cccdIssuePlace : '' %>"
+                            class="block w-full rounded-md border-slate-300 shadow-sm focus:border-lime-500 focus:ring focus:ring-lime-500 text-sm py-2 px-3 border bg-white"
+                            placeholder="VD: Cục Cảnh sát QLHC về TTXH">
+                    </div>
+                    <div>
+                        <label for="baseSalary" class="block text-sm font-medium text-slate-700 mb-1">Lương cứng (VNĐ/tháng)</label>
+                        <div class="relative">
+                            <input type="number" id="baseSalary" name="baseSalary" min="0"
+                                value="<%= typeof userData !== 'undefined' ? (userData.baseSalary || '') : '' %>"
+                                class="block w-full rounded-md border-slate-300 shadow-sm focus:border-lime-500 focus:ring focus:ring-lime-500 text-sm py-2 pl-3 pr-10 border bg-white"
+                                placeholder="VD: 5000000">
+                            <span class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-400 font-medium text-sm">₫</span>
+                        </div>
+                    </div>
+
+                    <div x-show="selectedRole === 'PT'" x-cloak class="sm:col-span-2">
+                        <label for="ptCommissionRate" class="block text-sm font-medium text-slate-700 mb-1">Hoa hồng PT (% trên giá trị HĐ trước VAT)</label>
+                        <div class="relative max-w-xs">
+                            <input type="number" id="ptCommissionRate" name="ptCommissionRate" min="0" max="100" step="0.1"
+                                value="<%= (typeof userData !== 'undefined' && userData.ptCommissionRate != null) ? userData.ptCommissionRate : 10 %>"
+                                class="block w-full rounded-md border-slate-300 shadow-sm focus:border-lime-500 focus:ring focus:ring-lime-500 text-sm py-2 pl-3 pr-8 border bg-white"
+                                placeholder="10">
+                            <span class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-400 font-medium text-sm">%</span>
+                        </div>
+                        <p class="mt-1 text-[11px] text-slate-500">Khi tạo HĐ: HH = netAmount × %. Payroll cộng ptCommission trên HĐ Paid.</p>
+                    </div>
+                    <div x-show="['Sales','Manager'].includes(selectedRole)" x-cloak class="sm:col-span-2">
+                        <label for="salesCommissionRate" class="block text-sm font-medium text-slate-700 mb-1">Hoa hồng Sales/QL (% trên giá trị HĐ trước VAT)</label>
+                        <div class="relative max-w-xs">
+                            <input type="number" id="salesCommissionRate" name="salesCommissionRate" min="0" max="100" step="0.1"
+                                value="<%= (typeof userData !== 'undefined' && userData.salesCommissionRate != null) ? userData.salesCommissionRate : 5 %>"
+                                class="block w-full rounded-md border-slate-300 shadow-sm focus:border-lime-500 focus:ring focus:ring-lime-500 text-sm py-2 pl-3 pr-8 border bg-white"
+                                placeholder="5">
+                            <span class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-400 font-medium text-sm">%</span>
+                        </div>
+                        <p class="mt-1 text-[11px] text-slate-500">Payroll: tổng netAmount HĐ Paid trong tháng × %.</p>
+                    </div>
+
+                    <div class="sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6 bg-slate-50/50 p-4 rounded-xl border border-dashed border-slate-200">
+                        <div class="sm:col-span-2 flex items-center gap-2 mb-2">
+                            <span class="material-symbols-outlined text-slate-400 text-sm">account_balance</span>
+                            <span class="text-[11px] font-black text-slate-400 uppercase tracking-widest">Thông tin tài khoản nhận lương</span>
+                        </div>
+                        <div>
+                            <label for="bankName" class="block text-sm font-medium text-slate-700 mb-1">Tên ngân hàng</label>
+                            <input type="text" id="bankName" name="bankInfo[bankName]" value="<%= (typeof userData !== 'undefined' && userData.bankInfo) ? userData.bankInfo.bankName : '' %>"
+                                class="block w-full rounded-md border-slate-300 shadow-sm focus:border-lime-500 focus:ring focus:ring-lime-500 text-sm py-2 px-3 border bg-white"
+                                placeholder="VD: Vietcombank, Techcombank...">
+                        </div>
+                        <div>
+                            <label for="accountNumber" class="block text-sm font-medium text-slate-700 mb-1">Số tài khoản ngân hàng</label>
+                            <input type="text" id="accountNumber" name="bankInfo[accountNumber]" value="<%= (typeof userData !== 'undefined' && userData.bankInfo) ? userData.bankInfo.accountNumber : '' %>"
+                                class="block w-full rounded-md border-slate-300 shadow-sm focus:border-lime-500 focus:ring focus:ring-lime-500 text-sm py-2 px-3 border bg-white"
+                                placeholder="Số tài khoản thụ hưởng">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="taxDocumentId" class="block text-sm font-medium text-slate-700 mb-1">Mã số thuế cá nhân</label>
+                        <input type="text" id="taxDocumentId" name="taxDocumentId" value="<%= typeof userData !== 'undefined' ? userData.taxDocumentId : '' %>"
+                            class="block w-full rounded-md border-slate-300 shadow-sm focus:border-lime-500 focus:ring focus:ring-lime-500 text-sm py-2 px-3 border bg-white"
+                            placeholder="MST">
+                    </div>
+                    <div>
+                        <label for="insuranceDocumentId" class="block text-sm font-medium text-slate-700 mb-1">Số sổ Bảo hiểm (BHXH)</label>
+                        <input type="text" id="insuranceDocumentId" name="insuranceDocumentId" value="<%= typeof userData !== 'undefined' ? userData.insuranceDocumentId : '' %>"
+                            class="block w-full rounded-md border-slate-300 shadow-sm focus:border-lime-500 focus:ring focus:ring-lime-500 text-sm py-2 px-3 border bg-white"
+                            placeholder="Mã số BHXH">
+                    </div>
+                </div>
+                <p class="mt-3 text-[11px] text-amber-600 bg-amber-50 p-2 rounded border border-amber-100 italic">Dữ liệu nhạy cảm này sẽ được mã hoá trong cơ sở dữ liệu. Chỉ người có thẩm quyền mới có thể truy cập.</p>
+            </div>
+            <% } %>
+        </div>
+
+        <div class="flex justify-end gap-3 pt-6 border-t border-slate-100">
+            <a href="/admin/users/list" class="px-5 py-2 text-sm font-medium rounded-md border border-slate-300 text-slate-700 hover:bg-slate-50 transition-colors">Hủy & Trở về</a>
+            <button type="submit" class="px-5 py-2 text-sm font-medium rounded-md bg-lime-500 text-slate-900 border border-transparent shadow hover:bg-lime-600 focus:outline-none focus:ring-2 focus:ring-lime-500 transition-colors">
+                <%= isEdit ? 'Ghi đè thay đổi' : 'Cấp phát Tài Khoản' %>
+            </button>
+        </div>
+    </form>
+</div>
+
+<script type="application/json" id="user-form-perm-config"><%- JSON.stringify({
+    initial: typeof userPermissionPreview !== 'undefined' ? userPermissionPreview : null,
+    customIds: (typeof userData !== 'undefined' && userData.customPermissionIds) ? userData.customPermissionIds : [],
+    selectedRole: (typeof userData !== 'undefined' && userData.role) ? userData.role : (typeof defaultRole !== 'undefined' ? defaultRole : 'PT'),
+    useCustomPermissions: Boolean(typeof userData !== 'undefined' && userData.useCustomPermissions)
+}) %></script>
+<script>
+function userRolePermissions() {
+    const cfg = JSON.parse(document.getElementById('user-form-perm-config').textContent);
+    return {
+        selectedRole: cfg.selectedRole,
+        useCustomPermissions: cfg.useCustomPermissions,
+        customCheckedList: [...cfg.customIds],
+        summary: cfg.initial,
+        roleSummary: null,
+        loading: false,
+        get effectiveCount() {
+            if (this.useCustomPermissions) return this.customCheckedList.length;
+            return this.summary?.count ?? 0;
+        },
+        get displayGrouped() {
+            if (this.useCustomPermissions) return null;
+            return this.summary?.grouped ?? null;
+        },
+        get sourceLabel() {
+            if (this.useCustomPermissions) return 'Quyền riêng (tùy chỉnh từng user)';
+            if (!this.summary) return '';
+            if (this.summary.source === 'full') return 'Toàn quyền (SA)';
+            if (this.summary.source === 'custom') return 'Role đã tùy chỉnh (SA)';
+            if (this.summary.source === 'user_custom') return 'Quyền riêng đã lưu';
+            return 'Theo vai trò';
+        },
+        onCustomToggle() {
+            if (this.useCustomPermissions && this.customCheckedList.length === 0) {
+                this.copyRoleToCustom();
+            }
+            if (!this.useCustomPermissions) {
+                this.syncSummaryFromRole();
+            }
+        },
+        idsFromGrouped(grouped) {
+            const ids = [];
+            if (!grouped) return ids;
+            for (const items of Object.values(grouped)) {
+                for (const item of items) ids.push(item.id);
+            }
+            return ids;
+        },
+        copyRoleToCustom() {
+            const src = this.roleSummary || this.summary;
+            this.customCheckedList = this.idsFromGrouped(src?.grouped);
+        },
+        syncSummaryFromRole() {
+            const src = this.roleSummary;
+            if (src && src.role === this.selectedRole) {
+                this.summary = src;
+            }
+        },
+        async loadPermissions(force) {
+            if (!this.selectedRole) return;
+            if (!force && !this.useCustomPermissions && this.summary && this.summary.role === this.selectedRole) return;
+            this.loading = true;
+            try {
+                const res = await fetch('/admin/users/api/role-permissions?role=' + encodeURIComponent(this.selectedRole));
+                const json = await res.json();
+                if (json.status === 'success') {
+                    this.roleSummary = json.data;
+                    if (!this.useCustomPermissions) {
+                        this.summary = json.data;
+                    }
+                }
+            } catch (e) {
+                console.error(e);
+            }
+            this.loading = false;
+        },
+        init() {
+            if (this.summary?.source === 'user_custom') {
+                this.useCustomPermissions = true;
+            }
+            if (!this.summary || (!this.useCustomPermissions && !this.summary.grouped)) {
+                this.loadPermissions(true);
+            } else if (this.selectedRole) {
+                this.roleSummary = this.summary;
+            }
+        }
+    };
+}
+
+async function loadJdTemplateOptions() {
+    const roleEl = document.getElementById('role');
+    const sel = document.getElementById('jobDescriptionTemplateId');
+    if (!roleEl || !sel) return;
+    const role = roleEl.value;
+    sel.innerHTML = '<option value="">Không áp dụng mẫu</option>';
+    if (!role) return;
+    try {
+        const res = await fetch('/admin/job-descriptions/api/by-role?role=' + encodeURIComponent(role));
+        const json = await res.json();
+        if (json.status === 'success' && json.data) {
+            json.data.forEach((t) => {
+                const opt = document.createElement('option');
+                opt.value = t._id;
+                opt.textContent = t.title + ' (' + (t.items?.length || 0) + ' mục)';
+                sel.appendChild(opt);
+            });
+        }
+    } catch (e) {
+        console.error(e);
+    }
+}
+document.getElementById('role')?.addEventListener('change', loadJdTemplateOptions);
+loadJdTemplateOptions();
+</script>
+
+<%- include('../../partials/footer') %>

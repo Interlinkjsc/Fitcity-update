@@ -1,0 +1,30 @@
+<%- include('../../partials/header', { title: 'Nộp Daily Report', activePage: 'daily-reports' }) %>
+
+<div class="max-w-2xl mx-auto mb-6">
+    <h2 class="text-2xl font-bold text-slate-800">Nộp Daily Report</h2>
+    <p class="text-slate-500 text-sm">Báo cáo công việc trong ngày — chờ Manager duyệt</p>
+</div>
+
+<div class="max-w-2xl mx-auto bg-white rounded-xl border border-slate-200 p-6 mb-8">
+    <form action="/admin/daily-reports/submit" method="POST" class="space-y-4">
+        <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">Ngày báo cáo</label>
+            <input type="date" name="reportDate" required value="<%= today %>" class="w-full border rounded-lg py-2 px-3 text-sm">
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">Tóm tắt công việc *</label>
+            <textarea name="summary" rows="3" required class="w-full border rounded-lg py-2 px-3 text-sm"></textarea>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">Kết quả đạt được</label>
+            <textarea name="accomplishments" rows="2" class="w-full border rounded-lg py-2 px-3 text-sm"></textarea>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">Khó khăn</label>
+            <textarea name="blockers" rows="2" class="w-full border rounded-lg py-2 px-3 text-sm"></textarea>
+        </div>
+        <button type="submit" class="w-full py-3 bg-lime-500 text-slate-900 font-bold rounded-lg">Gửi báo cáo</button>
+    </form>
+</div>
+
+<%- include('../../partials/footer') %>

@@ -1,0 +1,147 @@
+<%- include('../../partials/header', { title: 'Phân quyền hệ thống', activePage: 'permissions' }) %>
+
+<div class="mb-6">
+    <h2 class="text-2xl font-bold text-slate-800">Phân quyền theo vai trò</h2>
+    <p class="text-slate-500 text-sm mt-1">Super Admin: chọn vai trò, tick quyền hoặc dùng <strong>Gợi ý mặc định</strong> theo mô tả nghiệp vụ.</p>
+</div>
+
+<div class="grid grid-cols-1 xl:grid-cols-4 gap-6" x-data="permissionManager()">
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 h-fit xl:col-span-1">
+        <label class="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-widest">Vai trò</label>
+        <select x-model="selectedRole" @change="onRoleChange()" class="w-full border border-slate-300 rounded-lg text-sm p-3 focus:ring-2 focus:ring-lime-500 outline-none mb-4">
+            <% assignableRoles.forEach(function(r) { %>
+            <option value="<%= r %>"><%= roleLabels[r] || r %> (<%= r %>)</option>
+            <% }); %>
+        </select>
+
+        <div class="space-y-2">
+            <button type="button" @click="applySuggested()"
+                class="w-full py-2.5 px-3 bg-indigo-50 text-indigo-800 hover:bg-indigo-100 font-semibold rounded-lg text-sm transition-colors border border-indigo-100">
+                Gợi ý theo role
+            </button>
+            <button type="button" @click="selectAll(true)"
+                class="w-full py-2 px-3 bg-slate-50 text-slate-700 hover:bg-slate-100 font-medium rounded-lg text-sm border border-slate-200">
+                Chọn tất cả
+            </button>
+            <button type="button" @click="selectAll(false)"
+                class="w-full py-2 px-3 bg-slate-50 text-slate-700 hover:bg-slate-100 font-medium rounded-lg text-sm border border-slate-200">
+                Bỏ chọn tất cả
+            </button>
+        </div>
+
+        <p class="text-[11px] text-slate-400 mt-4 leading-relaxed">
+            Viền vàng = quyền nằm trong gợi ý mặc định cho role đang chọn.
+        </p>
+
+        <form action="/admin/permissions/reset-suggested" method="POST" class="mt-4" onsubmit="return confirm('Khôi phục toàn bộ quyền về gợi ý mặc định cho role này?');">
+            <input type="hidden" name="role" :value="selectedRole">
+            <button type="submit" class="w-full py-2 text-rose-600 hover:bg-rose-50 font-medium rounded-lg text-xs border border-rose-100">
+                Reset về gợi ý (xóa tùy chỉnh DB)
+            </button>
+        </form>
+    </div>
+
+    <div class="xl:col-span-3 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <form action="/admin/permissions/save" method="POST" @submit="beforeSubmit">
+            <input type="hidden" name="role" :value="selectedRole">
+
+            <div class="p-4 border-b border-slate-100 bg-slate-50/80 flex flex-wrap justify-between items-center gap-3">
+                <div>
+                    <span class="text-sm font-bold text-slate-700">Đang chỉnh: </span>
+                    <span class="text-sm font-extrabold text-lime-700" x-text="roleLabel"></span>
+                    <span class="text-xs text-slate-400 ml-2" x-text="checkedCount + ' / ' + totalCount + ' quyền'"></span>
+                </div>
+                <button type="submit" class="px-5 py-2.5 bg-lime-500 hover:bg-lime-600 text-slate-900 font-bold rounded-lg text-sm shadow-sm">
+                    Lưu phân quyền
+                </button>
+            </div>
+
+            <div class="p-4 max-h-[70vh] overflow-y-auto space-y-6">
+                <% Object.keys(permissionGroups).forEach(function(groupName) { %>
+                <section>
+                    <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 pb-1 border-b border-slate-100"><%= groupName %></h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        <% permissionGroups[groupName].forEach(function(perm) { %>
+                        <label class="flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors"
+                            :class="rowClass('<%= perm.id %>')">
+                            <input type="checkbox" value="<%= perm.id %>"
+                                class="mt-1 rounded border-slate-300 text-lime-600 focus:ring-lime-500"
+                                :checked="isChecked('<%= perm.id %>')"
+                                @change="toggle('<%= perm.id %>', $event.target.checked)">
+                            <span class="min-w-0">
+                                <span class="block text-sm font-semibold text-slate-800"><%= perm.label %></span>
+                                <span class="block text-[10px] font-mono text-slate-400 mt-0.5"><%= perm.id %></span>
+                                <% if (perm.description) { %>
+                                <span class="block text-[10px] text-slate-500 mt-0.5"><%= perm.description %></span>
+                                <% } %>
+                                <% if (perm.suggestedRoles && perm.suggestedRoles.length) { %>
+                                <span class="block text-[10px] text-amber-600/90 mt-1">Gợi ý: <%= perm.suggestedRoles.join(', ') %></span>
+                                <% } %>
+                            </span>
+                        </label>
+                        <% }); %>
+                    </div>
+                </section>
+                <% }); %>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function permissionManager() {
+    return {
+        selectedRole: <%- JSON.stringify(selectedRole) %>,
+        roleLabels: <%- JSON.stringify(roleLabels) %>,
+        suggestedByRole: <%- JSON.stringify(suggestedByRole) %>,
+        checked: new Set(<%- JSON.stringify(currentIds) %>),
+        allIds: <%- JSON.stringify(allPermissionIds) %>,
+
+        get roleLabel() {
+            return this.roleLabels[this.selectedRole] || this.selectedRole;
+        },
+        get totalCount() { return this.allIds.length; },
+        get checkedCount() { return this.checked.size; },
+
+        isChecked(id) { return this.checked.has(id); },
+        toggle(id, on) {
+            if (on) this.checked.add(id); else this.checked.delete(id);
+        },
+        suggestedSet() {
+            return new Set(this.suggestedByRole[this.selectedRole] || []);
+        },
+        rowClass(id) {
+            const sug = this.suggestedSet().has(id);
+            const on = this.checked.has(id);
+            if (sug && on) return 'border-amber-300 bg-amber-50/50';
+            if (sug) return 'border-amber-200 bg-amber-50/30';
+            if (on) return 'border-lime-300 bg-lime-50/40';
+            return 'border-slate-100 hover:border-slate-200';
+        },
+        applySuggested() {
+            this.checked = new Set(this.suggestedByRole[this.selectedRole] || []);
+        },
+        selectAll(on) {
+            this.checked = on ? new Set(this.allIds) : new Set();
+        },
+        onRoleChange() {
+            window.location.href = '/admin/permissions?role=' + encodeURIComponent(this.selectedRole);
+        },
+        beforeSubmit(e) {
+            e.preventDefault();
+            const form = e.target;
+            form.querySelectorAll('input[name="permissionIds"]').forEach(el => el.remove());
+            this.checked.forEach(id => {
+                const hidden = document.createElement('input');
+                hidden.type = 'hidden';
+                hidden.name = 'permissionIds';
+                hidden.value = id;
+                form.appendChild(hidden);
+            });
+            form.submit();
+        }
+    };
+}
+</script>
+
+<%- include('../../partials/footer') %>

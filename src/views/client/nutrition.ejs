@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <title>FITCITY - Protocol Dinh dưỡng</title>
+    <%- include('../partials/client-head') %>
+</head>
+<body class="min-h-screen pb-32">
+    <header class="flex justify-between items-start p-6 mb-2">
+        <div>
+            <h1 class="text-4xl font-black italic tracking-tighter uppercase leading-none"><span class="text-primary tracking-normal">DINH</span> DƯỠNG</h1>
+            <p class="text-slate-500 text-sm mt-2">Phác đồ cá nhân hóa theo lộ trình tập luyện.</p>
+        </div>
+        <a href="/client" aria-label="Về trang chủ" class="w-12 h-12 glass rounded-full flex items-center justify-center hover:bg-slate-50 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60">
+            <span class="material-symbols-outlined">close</span>
+        </a>
+    </header>
+
+    <main class="p-6 space-y-8 max-w-lg mx-auto">
+        <%- include('../partials/flash') %>
+
+        <!-- Nhật ký bữa ăn hôm nay -->
+        <section class="bg-white rounded-[2rem] border border-slate-200 p-6 shadow-sm">
+            <h3 class="text-sm font-black uppercase tracking-widest text-slate-500 mb-4">Nhật ký bữa ăn</h3>
+            <form action="/client/meal-log" method="POST" class="space-y-3">
+                <input type="hidden" name="logDate" value="<%= typeof todayStr !== 'undefined' ? todayStr : '' %>">
+                <div class="grid grid-cols-2 gap-2">
+                    <select name="mealType" required class="border border-slate-200 rounded-xl px-3 py-2 text-sm">
+                        <option value="Breakfast">Sáng</option>
+                        <option value="Lunch">Trưa</option>
+                        <option value="Dinner">Tối</option>
+                        <option value="Snack">Phụ</option>
+                    </select>
+                    <select name="compliance" class="border border-slate-200 rounded-xl px-3 py-2 text-sm">
+                        <option value="Followed">Đúng thực đơn</option>
+                        <option value="Partial">Một phần</option>
+                        <option value="Skipped">Bỏ qua</option>
+                    </select>
+                </div>
+                <input type="text" name="description" placeholder="Mô tả bữa ăn..." class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm">
+                <input type="number" name="calories" min="0" placeholder="Kcal ước tính" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm">
+                <button type="submit" class="w-full py-3 bg-primary text-white font-black rounded-xl text-xs uppercase tracking-widest">Ghi nhật ký</button>
+            </form>
+            <% if (typeof todayLogs !== 'undefined' && todayLogs.length) { %>
+            <div class="mt-4 pt-4 border-t border-slate-100 space-y-2">
+                <% todayLogs.forEach(log => { %>
+                <div class="flex justify-between text-xs">
+                    <span class="font-bold text-slate-700"><%= log.mealType %></span>
+                    <span class="text-slate-500"><%= log.calories || 0 %> kcal · <%= log.compliance %></span>
+                </div>
+                <% }) %>
+            </div>
+            <% } %>
+        </section>
+
+        <% if (typeof mealPlan !== 'undefined' && mealPlan) { %>
+            <!-- Macro Summary Card -->
+            <div class="bg-white rounded-[2.5rem] p-8 border border-slate-200 shadow-sm relative overflow-hidden">
+                <div class="absolute top-0 right-0 p-6 opacity-10">
+                    <span class="material-symbols-outlined text-[120px]">nutrition</span>
+                </div>
+                
+                <div class="relative z-10 flex flex-col items-center">
+                    <div class="text-[10px] font-black text-accent uppercase tracking-[0.3em] mb-2 bg-accent/5 px-4 py-1.5 rounded-full border border-accent/10"><%= mealPlan.goal %></div>
+                    <div class="flex items-baseline gap-2">
+                        <span class="text-6xl font-black tracking-tighter text-slate-900"><%= mealPlan.dailyCalories %></span>
+                        <span class="text-xs font-bold text-slate-500 uppercase tracking-widest">Kcal</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-4 gap-3 mt-10">
+                    <div class="bg-slate-50 p-5 rounded-3xl border border-slate-200 text-center">
+                        <p class="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-2">Đạm</p>
+                        <div class="text-2xl font-black text-slate-900"><%= mealPlan.macros.protein %>%</div>
+                    </div>
+                    <div class="bg-slate-50 p-5 rounded-3xl border border-slate-200 text-center">
+                        <p class="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-2">Tinh bột</p>
+                        <div class="text-2xl font-black text-slate-900"><%= mealPlan.macros.carbs %>%</div>
+                    </div>
+                    <div class="bg-slate-50 p-5 rounded-3xl border border-slate-200 text-center">
+                        <p class="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-2">Chất béo</p>
+                        <div class="text-2xl font-black text-slate-900"><%= mealPlan.macros.fat %>%</div>
+                    </div>
+                    <div class="bg-slate-50 p-5 rounded-3xl border border-slate-200 text-center">
+                        <p class="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-2">Chất xơ</p>
+                        <div class="text-2xl font-black text-slate-900"><%= mealPlan.macros.fiber || 0 %>%</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 24h Timeline -->
+            <section class="space-y-4">
+                <div class="flex justify-between items-center px-2 flex-wrap gap-2">
+                    <h3 class="text-sm font-black uppercase tracking-widest text-slate-500">Timeline 24h</h3>
+                    <% if (mealPlan.startDate && mealPlan.endDate) { %>
+                    <p class="text-[10px] font-bold text-slate-500">
+                        Hiệu lực: <%= new Date(mealPlan.startDate).toLocaleDateString('vi-VN') %> – <%= new Date(mealPlan.endDate).toLocaleDateString('vi-VN') %>
+                    </p>
+                    <% } %>
+                </div>
+                
+                <!-- Timeline Container -->
+                <div class="relative pl-8">
+                    <!-- Vertical Line -->
+                    <div class="absolute left-[15px] top-0 bottom-0 w-[2px] bg-gradient-to-b from-primary/40 via-primary/20 to-transparent"></div>
+
+                    <% mealPlan.meals.forEach((meal, index) => { %>
+                        <div class="relative mb-6 last:mb-0">
+                            <!-- Timeline Dot -->
+                            <div class="absolute -left-[23px] top-6 w-4 h-4 rounded-full border-2 border-primary bg-[#F8FAF7] z-10 shadow-lg shadow-accent/20"></div>
+                            
+                            <!-- Time Badge -->
+                            <div class="absolute -left-[62px] top-5 text-[10px] font-black text-primary/60 text-right w-[35px]"><%= meal.time %></div>
+
+                            <!-- Meal Card -->
+                            <div class="bg-white border border-slate-200 p-5 rounded-[1.5rem] hover:border-primary/20 transition-all group ml-2 shadow-sm">
+                                <% const mn = (typeof mealNutritionByMeal !== 'undefined' && mealNutritionByMeal[index]) ? mealNutritionByMeal[index] : null; %>
+                                <div class="flex justify-between items-start mb-3 gap-2">
+                                    <div class="min-w-0">
+                                        <h4 class="font-black text-slate-900 text-sm truncate"><%= mn ? mn.label : (meal.notes || meal.time || ('Bữa ' + (index + 1))) %></h4>
+                                    </div>
+                                    <% if (mn) { %>
+                                        <div class="bg-primary/10 text-primary text-xs font-black px-3 py-1 rounded-full border border-primary/20 shrink-0"><%= mn.kcal %> kcal</div>
+                                    <% } %>
+                                </div>
+                                <% if (mn) { %>
+                                <div class="grid grid-cols-4 gap-2 mb-3">
+                                    <div class="bg-slate-50 rounded-xl py-2 px-1 text-center border border-slate-100"><p class="text-[8px] font-black text-slate-400 uppercase">Đạm</p><p class="text-xs font-black"><%= mn.proteinG %>g</p></div>
+                                    <div class="bg-slate-50 rounded-xl py-2 px-1 text-center border border-slate-100"><p class="text-[8px] font-black text-slate-400 uppercase">Tinh bột</p><p class="text-xs font-black"><%= mn.carbsG %>g</p></div>
+                                    <div class="bg-slate-50 rounded-xl py-2 px-1 text-center border border-slate-100"><p class="text-[8px] font-black text-slate-400 uppercase">Béo</p><p class="text-xs font-black"><%= mn.fatG %>g</p></div>
+                                    <div class="bg-slate-50 rounded-xl py-2 px-1 text-center border border-slate-100"><p class="text-[8px] font-black text-slate-400 uppercase">Xơ</p><p class="text-xs font-black"><%= mn.fiberG %>g</p></div>
+                                </div>
+                                <% } %>
+
+                                <div class="space-y-2">
+                                    <% meal.foodItems.forEach(item => { %>
+                                        <div class="flex justify-between items-center text-sm py-1.5 border-b border-slate-100 last:border-0">
+                                            <div class="flex items-center gap-2">
+                                                <div class="size-1.5 rounded-full bg-primary/40"></div>
+                                                <span class="text-slate-700 font-medium"><%= item.name %></span>
+                                            </div>
+                                            <span class="text-slate-500 font-mono text-xs"><%= item.quantity %></span>
+                                        </div>
+                                    <% }) %>
+                                </div>
+
+                                <% if (meal.notes) { %>
+                                    <div class="mt-3 flex gap-2 items-start text-xs text-slate-500 bg-emerald-500/5 p-2.5 rounded-xl border border-emerald-500/10">
+                                        <span class="material-symbols-outlined text-[14px] text-emerald-500 mt-0.5">info</span>
+                                        <p class="italic"><%= meal.notes %></p>
+                                    </div>
+                                <% } %>
+                            </div>
+                        </div>
+                    <% }) %>
+                </div>
+            </section>
+
+            <!-- PT Note -->
+            <% if (mealPlan.pt) { %>
+                <div class="bg-primary p-8 rounded-[3rem] text-white shadow-2xl shadow-accent/20 flex flex-col items-center text-center gap-4">
+                    <div class="size-20 rounded-full border-4 border-white/20 overflow-hidden">
+                        <img src="<%= mealPlan.pt.avatar || ('https://ui-avatars.com/api/?name=' + encodeURIComponent(mealPlan.pt.name || 'PT') + '&background=111827&color=ffffff') %>" alt="PT" class="w-full h-full object-cover">
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-black uppercase tracking-[0.2em] opacity-60">Huấn luyện viên</p>
+                        <h4 class="text-xl font-black tracking-tighter">Xác nhận bởi <%= mealPlan.pt.name %></h4>
+                    </div>
+                    <p class="text-sm font-bold leading-relaxed opacity-80">"Kiên trì là chìa khóa để thấy kết quả rõ rệt. Hãy tuân thủ lịch ăn và uống đủ nước!"</p>
+                </div>
+            <% } %>
+
+        <% } else { %>
+            <!-- Empty State -->
+            <div class="flex flex-col items-center justify-center py-40 text-center">
+                <div class="size-24 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 mb-6 border border-slate-200">
+                    <span class="material-symbols-outlined text-[40px]">flatware</span>
+                </div>
+                <h3 class="text-2xl font-black text-slate-900 tracking-tighter mb-2">Chưa có thực đơn</h3>
+                <p class="text-slate-500 text-sm max-w-[240px]">Huấn luyện viên của bạn đang xây dựng lộ trình dinh dưỡng. Vui lòng quay lại sau.</p>
+            </div>
+        <% } %>
+    </main>
+
+    <!-- Bottom Nav -->
+    <% const activePage = 'nutrition'; %>
+    <%- include('../partials/client-bottom-nav', { activePage }) %>
+</body>
+</html>

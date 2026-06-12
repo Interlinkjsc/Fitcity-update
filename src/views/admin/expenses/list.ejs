@@ -1,0 +1,449 @@
+<%- include('../../partials/header', { title: 'Quản lý Chi phí', activePage: 'expenses' }) %>
+
+<div class="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div>
+        <h2 class="text-2xl font-bold text-slate-800">Sổ chi nội bộ</h2>
+        <p class="text-slate-500 text-sm mt-1">Quản lý và ghi nhận các khoản chi phí vận hành chi nhánh.</p>
+    </div>
+    <div class="flex flex-wrap gap-2">
+        <a href="/admin/expenses/export?startDate=<%= encodeURIComponent(currentFilter.startDate || '') %>&endDate=<%= encodeURIComponent(currentFilter.endDate || '') %>&branchId=<%= encodeURIComponent(currentFilter.branchId || 'all') %>" class="inline-flex items-center px-4 py-2 bg-white border border-slate-300 text-slate-700 font-semibold rounded-lg hover:bg-slate-50 text-sm">
+            Xuất Excel
+        </a>
+        <form method="GET" action="/admin/expenses/export" class="inline-flex items-center gap-2">
+            <input type="hidden" name="branchId" value="<%= typeof currentFilter !== 'undefined' ? currentFilter.branchId : 'all' %>">
+            <select name="quarter" class="text-xs border border-slate-300 rounded-lg py-2 px-2">
+                <option value="1">Q1</option><option value="2">Q2</option><option value="3">Q3</option><option value="4">Q4</option>
+            </select>
+            <select name="year" class="text-xs border border-slate-300 rounded-lg py-2 px-2">
+                <% for (let y = 2024; y <= 2027; y++) { %><option value="<%= y %>" <%= y === new Date().getFullYear() ? 'selected' : '' %>><%= y %></option><% } %>
+            </select>
+            <button type="submit" class="text-xs font-bold text-indigo-600 hover:underline">Excel quý</button>
+        </form>
+    <button onclick="document.getElementById('expenseModal').classList.remove('hidden')" class="inline-flex items-center justify-center px-4 py-2 bg-lime-500 hover:bg-lime-600 text-slate-900 font-semibold rounded-lg transition-colors shadow-sm">
+        <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+        </svg>
+        Thêm khoản chi
+    </button>
+    </div>
+</div>
+
+<!-- Filter Panel -->
+<div class="mb-6 bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+    <form method="GET" action="/admin/expenses" class="flex flex-wrap items-end gap-4">
+        <div class="flex-1 min-w-[140px]">
+            <label class="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">Từ ngày</label>
+            <input type="date" name="startDate" value="<%= typeof currentFilter !== 'undefined' ? currentFilter.startDate : '' %>" class="w-full border border-slate-300 rounded-lg text-sm py-2 px-3 focus:ring-2 focus:ring-lime-500 focus:border-lime-500 outline-none">
+        </div>
+        <div class="flex-1 min-w-[140px]">
+            <label class="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">Đến ngày</label>
+            <input type="date" name="endDate" value="<%= typeof currentFilter !== 'undefined' ? currentFilter.endDate : '' %>" class="w-full border border-slate-300 rounded-lg text-sm py-2 px-3 focus:ring-2 focus:ring-lime-500 focus:border-lime-500 outline-none">
+        </div>
+        <div class="flex-1 min-w-[140px]">
+            <label class="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">Chi nhánh</label>
+            <select name="branchId" class="w-full border border-slate-300 rounded-lg text-sm py-2 px-3 focus:ring-2 focus:ring-lime-500 focus:border-lime-500 outline-none">
+                <option value="all">Tất cả</option>
+                <% branches.forEach(b => { %>
+                    <option value="<%= b._id %>" <%= (typeof currentFilter !== 'undefined' && currentFilter.branchId == b._id.toString()) ? 'selected' : '' %>><%= b.name %></option>
+                <% }) %>
+            </select>
+        </div>
+        <div class="flex-1 min-w-[140px]">
+            <label class="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">Loại chi phí</label>
+            <select name="category" class="w-full border border-slate-300 rounded-lg text-sm py-2 px-3 focus:ring-2 focus:ring-lime-500 focus:border-lime-500 outline-none">
+                <option value="all">Tất cả</option>
+                <option value="Rent" <%= (typeof currentFilter !== 'undefined' && currentFilter.category === 'Rent') ? 'selected' : '' %>>Thuê mặt bằng</option>
+                <option value="Electricity" <%= (typeof currentFilter !== 'undefined' && currentFilter.category === 'Electricity') ? 'selected' : '' %>>Tiền điện</option>
+                <option value="Water" <%= (typeof currentFilter !== 'undefined' && currentFilter.category === 'Water') ? 'selected' : '' %>>Tiền nước</option>
+                <option value="Equipment" <%= (typeof currentFilter !== 'undefined' && currentFilter.category === 'Equipment') ? 'selected' : '' %>>Thiết bị</option>
+                <option value="Marketing" <%= (typeof currentFilter !== 'undefined' && currentFilter.category === 'Marketing') ? 'selected' : '' %>>Marketing</option>
+                <option value="Supplies" <%= (typeof currentFilter !== 'undefined' && currentFilter.category === 'Supplies') ? 'selected' : '' %>>Vật tư</option>
+                <option value="Other" <%= (typeof currentFilter !== 'undefined' && currentFilter.category === 'Other') ? 'selected' : '' %>>Khác</option>
+                <option value="Payroll" <%= (typeof currentFilter !== 'undefined' && currentFilter.category === 'Payroll') ? 'selected' : '' %>>Lương nhân sự (đã trả)</option>
+            </select>
+        </div>
+        <div class="flex gap-2">
+            <button type="submit" class="inline-flex items-center px-4 py-2 bg-slate-800 text-white font-semibold rounded-lg hover:bg-slate-900 transition-colors text-sm">
+                <svg class="h-4 w-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+                Lọc
+            </button>
+            <a href="/admin/expenses" class="inline-flex items-center px-4 py-2 bg-white border border-slate-300 text-slate-600 font-semibold rounded-lg hover:bg-slate-50 transition-colors text-sm">
+                Xoá lọc
+            </a>
+        </div>
+    </form>
+</div>
+
+<% const vs = typeof vatSummary !== 'undefined' ? vatSummary : { beforeVat: 0, vatAmount: 0, total: 0 }; %>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+    <div class="bg-white p-4 rounded-xl border border-slate-200 border-l-4 border-l-teal-500">
+        <p class="text-xs font-semibold text-slate-500 uppercase">Trước VAT (vận hành)</p>
+        <p class="text-lg font-extrabold text-teal-700"><%= new Intl.NumberFormat('vi-VN').format(Math.round(vs.beforeVat || 0)) %> đ</p>
+    </div>
+    <div class="bg-white p-4 rounded-xl border border-slate-200 border-l-4 border-l-cyan-500">
+        <p class="text-xs font-semibold text-slate-500 uppercase">Tiền VAT</p>
+        <p class="text-lg font-extrabold text-cyan-700"><%= new Intl.NumberFormat('vi-VN').format(Math.round(vs.vatAmount || 0)) %> đ</p>
+    </div>
+    <div class="bg-white p-4 rounded-xl border border-slate-200 border-l-4 border-l-rose-400">
+        <p class="text-xs font-semibold text-slate-500 uppercase">Tổng sau VAT</p>
+        <p class="text-lg font-extrabold text-rose-600"><%= new Intl.NumberFormat('vi-VN').format(Math.round(vs.total || totalOperating || 0)) %> đ</p>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm border-l-4 border-l-rose-500">
+        <p class="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">Tổng chi (gộp)</p>
+        <h3 class="text-xl font-extrabold text-rose-600"><%= new Intl.NumberFormat('vi-VN').format(Math.round(typeof totalExpenses !== 'undefined' ? totalExpenses : 0)) %> <small class="text-xs font-normal text-slate-400">VNĐ</small></h3>
+    </div>
+    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm border-l-4 border-l-orange-500">
+        <p class="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">Chi vận hành</p>
+        <h3 class="text-lg font-extrabold text-orange-600"><%= new Intl.NumberFormat('vi-VN').format(Math.round(typeof totalOperating !== 'undefined' ? totalOperating : 0)) %> <small class="text-xs font-normal text-slate-400">VNĐ</small></h3>
+    </div>
+    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm border-l-4 border-l-violet-500">
+        <p class="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">Lương đã thanh toán</p>
+        <h3 class="text-lg font-extrabold text-violet-600"><%= new Intl.NumberFormat('vi-VN').format(Math.round(typeof totalPayrollPaid !== 'undefined' ? totalPayrollPaid : 0)) %> <small class="text-xs font-normal text-slate-400">VNĐ</small></h3>
+    </div>
+    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm border-l-4 border-l-blue-500">
+        <p class="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">Số giao dịch</p>
+        <h3 class="text-xl font-extrabold text-blue-600"><%= typeof totalCount !== 'undefined' ? totalCount : 0 %></h3>
+    </div>
+    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm border-l-4 border-l-amber-500">
+        <p class="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">Chi phí TB/giao dịch</p>
+        <h3 class="text-xl font-extrabold text-amber-600"><%= new Intl.NumberFormat('vi-VN').format(totalCount > 0 ? Math.round(totalExpenses / totalCount) : 0) %> <small class="text-xs font-normal text-slate-400">VNĐ</small></h3>
+    </div>
+    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm border-l-4 border-l-emerald-500">
+        <p class="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">Danh mục chi nhiều nhất</p>
+        <% if (typeof categoryBreakdown !== 'undefined' && categoryBreakdown.length > 0) { %>
+            <%
+                const catMap = { 'Rent': 'Thuê MB', 'Electricity': 'Điện', 'Water': 'Nước', 'Equipment': 'Thiết bị', 'Marketing': 'Marketing', 'Supplies': 'Vật tư', 'Other': 'Khác' };
+            %>
+            <h3 class="text-lg font-extrabold text-emerald-600"><%= catMap[categoryBreakdown[0]._id] || categoryBreakdown[0]._id %></h3>
+        <% } else { %>
+            <h3 class="text-lg font-extrabold text-slate-400">—</h3>
+        <% } %>
+    </div>
+</div>
+
+<!-- Bảng Tổng Chi -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+    <!-- Theo Loại chi phí -->
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="px-5 py-3 border-b border-slate-100 bg-slate-50/50">
+            <h4 class="font-bold text-slate-700 text-sm flex items-center gap-2">
+                <svg class="h-4 w-4 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                Tổng chi theo Loại
+            </h4>
+        </div>
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="text-xs text-slate-400 uppercase tracking-wider border-b border-slate-100">
+                    <th class="px-5 py-2 text-left font-semibold">Loại</th>
+                    <th class="px-5 py-2 text-center font-semibold">SL</th>
+                    <th class="px-5 py-2 text-right font-semibold">Tổng tiền</th>
+                    <th class="px-5 py-2 text-right font-semibold">Tỷ trọng</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-50">
+                <% if (typeof categoryBreakdown !== 'undefined' && categoryBreakdown.length > 0) { %>
+                    <%
+                        const catLabels = { 'Rent': 'Thuê mặt bằng', 'Electricity': 'Tiền điện', 'Water': 'Tiền nước', 'Equipment': 'Thiết bị', 'Marketing': 'Marketing', 'Supplies': 'Vật tư', 'Other': 'Khác', 'Payroll': 'Lương nhân sự' };
+                        const catColors = { 'Rent': 'bg-rose-100 text-rose-700', 'Electricity': 'bg-amber-100 text-amber-700', 'Water': 'bg-blue-100 text-blue-700', 'Equipment': 'bg-slate-100 text-slate-700', 'Marketing': 'bg-fuchsia-100 text-fuchsia-700', 'Supplies': 'bg-emerald-100 text-emerald-700', 'Other': 'bg-slate-100 text-slate-600', 'Payroll': 'bg-violet-100 text-violet-700' };
+                    %>
+                    <% categoryBreakdown.forEach(cat => { %>
+                        <tr class="hover:bg-slate-50/50">
+                            <td class="px-5 py-2.5">
+                                <span class="px-2 py-0.5 rounded-full text-xs font-bold <%= catColors[cat._id] || 'bg-slate-100 text-slate-600' %>"><%= catLabels[cat._id] || cat._id || 'Khác' %></span>
+                            </td>
+                            <td class="px-5 py-2.5 text-center text-slate-500 font-medium"><%= cat.count %></td>
+                            <td class="px-5 py-2.5 text-right font-bold text-rose-600"><%= new Intl.NumberFormat('vi-VN').format(Math.round(cat.total)) %>đ</td>
+                            <td class="px-5 py-2.5 text-right">
+                                <div class="flex items-center justify-end gap-2">
+                                    <div class="w-16 bg-slate-100 rounded-full h-1.5">
+                                        <div class="bg-rose-500 h-1.5 rounded-full" style="width: <%= totalExpenses > 0 ? Math.round(cat.total / totalExpenses * 100) : 0 %>%"></div>
+                                    </div>
+                                    <span class="text-xs font-bold text-slate-500"><%= totalExpenses > 0 ? Math.round(cat.total / totalExpenses * 100) : 0 %>%</span>
+                                </div>
+                            </td>
+                        </tr>
+                    <% }) %>
+                <% } else { %>
+                    <tr><td colspan="4" class="px-5 py-4 text-center text-slate-400 text-xs italic">Chưa có dữ liệu</td></tr>
+                <% } %>
+            </tbody>
+            <% if (typeof categoryBreakdown !== 'undefined' && categoryBreakdown.length > 0) { %>
+                <tfoot>
+                    <tr class="bg-slate-50 border-t border-slate-200">
+                        <td class="px-5 py-2.5 font-bold text-slate-800 text-xs uppercase">Tổng cộng</td>
+                        <td class="px-5 py-2.5 text-center font-bold text-slate-800"><%= totalCount %></td>
+                        <td class="px-5 py-2.5 text-right font-extrabold text-rose-700"><%= new Intl.NumberFormat('vi-VN').format(Math.round(totalExpenses)) %>đ</td>
+                        <td class="px-5 py-2.5 text-right font-bold text-slate-500">100%</td>
+                    </tr>
+                </tfoot>
+            <% } %>
+        </table>
+    </div>
+
+    <!-- Theo Chi nhánh -->
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="px-5 py-3 border-b border-slate-100 bg-slate-50/50">
+            <h4 class="font-bold text-slate-700 text-sm flex items-center gap-2">
+                <svg class="h-4 w-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                Tổng chi theo Chi nhánh
+            </h4>
+        </div>
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="text-xs text-slate-400 uppercase tracking-wider border-b border-slate-100">
+                    <th class="px-5 py-2 text-left font-semibold">Chi nhánh</th>
+                    <th class="px-5 py-2 text-right font-semibold">Vận hành</th>
+                    <th class="px-5 py-2 text-right font-semibold">Lương đã trả</th>
+                    <th class="px-5 py-2 text-right font-semibold">Tổng</th>
+                    <th class="px-5 py-2 text-right font-semibold">Tỷ trọng</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-50">
+                <% if (typeof branchBreakdown !== 'undefined' && branchBreakdown.length > 0) { %>
+                    <% branchBreakdown.forEach(br => { %>
+                        <tr class="hover:bg-slate-50/50">
+                            <td class="px-5 py-2.5 font-semibold text-slate-700"><%= br.branchName %></td>
+                            <td class="px-5 py-2.5 text-right text-orange-600 font-medium"><%= new Intl.NumberFormat('vi-VN').format(Math.round(br.operatingTotal || 0)) %>đ</td>
+                            <td class="px-5 py-2.5 text-right text-violet-600 font-medium"><%= new Intl.NumberFormat('vi-VN').format(Math.round(br.payrollTotal || 0)) %>đ</td>
+                            <td class="px-5 py-2.5 text-right font-bold text-indigo-600"><%= new Intl.NumberFormat('vi-VN').format(Math.round(br.total)) %>đ</td>
+                            <td class="px-5 py-2.5 text-right">
+                                <div class="flex items-center justify-end gap-2">
+                                    <div class="w-16 bg-slate-100 rounded-full h-1.5">
+                                        <div class="bg-indigo-500 h-1.5 rounded-full" style="width: <%= totalExpenses > 0 ? Math.round(br.total / totalExpenses * 100) : 0 %>%"></div>
+                                    </div>
+                                    <span class="text-xs font-bold text-slate-500"><%= totalExpenses > 0 ? Math.round(br.total / totalExpenses * 100) : 0 %>%</span>
+                                </div>
+                            </td>
+                        </tr>
+                    <% }) %>
+                <% } else { %>
+                    <tr><td colspan="5" class="px-5 py-4 text-center text-slate-400 text-xs italic">Chưa có dữ liệu</td></tr>
+                <% } %>
+            </tbody>
+            <% if (typeof branchBreakdown !== 'undefined' && branchBreakdown.length > 0) { %>
+                <tfoot>
+                    <tr class="bg-slate-50 border-t border-slate-200">
+                        <td class="px-5 py-2.5 font-bold text-slate-800 text-xs uppercase">Tổng cộng</td>
+                        <td class="px-5 py-2.5 text-right font-bold text-orange-700"><%= new Intl.NumberFormat('vi-VN').format(Math.round(totalOperating || 0)) %>đ</td>
+                        <td class="px-5 py-2.5 text-right font-bold text-violet-700"><%= new Intl.NumberFormat('vi-VN').format(Math.round(totalPayrollPaid || 0)) %>đ</td>
+                        <td class="px-5 py-2.5 text-right font-extrabold text-indigo-700"><%= new Intl.NumberFormat('vi-VN').format(Math.round(totalExpenses)) %>đ</td>
+                        <td class="px-5 py-2.5 text-right font-bold text-slate-500">100%</td>
+                    </tr>
+                </tfoot>
+            <% } %>
+        </table>
+    </div>
+
+    <% if (typeof taxDocumentBreakdown !== 'undefined' && taxDocumentBreakdown.length) { %>
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden md:col-span-2">
+        <div class="px-5 py-3 border-b border-slate-100 bg-slate-50/50">
+            <h4 class="font-bold text-slate-700 text-sm">Chi theo loại chứng từ thuế</h4>
+        </div>
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="text-xs text-slate-400 uppercase border-b border-slate-100">
+                    <th class="px-5 py-2 text-left">Loại CT</th>
+                    <th class="px-5 py-2 text-center">SL</th>
+                    <th class="px-5 py-2 text-right">Tổng</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-50">
+                <% taxDocumentBreakdown.forEach(row => {
+                    const lbl = (typeof taxDocumentLabels !== 'undefined' && taxDocumentLabels[row._id]) ? taxDocumentLabels[row._id] : row._id;
+                %>
+                <tr>
+                    <td class="px-5 py-2"><%= lbl %></td>
+                    <td class="px-5 py-2 text-center"><%= row.count %></td>
+                    <td class="px-5 py-2 text-right font-bold text-rose-600"><%= new Intl.NumberFormat('vi-VN').format(Math.round(row.total)) %>đ</td>
+                </tr>
+                <% }) %>
+            </tbody>
+        </table>
+    </div>
+    <% } %>
+</div>
+
+<!-- DATA TABLE -->
+<div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="bg-slate-50 text-slate-500 text-sm uppercase tracking-wider border-b border-slate-200">
+                    <th class="p-4 font-semibold">Ngày</th>
+                    <th class="p-4 font-semibold">Chi nhánh</th>
+                    <th class="p-4 font-semibold">Loại chi phí</th>
+                    <th class="p-4 font-semibold">Mô tả</th>
+                    <th class="p-4 font-semibold text-right">Trước VAT</th>
+                    <th class="p-4 font-semibold text-right">VAT</th>
+                    <th class="p-4 font-semibold text-right">Tổng</th>
+                    <th class="p-4 font-semibold">Người ghi</th>
+                    <th class="p-4 font-semibold text-center">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+                <% if (typeof showPayrollOnly !== 'undefined' && showPayrollOnly && payrollPaidRows && payrollPaidRows.length) { %>
+                    <% payrollPaidRows.forEach(pr => { %>
+                    <tr class="hover:bg-violet-50/50">
+                        <td class="p-4 text-sm text-slate-600"><%= pr.paymentDate ? new Date(pr.paymentDate).toLocaleDateString('vi-VN') : '-' %></td>
+                        <td class="p-4"><span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-violet-100 text-violet-700"><%= pr.staff?.branch?.name || 'N/A' %></span></td>
+                        <td class="p-4 text-sm font-semibold text-violet-700">Lương Kỳ <%= pr.period %></td>
+                        <td class="p-4 text-sm text-slate-500"><%= pr.staff?.name %> (<%= pr.staff?.role %>)</td>
+                        <td class="p-4 text-sm font-bold text-rose-600 text-right">-<%= new Intl.NumberFormat('vi-VN').format(Math.round(pr.totalSalary)) %> đ</td>
+                        <td class="p-4 text-sm text-slate-500">—</td>
+                        <td class="p-4 text-center text-xs text-emerald-600 font-bold">Đã trả</td>
+                    </tr>
+                    <% }) %>
+                <% } %>
+                <% if (!showPayrollOnly) { expenses.forEach(exp => { %>
+                    <tr class="hover:bg-slate-50/70 transition-colors">
+                        <td class="p-4 text-sm text-slate-600">
+                            <%= new Date(exp.date).toLocaleDateString('vi-VN') %>
+                        </td>
+                        <td class="p-4">
+                            <span class="px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-slate-100 text-slate-700">
+                                <%= exp.branch ? exp.branch.name : 'N/A' %>
+                            </span>
+                        </td>
+                        <td class="p-4 text-sm font-semibold text-slate-700"><%= exp.category %></td>
+                        <td class="p-4 text-sm text-slate-500 max-w-xs truncate"><%= exp.description || '-' %></td>
+                        <td class="p-4 text-sm text-right text-slate-600"><%= new Intl.NumberFormat('vi-VN').format(Math.round(exp.amountBeforeVat ?? exp.total ?? exp.amount)) %></td>
+                        <td class="p-4 text-sm text-right text-cyan-600"><%= new Intl.NumberFormat('vi-VN').format(Math.round(exp.vatAmount || 0)) %></td>
+                        <td class="p-4 text-sm font-bold text-rose-600 text-right">
+                            -<%= new Intl.NumberFormat('vi-VN').format(Math.round(exp.total ?? exp.amount)) %> đ
+                        </td>
+                        <td class="p-4 text-sm text-slate-500">
+                            <%= exp.recordedBy ? exp.recordedBy.name : 'Hệ thống' %>
+                        </td>
+                        <td class="p-4 text-center">
+                            <div class="flex items-center justify-center gap-2">
+                                <a href="/admin/expenses/detail/<%= exp._id %>" class="text-slate-400 hover:text-emerald-600 transition-colors" title="Xem chi tiết">
+                                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                    </svg>
+                                </a>
+                                <form action="/admin/expenses/delete/<%= exp._id %>" method="POST" onsubmit="return confirm('Xóa khoản chi này?')" class="inline-block">
+                                    <button class="text-slate-400 hover:text-red-600 transition-colors">
+                                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                        </svg>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                <% }) } %>
+                <% const hasRows = (showPayrollOnly && payrollPaidRows && payrollPaidRows.length) || (!showPayrollOnly && expenses && expenses.length); %>
+                <% if (!hasRows) { %>
+                    <tr>
+                        <td colspan="9" class="p-8 text-center text-slate-500"><%= showPayrollOnly ? 'Chưa có kỳ lương đã thanh toán trong bộ lọc.' : 'Chưa có khoản chi nào được ghi nhận.' %></td>
+                    </tr>
+                <% } %>
+            </tbody>
+        </table>
+    </div>
+</div>
+<%- include('../../partials/pagination') %>
+
+<!-- Modal Form -->
+<div id="expenseModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+    <div class="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden">
+        <div class="px-8 py-6 border-b border-slate-100 flex justify-between items-center">
+            <h3 class="text-xl font-bold text-slate-800">Ghi nhận chi phí mới</h3>
+            <button onclick="document.getElementById('expenseModal').classList.add('hidden')" class="text-slate-400 hover:text-slate-600 transition-colors text-2xl leading-none">&times;</button>
+        </div>
+        <form action="/admin/expenses/store" method="POST" enctype="multipart/form-data" class="px-8 py-8 space-y-4" id="expenseForm">
+            <div class="grid grid-cols-2 gap-4">
+                <div class="space-y-1">
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Chi nhánh</label>
+                    <select name="branchId" class="block w-full rounded-md border-slate-300 shadow-sm focus:border-lime-500 focus:ring focus:ring-lime-500 text-sm py-2 px-3 border bg-white">
+                        <% branches.forEach(b => { %>
+                            <option value="<%= b._id %>"><%= b.name %></option>
+                        <% }) %>
+                    </select>
+                </div>
+                <div class="space-y-1">
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Ngày chi</label>
+                    <input type="date" name="date" required value="<%= new Date().toISOString().split('T')[0] %>" class="block w-full rounded-md border-slate-300 shadow-sm focus:border-lime-500 focus:ring focus:ring-lime-500 text-sm py-2 px-3 border bg-white">
+                </div>
+            </div>
+
+            <div class="space-y-1">
+                <label class="block text-sm font-medium text-slate-700 mb-1">Loại chi phí</label>
+                <select name="category" class="block w-full rounded-md border-slate-300 shadow-sm focus:border-lime-500 focus:ring focus:ring-lime-500 text-sm py-2 px-3 border bg-white">
+                    <option value="Rent">Tiền thuê mặt bằng</option>
+                    <option value="Electricity">Tiền điện</option>
+                    <option value="Water">Tiền nước</option>
+                    <option value="Equipment">Thiết bị Gym</option>
+                    <option value="Marketing">Marketing/Ads</option>
+                    <option value="Supplies">Vật phẩm sửa chữa</option>
+                    <option value="Other">Khác...</option>
+                </select>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div class="space-y-1">
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Tiền trước VAT (VNĐ) *</label>
+                    <input type="number" id="amountBeforeVat" name="amountBeforeVat" min="0" step="1000" required placeholder="5000000" class="block w-full rounded-md border-slate-300 text-sm py-2 px-3 border bg-white font-bold">
+                </div>
+                <div class="space-y-1">
+                    <label class="block text-sm font-medium text-slate-700 mb-1">% VAT</label>
+                    <input type="number" id="vatRate" name="vatRate" min="0" max="100" step="0.1" value="<%= typeof defaultVat !== 'undefined' ? defaultVat : 10 %>" class="block w-full rounded-md border-slate-300 text-sm py-2 px-3 border bg-white">
+                </div>
+            </div>
+            <p class="text-xs text-slate-500">Tổng sau VAT: <strong id="expenseTotalPreview">0</strong> VNĐ</p>
+
+            <div class="space-y-1">
+                <label class="block text-sm font-medium text-slate-700 mb-1">Loại chứng từ thuế</label>
+                <select name="taxDocumentType" class="block w-full rounded-md border-slate-300 text-sm py-2 px-3 border bg-white">
+                    <option value="INPUT_VAT">Chi phí đầu vào (VAT)</option>
+                    <option value="OUTPUT_VAT">HĐ thuế đầu ra</option>
+                    <option value="PIT">Thuế TNCN</option>
+                    <option value="SOCIAL_INSURANCE">BHXH</option>
+                    <option value="OTHER">Khác</option>
+                </select>
+            </div>
+
+            <div class="space-y-1">
+                <label class="block text-sm font-medium text-slate-700 mb-1">Chứng từ (ảnh/PDF)</label>
+                <input type="file" name="invoiceFile" accept="image/*,.pdf" class="block w-full text-sm text-slate-600">
+            </div>
+
+            <div class="space-y-1">
+                <label class="block text-sm font-medium text-slate-700 mb-1">Ghi chú chi tiết</label>
+                <textarea name="description" rows="3" class="block w-full rounded-md border-slate-300 shadow-sm focus:border-lime-500 focus:ring focus:ring-lime-500 text-sm py-2 px-3 border bg-white"></textarea>
+            </div>
+
+            <div class="pt-4">
+                <button type="submit" class="px-5 py-2 text-sm font-medium rounded-md bg-lime-500 text-slate-900 border border-transparent shadow hover:bg-lime-600 focus:outline-none focus:ring-2 focus:ring-lime-500 transition-colors w-full">
+                    Xác nhận ghi chi
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+(function () {
+    const before = document.getElementById('amountBeforeVat');
+    const rate = document.getElementById('vatRate');
+    const preview = document.getElementById('expenseTotalPreview');
+    if (!before || !rate || !preview) return;
+    function update() {
+        const b = Math.max(0, Number(before.value) || 0);
+        const r = Math.min(100, Math.max(0, Number(rate.value) || 0));
+        const vat = Math.round(b * r / 100);
+        preview.textContent = new Intl.NumberFormat('vi-VN').format(b + vat);
+    }
+    before.addEventListener('input', update);
+    rate.addEventListener('input', update);
+    update();
+})();
+</script>
+<%- include('../../partials/footer') %>

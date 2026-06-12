@@ -1,0 +1,39 @@
+@startuml ACT_SA_Standalone
+title Activity — System Admin (SA) (độc lập)
+skinparam activityStyle rectangle
+
+start
+:Đăng nhập với vai trò SA;
+:Truy cập khu vực quản trị /admin;
+
+partition "RBAC" {
+  :Mở trang quản lý phân quyền\nGET /admin/permissions;
+  :Xem danh sách role và permission gợi ý;
+  if (Cần chỉnh override?) then (có)
+    :Chỉnh quyền theo role;
+    :Lưu thay đổi override;
+  else (không)
+  endif
+  if (Cần reset về mặc định gợi ý?) then (có)
+    :Thực hiện reset theo registry gợi ý;
+  else (không)
+  endif
+}
+
+partition "Chi nhánh" {
+  if (Quản lý chi nhánh?) then (có)
+    :CRUD chi nhánh\n/admin/branches;
+  else (không)
+  endif
+}
+
+partition "Người dùng" {
+  if (Tạo tài khoản nhân sự?) then (có)
+    :Tạo user mới\n/admin/users;
+  else (không)
+  endif
+}
+
+stop
+
+@enduml
