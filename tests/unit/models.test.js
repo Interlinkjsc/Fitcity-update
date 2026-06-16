@@ -113,24 +113,19 @@ describe('Database Models Unit Tests (Sprint 1 - Task 2)', () => {
             expect(savedSP.target).toBe('Pilates');
         });
 
-        test('Should FAIL if target is not in enum list', async () => {
+        test('Should save successfully with a free-form custom target (no enum — form supports "Mục tiêu khác")', async () => {
+            // target has no enum because the package form lets staff type an
+            // arbitrary custom goal via the "Mục tiêu khác" option.
             const sp = new ServicePackage({
                 name: 'Gói Chạy Bộ',
                 type: 'Gym',
                 duration: 30,
                 price: 500000,
-                target: 'Chạy Bộ' // Invalid enum value
+                target: 'Chạy Bộ'
             });
 
-            let error;
-            try {
-                await sp.save();
-            } catch (err) {
-                error = err;
-            }
-
-            expect(error).toBeDefined();
-            expect(error.errors.target).toBeDefined();
+            const saved = await sp.save();
+            expect(saved.target).toBe('Chạy Bộ');
         });
     });
 

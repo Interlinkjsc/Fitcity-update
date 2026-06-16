@@ -8,8 +8,9 @@ describe('sidebarMenu', () => {
     const MENU_COUNT = sidebarMenu.MENU_ITEMS.length;
 
     describe('MENU_ITEMS', () => {
-        it('Should have expected menu items (aligned with 12-sa-standalone modules)', () => {
-            expect(MENU_COUNT).toBe(26);
+        it('Should have expected menu items (aligned with 12-sa-standalone modules + session/meal-plan approval)', () => {
+            // 26 base items + 'session-approval' (pt_ops) + 'meal-plan-approval' (programs)
+            expect(MENU_COUNT).toBe(28);
         });
 
         it('Each item should have key, label, href, moduleId, icon, and roles', () => {
