@@ -100,11 +100,20 @@ exports.getContractList = async (req, res, next) => {
 
         const pagination = getPagination(totalDocs, page, limit);
 
+        const contractBaseMatch = { ...listFilter, contractStatus: { $ne: 'Cancelled' } };
+
         const revenueStats = await Contract.aggregate([
-            { $match: { ...listFilter, contractStatus: { $ne: 'Cancelled' } } },
+            { $match: contractBaseMatch },
             { $group: contractScope.revenueAggregateGroup() }
         ]);
         const revSummary = revenueStats[0] || { totalNet: 0, totalAfterTax: 0, totalPaid: 0, count: 0 };
+
+        const pendingResult = await Contract.aggregate([
+            { $match: contractBaseMatch },
+            { $project: { pending: { $subtract: ['$totalAmount', '$paidAmount'] } } },
+            { $group: { _id: null, totalPending: { $sum: '$pending' } } }
+        ]);
+        const pendingReceivables = pendingResult[0] ? pendingResult[0].totalPending : 0;
 
         let branches = [];
         if (contractScope.GLOBAL_VIEW_ROLES.includes(user.role)) {
@@ -125,6 +134,7 @@ exports.getContractList = async (req, res, next) => {
             totalAfterTax: revSummary.totalAfterTax,
             totalBeforeTax: Math.round(revSummary.totalNet || 0),
             totalPaid: revSummary.totalPaid,
+            pendingReceivables,
             canManageContract,
             canDeleteContract
         });

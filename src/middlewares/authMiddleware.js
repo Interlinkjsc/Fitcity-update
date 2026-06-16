@@ -11,7 +11,22 @@ exports.protect = (req, res, next) => {
 
 exports.restrictTo = (...roles) => {
     return (req, res, next) => {
-        if (!req.session.user || !roles.includes(req.session.user.role)) {
+        const user = req.session.user;
+        if (!user || !roles.includes(user.role)) {
+            // Yêu cầu thực sự cần JSON (AJAX/fetch, hoặc client không accept html)
+            // vẫn trả JSON 403 như cũ; còn điều hướng HTML thường thì hiện flash
+            // + quay lại trang trước thay vì trả lỗi JSON thô không có UI.
+            const wantsJson = req.xhr || !req.accepts('html') || req.is('application/json');
+
+            if (!wantsJson && typeof req.flash === 'function' && user) {
+                req.flash('error_msg', 'Bạn không có quyền truy cập chức năng này.');
+                const referer = req.get('Referer');
+                if (referer) return res.redirect(referer);
+                if (user.role === 'PT') return res.redirect('/pt');
+                if (user.role === 'Client') return res.redirect('/client');
+                return res.redirect('/admin');
+            }
+
             return res.status(403).json({ status: 'fail', message: 'Không có quyền.' });
         }
         next();

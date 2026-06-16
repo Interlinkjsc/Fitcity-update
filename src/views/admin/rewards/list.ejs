@@ -1,91 +1,123 @@
 <%- include('../../partials/header', { title: 'Phần thưởng', activePage: 'rewards' }) %>
 
-<div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1><i class="fas fa-gift"></i> Quản lý Voucher & Reward</h1>
-        <a href="/admin/rewards/create" class="btn btn-success"><i class="fas fa-plus"></i> Gán Reward</a>
+<div class="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div>
+        <h2 class="text-2xl font-bold text-slate-800">Quản lý Voucher & Reward</h2>
+        <p class="text-slate-500 text-sm mt-1">Theo dõi và gán phần thưởng cho khách hàng</p>
     </div>
+    <a href="/admin/rewards/create"
+       class="inline-flex items-center justify-center px-4 py-2 bg-lime-500 hover:bg-lime-600 text-slate-900 font-semibold rounded-lg transition-colors shadow-sm">
+        <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+        </svg>
+        Gán Reward
+    </a>
+</div>
 
-    <!-- Filters -->
-    <form method="GET" class="row g-3 mb-4">
-        <div class="col-md-3">
-            <select name="type" class="form-select">
-                <option value="">-- Loại --</option>
-                <option value="Voucher" <%= filters.type === 'Voucher' ? 'selected' : '' %>>Voucher</option>
-                <option value="FreeSession" <%= filters.type === 'FreeSession' ? 'selected' : '' %>>Buổi tập miễn phí</option>
-                <option value="Discount" <%= filters.type === 'Discount' ? 'selected' : '' %>>Giảm giá</option>
-                <option value="Gift" <%= filters.type === 'Gift' ? 'selected' : '' %>>Quà tặng</option>
-            </select>
-        </div>
-        <div class="col-md-3">
-            <select name="status" class="form-select">
-                <option value="">-- Trạng thái --</option>
-                <option value="Active" <%= filters.status === 'Active' ? 'selected' : '' %>>Active</option>
-                <option value="Used" <%= filters.status === 'Used' ? 'selected' : '' %>>Đã dùng</option>
-                <option value="Expired" <%= filters.status === 'Expired' ? 'selected' : '' %>>Hết hạn</option>
-            </select>
-        </div>
-        <div class="col-md-2">
-            <button type="submit" class="btn btn-outline-primary w-100">Lọc</button>
-        </div>
-    </form>
+<!-- Filters -->
+<form method="GET" class="mb-6 grid grid-cols-1 sm:grid-cols-4 gap-3 bg-white p-4 rounded-xl border border-slate-200">
+    <select name="type" class="border border-slate-300 rounded-lg text-sm py-2 px-3">
+        <option value="">-- Loại --</option>
+        <option value="Voucher" <%= filters.type === 'Voucher' ? 'selected' : '' %>>Voucher</option>
+        <option value="FreeSession" <%= filters.type === 'FreeSession' ? 'selected' : '' %>>Buổi tập miễn phí</option>
+        <option value="Discount" <%= filters.type === 'Discount' ? 'selected' : '' %>>Giảm giá</option>
+        <option value="Gift" <%= filters.type === 'Gift' ? 'selected' : '' %>>Quà tặng</option>
+    </select>
+    <select name="status" class="border border-slate-300 rounded-lg text-sm py-2 px-3">
+        <option value="">-- Trạng thái --</option>
+        <option value="Active" <%= filters.status === 'Active' ? 'selected' : '' %>>Active</option>
+        <option value="Used" <%= filters.status === 'Used' ? 'selected' : '' %>>Đã dùng</option>
+        <option value="Expired" <%= filters.status === 'Expired' ? 'selected' : '' %>>Hết hạn</option>
+    </select>
+    <button type="submit"
+            class="px-4 py-2 border border-slate-300 text-slate-700 text-sm font-semibold rounded-lg hover:bg-slate-50 transition-colors">
+        Lọc
+    </button>
+</form>
 
-    <!-- Rewards Table -->
-    <div class="table-responsive">
-        <table class="table table-hover align-middle">
-            <thead class="table-dark">
+<!-- Rewards Table -->
+<div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead class="bg-slate-50 border-b border-slate-200">
                 <tr>
-                    <th>#</th>
-                    <th>Khách hàng</th>
-                    <th>Loại</th>
-                    <th>Tiêu đề</th>
-                    <th>Giá trị</th>
-                    <th>Trạng thái</th>
-                    <th>Hết hạn</th>
-                    <th>Người gán</th>
-                    <th>Thao tác</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider w-10">#</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Khách hàng</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Loại</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Tiêu đề</th>
+                    <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Giá trị</th>
+                    <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">Trạng thái</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Hết hạn</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Người gán</th>
+                    <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">Thao tác</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody class="divide-y divide-slate-100">
                 <% if (rewards && rewards.length > 0) { %>
+                    <%
+                        const typeStyle = {
+                            Voucher: 'bg-blue-100 text-blue-700',
+                            FreeSession: 'bg-emerald-100 text-emerald-700',
+                            Discount: 'bg-amber-100 text-amber-700',
+                            Gift: 'bg-indigo-100 text-indigo-700'
+                        };
+                        const typeLabel = {
+                            Voucher: 'Voucher',
+                            FreeSession: 'Free Session',
+                            Discount: 'Discount',
+                            Gift: 'Gift'
+                        };
+                        const statusStyle = {
+                            Active: 'bg-emerald-100 text-emerald-700',
+                            Used: 'bg-slate-200 text-slate-600',
+                            Expired: 'bg-red-100 text-red-600'
+                        };
+                        const statusLabel = {
+                            Active: 'Active',
+                            Used: 'Đã dùng',
+                            Expired: 'Hết hạn'
+                        };
+                    %>
                     <% rewards.forEach((r, i) => { %>
-                    <tr>
-                        <td><%= i + 1 %></td>
-                        <td><%= r.client ? r.client.name : 'N/A' %></td>
-                        <td>
-                            <% if (r.type === 'Voucher') { %>
-                                <span class="badge bg-primary">Voucher</span>
-                            <% } else if (r.type === 'FreeSession') { %>
-                                <span class="badge bg-success">Free Session</span>
-                            <% } else if (r.type === 'Discount') { %>
-                                <span class="badge bg-warning text-dark">Discount</span>
-                            <% } else { %>
-                                <span class="badge bg-info">Gift</span>
-                            <% } %>
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="px-4 py-3 text-slate-500 font-medium"><%= i + 1 %></td>
+                        <td class="px-4 py-3 font-medium text-slate-800"><%= r.client ? r.client.name : 'N/A' %></td>
+                        <td class="px-4 py-3">
+                            <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-semibold <%= typeStyle[r.type] || 'bg-slate-100 text-slate-500' %>">
+                                <%= typeLabel[r.type] || r.type %>
+                            </span>
                         </td>
-                        <td><%= r.title %></td>
-                        <td><%= r.value ? r.value.toLocaleString('vi-VN') + 'đ' : '-' %></td>
-                        <td>
-                            <% if (r.status === 'Active') { %>
-                                <span class="badge bg-success">Active</span>
-                            <% } else if (r.status === 'Used') { %>
-                                <span class="badge bg-secondary">Đã dùng</span>
-                            <% } else { %>
-                                <span class="badge bg-danger">Hết hạn</span>
-                            <% } %>
+                        <td class="px-4 py-3 text-slate-700"><%= r.title %></td>
+                        <td class="px-4 py-3 text-right font-semibold text-slate-700"><%= r.value ? r.value.toLocaleString('vi-VN') + 'đ' : '-' %></td>
+                        <td class="px-4 py-3 text-center">
+                            <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-bold <%= statusStyle[r.status] || 'bg-slate-100 text-slate-500' %>">
+                                <%= statusLabel[r.status] || r.status %>
+                            </span>
                         </td>
-                        <td><%= new Date(r.expiresAt).toLocaleDateString('vi-VN') %></td>
-                        <td><%= r.assignedBy ? r.assignedBy.name : 'System' %></td>
-                        <td>
-                            <a href="/admin/rewards/detail/<%= r._id %>" class="btn btn-sm btn-outline-info"><i class="fas fa-eye"></i></a>
-                            <form action="/admin/rewards/delete/<%= r._id %>" method="POST" class="d-inline" onsubmit="return confirm('Xóa reward này?')">
-                                <button class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></button>
-                            </form>
+                        <td class="px-4 py-3 text-slate-500"><%= new Date(r.expiresAt).toLocaleDateString('vi-VN') %></td>
+                        <td class="px-4 py-3 text-slate-500"><%= r.assignedBy ? r.assignedBy.name : 'System' %></td>
+                        <td class="px-4 py-3">
+                            <div class="flex items-center justify-center gap-2">
+                                <a href="/admin/rewards/detail/<%= r._id %>"
+                                   class="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-100 transition-colors">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                    </svg>
+                                </a>
+                                <form action="/admin/rewards/delete/<%= r._id %>" method="POST" onsubmit="return confirm('Xóa reward này?')">
+                                    <button type="submit"
+                                            class="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-red-200 text-red-500 hover:bg-red-50 transition-colors">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                        </svg>
+                                    </button>
+                                </form>
+                            </div>
                         </td>
                     </tr>
                     <% }) %>
                 <% } else { %>
-                    <tr><td colspan="9" class="text-center text-muted">Chưa có reward nào</td></tr>
+                    <tr><td colspan="9" class="px-4 py-8 text-center text-slate-400">Chưa có reward nào</td></tr>
                 <% } %>
             </tbody>
         </table>

@@ -1,70 +1,82 @@
 <%- include('../../partials/header', { title: 'Chi tiết phần thưởng', activePage: 'rewards' }) %>
 
-<div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h1><i class="fas fa-gift"></i> Chi tiết Reward</h1>
-        <a href="/admin/rewards" class="btn btn-outline-secondary"><i class="fas fa-arrow-left"></i> Quay lại</a>
+<div class="mb-6 flex items-center justify-between">
+    <h2 class="text-2xl font-bold text-slate-800">Chi tiết Reward</h2>
+    <a href="/admin/rewards"
+       class="inline-flex items-center gap-1.5 px-4 py-2 border border-slate-300 text-slate-700 text-sm font-semibold rounded-lg hover:bg-slate-50 transition-colors">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+        Quay lại
+    </a>
+</div>
+
+<%
+    const typeStyle = {
+        Voucher: 'bg-blue-100 text-blue-700',
+        FreeSession: 'bg-emerald-100 text-emerald-700',
+        Discount: 'bg-amber-100 text-amber-700',
+        Gift: 'bg-indigo-100 text-indigo-700'
+    };
+    const typeLabel = {
+        Voucher: 'Voucher',
+        FreeSession: 'Free Session',
+        Discount: 'Discount',
+        Gift: 'Gift'
+    };
+    const statusStyle = {
+        Active: 'bg-emerald-100 text-emerald-700',
+        Used: 'bg-slate-200 text-slate-600',
+        Expired: 'bg-red-100 text-red-600'
+    };
+    const statusLabel = {
+        Active: 'Active',
+        Used: 'Đã dùng',
+        Expired: 'Hết hạn'
+    };
+%>
+
+<div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 max-w-3xl">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 mb-4">
+        <p class="text-sm text-slate-700"><span class="font-semibold text-slate-500">Khách hàng:</span> <%= reward.client ? reward.client.name : 'N/A' %></p>
+        <p class="text-sm text-slate-700">
+            <span class="font-semibold text-slate-500">Loại:</span>
+            <span class="inline-flex px-2.5 py-0.5 rounded-full text-xs font-semibold <%= typeStyle[reward.type] || 'bg-slate-100 text-slate-500' %>">
+                <%= typeLabel[reward.type] || reward.type %>
+            </span>
+        </p>
+        <p class="text-sm text-slate-700"><span class="font-semibold text-slate-500">Email:</span> <%= reward.client ? reward.client.email : '-' %></p>
+        <p class="text-sm text-slate-700">
+            <span class="font-semibold text-slate-500">Trạng thái:</span>
+            <span class="inline-flex px-2.5 py-0.5 rounded-full text-xs font-bold <%= statusStyle[reward.status] || 'bg-slate-100 text-slate-500' %>">
+                <%= statusLabel[reward.status] || reward.status %>
+            </span>
+        </p>
+        <p class="text-sm text-slate-700"><span class="font-semibold text-slate-500">SĐT:</span> <%= reward.client && reward.client.phone ? reward.client.phone : '-' %></p>
+        <p class="text-sm text-slate-700"><span class="font-semibold text-slate-500">Người gán:</span> <%= reward.assignedBy ? reward.assignedBy.name : 'System' %></p>
     </div>
 
-    <div class="card">
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-6">
-                    <p><strong>Khách hàng:</strong> <%= reward.client ? reward.client.name : 'N/A' %></p>
-                    <p><strong>Email:</strong> <%= reward.client ? reward.client.email : '-' %></p>
-                    <p><strong>SĐT:</strong> <%= reward.client && reward.client.phone ? reward.client.phone : '-' %></p>
-                </div>
-                <div class="col-md-6">
-                    <p><strong>Loại:</strong>
-                        <% if (reward.type === 'Voucher') { %>
-                            <span class="badge bg-primary">Voucher</span>
-                        <% } else if (reward.type === 'FreeSession') { %>
-                            <span class="badge bg-success">Free Session</span>
-                        <% } else if (reward.type === 'Discount') { %>
-                            <span class="badge bg-warning text-dark">Discount</span>
-                        <% } else { %>
-                            <span class="badge bg-info">Gift</span>
-                        <% } %>
-                    </p>
-                    <p><strong>Trạng thái:</strong>
-                        <% if (reward.status === 'Active') { %>
-                            <span class="badge bg-success">Active</span>
-                        <% } else if (reward.status === 'Used') { %>
-                            <span class="badge bg-secondary">Đã dùng</span>
-                        <% } else { %>
-                            <span class="badge bg-danger">Hết hạn</span>
-                        <% } %>
-                    </p>
-                    <p><strong>Người gán:</strong> <%= reward.assignedBy ? reward.assignedBy.name : 'System' %></p>
-                </div>
-            </div>
-            <hr>
-            <div class="row">
-                <div class="col-md-4">
-                    <p><strong>Tiêu đề:</strong> <%= reward.title %></p>
-                </div>
-                <div class="col-md-4">
-                    <p><strong>Giá trị:</strong> <%= reward.value ? reward.value.toLocaleString('vi-VN') + 'đ' : '-' %></p>
-                </div>
-                <div class="col-md-4">
-                    <p><strong>Hết hạn:</strong> <%= new Date(reward.expiresAt).toLocaleDateString('vi-VN') %></p>
-                </div>
-            </div>
-            <% if (reward.description) { %>
-                <p><strong>Mô tả:</strong> <%= reward.description %></p>
-            <% } %>
-            <% if (reward.notes) { %>
-                <p><strong>Ghi chú:</strong> <%= reward.notes %></p>
-            <% } %>
-            <% if (reward.coupon) { %>
-                <p><strong>Coupon liên kết:</strong> <code><%= reward.coupon.code %></code> (<%= reward.coupon.type %> - <%= reward.coupon.value %>)</p>
-            <% } %>
-            <% if (reward.usedAt) { %>
-                <p><strong>Ngày sử dụng:</strong> <%= new Date(reward.usedAt).toLocaleString('vi-VN') %></p>
-            <% } %>
-            <p class="text-muted mt-2"><small>Tạo lúc: <%= new Date(reward.createdAt).toLocaleString('vi-VN') %></small></p>
-        </div>
+    <hr class="border-slate-200 my-4">
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+        <p class="text-sm text-slate-700"><span class="font-semibold text-slate-500">Tiêu đề:</span> <%= reward.title %></p>
+        <p class="text-sm text-slate-700"><span class="font-semibold text-slate-500">Giá trị:</span> <%= reward.value ? reward.value.toLocaleString('vi-VN') + 'đ' : '-' %></p>
+        <p class="text-sm text-slate-700"><span class="font-semibold text-slate-500">Hết hạn:</span> <%= new Date(reward.expiresAt).toLocaleDateString('vi-VN') %></p>
     </div>
+
+    <% if (reward.description) { %>
+        <p class="text-sm text-slate-700 mb-2"><span class="font-semibold text-slate-500">Mô tả:</span> <%= reward.description %></p>
+    <% } %>
+    <% if (reward.notes) { %>
+        <p class="text-sm text-slate-700 mb-2"><span class="font-semibold text-slate-500">Ghi chú:</span> <%= reward.notes %></p>
+    <% } %>
+    <% if (reward.coupon) { %>
+        <p class="text-sm text-slate-700 mb-2"><span class="font-semibold text-slate-500">Coupon liên kết:</span> <code class="bg-slate-100 px-1.5 py-0.5 rounded text-xs"><%= reward.coupon.code %></code> (<%= reward.coupon.type %> - <%= reward.coupon.value %>)</p>
+    <% } %>
+    <% if (reward.usedAt) { %>
+        <p class="text-sm text-slate-700 mb-2"><span class="font-semibold text-slate-500">Ngày sử dụng:</span> <%= new Date(reward.usedAt).toLocaleString('vi-VN') %></p>
+    <% } %>
+    <p class="text-xs text-slate-400 mt-3">Tạo lúc: <%= new Date(reward.createdAt).toLocaleString('vi-VN') %></p>
 </div>
 
 <%- include('../../partials/footer') %>

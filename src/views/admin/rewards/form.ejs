@@ -1,13 +1,16 @@
 <%- include('../../partials/header', { title: 'Gán phần thưởng', activePage: 'rewards' }) %>
 
-<div class="container mt-4">
-    <h1><i class="fas fa-gift"></i> Gán Reward cho Khách hàng</h1>
-    <hr>
+<div class="mb-6">
+    <h2 class="text-2xl font-bold text-slate-800">Gán Reward cho Khách hàng</h2>
+    <p class="text-slate-500 text-sm mt-1">Tạo voucher / quà tặng / giảm giá cho một khách hàng cụ thể</p>
+</div>
 
-    <form action="/admin/rewards/store" method="POST" class="row g-3">
-        <div class="col-md-6">
-            <label for="clientId" class="form-label">Khách hàng <span class="text-danger">*</span></label>
-            <select name="clientId" id="clientId" class="form-select" required>
+<div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 max-w-3xl">
+    <form action="/admin/rewards/store" method="POST" class="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div>
+            <label for="clientId" class="block text-sm font-medium text-slate-700 mb-1">Khách hàng <span class="text-red-500">*</span></label>
+            <select name="clientId" id="clientId" required
+                    class="w-full border border-slate-300 rounded-lg text-sm py-2.5 px-3 focus:ring-2 focus:ring-green-500 outline-none transition-all">
                 <option value="">-- Chọn khách hàng --</option>
                 <% clients.forEach(c => { %>
                     <option value="<%= c._id %>"><%= c.name %> (<%= c.email %>)</option>
@@ -15,9 +18,10 @@
             </select>
         </div>
 
-        <div class="col-md-6">
-            <label for="type" class="form-label">Loại Reward <span class="text-danger">*</span></label>
-            <select name="type" id="type" class="form-select" required>
+        <div>
+            <label for="type" class="block text-sm font-medium text-slate-700 mb-1">Loại Reward <span class="text-red-500">*</span></label>
+            <select name="type" id="type" required
+                    class="w-full border border-slate-300 rounded-lg text-sm py-2.5 px-3 focus:ring-2 focus:ring-green-500 outline-none transition-all">
                 <option value="Voucher">Voucher</option>
                 <option value="FreeSession">Buổi tập miễn phí</option>
                 <option value="Discount">Giảm giá</option>
@@ -25,34 +29,48 @@
             </select>
         </div>
 
-        <div class="col-md-6">
-            <label for="title" class="form-label">Tiêu đề <span class="text-danger">*</span></label>
-            <input type="text" name="title" id="title" class="form-control" placeholder="VD: Giảm 20% gói Gym" required>
+        <div>
+            <label for="title" class="block text-sm font-medium text-slate-700 mb-1">Tiêu đề <span class="text-red-500">*</span></label>
+            <input type="text" name="title" id="title" required placeholder="VD: Giảm 20% gói Gym"
+                   class="w-full border border-slate-300 rounded-lg text-sm py-2.5 px-3 focus:ring-2 focus:ring-green-500 outline-none transition-all">
         </div>
 
-        <div class="col-md-6">
-            <label for="value" class="form-label">Giá trị (VNĐ)</label>
-            <input type="number" name="value" id="value" class="form-control" min="0" value="0">
+        <div>
+            <label for="value" class="block text-sm font-medium text-slate-700 mb-1">Giá trị (VNĐ)</label>
+            <input type="number" name="value" id="value" min="0" value="0"
+                   class="w-full border border-slate-300 rounded-lg text-sm py-2.5 px-3 focus:ring-2 focus:ring-green-500 outline-none transition-all">
         </div>
 
-        <div class="col-md-6">
-            <label for="expiresAt" class="form-label">Hết hạn <span class="text-danger">*</span></label>
-            <input type="date" name="expiresAt" id="expiresAt" class="form-control" required>
+        <div>
+            <label for="expiresAt" class="block text-sm font-medium text-slate-700 mb-1">Hết hạn <span class="text-red-500">*</span></label>
+            <input type="date" name="expiresAt" id="expiresAt" required
+                   class="w-full border border-slate-300 rounded-lg text-sm py-2.5 px-3 focus:ring-2 focus:ring-green-500 outline-none transition-all">
         </div>
 
-        <div class="col-md-6">
-            <label for="description" class="form-label">Mô tả</label>
-            <input type="text" name="description" id="description" class="form-control" placeholder="Chi tiết reward">
+        <div>
+            <label for="description" class="block text-sm font-medium text-slate-700 mb-1">Mô tả</label>
+            <input type="text" name="description" id="description" placeholder="Chi tiết reward"
+                   class="w-full border border-slate-300 rounded-lg text-sm py-2.5 px-3 focus:ring-2 focus:ring-green-500 outline-none transition-all">
         </div>
 
-        <div class="col-12">
-            <label for="notes" class="form-label">Ghi chú nội bộ</label>
-            <textarea name="notes" id="notes" class="form-control" rows="2" placeholder="Ghi chú cho Admin"></textarea>
+        <div class="md:col-span-2">
+            <label for="notes" class="block text-sm font-medium text-slate-700 mb-1">Ghi chú nội bộ</label>
+            <textarea name="notes" id="notes" rows="2" placeholder="Ghi chú cho Admin"
+                      class="w-full border border-slate-300 rounded-lg text-sm py-2.5 px-3 focus:ring-2 focus:ring-green-500 outline-none transition-all resize-none"></textarea>
         </div>
 
-        <div class="col-12 d-flex gap-2">
-            <button type="submit" class="btn btn-success"><i class="fas fa-check"></i> Gán Reward</button>
-            <a href="/admin/rewards" class="btn btn-secondary">Hủy</a>
+        <div class="md:col-span-2 flex gap-3 pt-2">
+            <button type="submit"
+                    class="inline-flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-bold rounded-lg transition-colors shadow-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+                Gán Reward
+            </button>
+            <a href="/admin/rewards"
+               class="inline-flex items-center px-4 py-2 border border-slate-300 text-slate-700 text-sm font-semibold rounded-lg hover:bg-slate-50 transition-colors">
+                Hủy
+            </a>
         </div>
     </form>
 </div>

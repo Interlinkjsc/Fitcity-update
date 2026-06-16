@@ -1,5 +1,42 @@
 <%# Expects: activePage = 'dashboard' | 'pt-slots' | 'pt-requests' | 'scan' | 'metrics' | 'meal-plans' | 'contracts' %>
-<nav class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[95%] max-w-lg z-50">
+
+<!-- Desktop top nav (lg and up) — bottom nav below is mobile-only -->
+<nav class="hidden lg:flex fixed top-0 left-0 right-0 z-50 h-16 items-center justify-between px-6 bg-white/95 backdrop-blur-xl border-b border-slate-200 shadow-sm">
+    <a href="/pt" class="flex items-center gap-2 font-black italic tracking-tighter uppercase text-slate-900 text-lg shrink-0">
+        FIT<span class="text-primary tracking-normal">CITY</span> <span class="text-slate-400 text-xs font-bold not-italic uppercase tracking-widest ml-1">PT</span>
+    </a>
+    <div class="flex items-center gap-1">
+        <a href="/pt" class="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold transition-all <%= activePage === 'dashboard' ? 'text-primary bg-primary/10' : 'text-slate-500 hover:text-primary hover:bg-slate-50' %>">
+            <span class="material-symbols-outlined text-[18px]">calendar_month</span> Lịch dạy
+        </a>
+        <a href="/pt/schedule" class="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold transition-all <%= activePage === 'pt-slots' ? 'text-primary bg-primary/10' : 'text-slate-500 hover:text-primary hover:bg-slate-50' %>">
+            <span class="material-symbols-outlined text-[18px]">calendar_add_on</span> Slot
+        </a>
+        <a href="/pt/requests" class="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold transition-all <%= activePage === 'pt-requests' ? 'text-primary bg-primary/10' : 'text-slate-500 hover:text-primary hover:bg-slate-50' %>">
+            <span class="material-symbols-outlined text-[18px]">rule</span> Yêu cầu
+        </a>
+        <button type="button" onclick="openScanModal()" class="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold transition-all <%= activePage === 'scan' ? 'text-primary bg-primary/10' : 'text-slate-500 hover:text-primary hover:bg-slate-50' %>">
+            <span class="material-symbols-outlined text-[18px]">qr_code_scanner</span> Quét
+        </button>
+        <a href="/pt/metrics" class="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold transition-all <%= activePage === 'metrics' ? 'text-primary bg-primary/10' : 'text-slate-500 hover:text-primary hover:bg-slate-50' %>">
+            <span class="material-symbols-outlined text-[18px]">monitoring</span> Chỉ số
+        </a>
+        <a href="/pt/meal-plans" class="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold transition-all <%= activePage === 'meal-plans' ? 'text-primary bg-primary/10' : 'text-slate-500 hover:text-primary hover:bg-slate-50' %>">
+            <span class="material-symbols-outlined text-[18px]">restaurant</span> Dinh dưỡng
+        </a>
+        <a href="/pt/contracts/create" class="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold transition-all <%= activePage === 'contracts' ? 'text-primary bg-primary/10' : 'text-slate-500 hover:text-primary hover:bg-slate-50' %>">
+            <span class="material-symbols-outlined text-[18px]">history_edu</span> Hợp đồng
+        </a>
+        <form action="/auth/logout" method="POST" class="m-0 ml-2 pl-2 border-l border-slate-200" onsubmit="return confirm('Bạn muốn thoát?');">
+            <button type="submit" class="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold text-slate-500 hover:text-red-500 hover:bg-red-50 transition-all">
+                <span class="material-symbols-outlined text-[18px]">logout</span> Thoát
+            </button>
+        </form>
+    </div>
+</nav>
+
+<!-- Mobile bottom nav (hidden on lg and up — desktop uses the top nav above) -->
+<nav class="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[95%] max-w-lg z-50">
     <div class="bg-white/95 backdrop-blur-xl border border-slate-200 rounded-full px-2 py-3 grid grid-cols-8 items-center shadow-xl">
         <a class="flex flex-col items-center gap-1 <%= activePage === 'dashboard' ? 'text-primary' : 'text-slate-500 hover:text-primary' %> transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 rounded-xl" href="/pt" aria-label="Lịch dạy">
             <span class="material-symbols-outlined text-[20px] <%= activePage === 'dashboard' ? 'fill-[1]' : '' %>">calendar_month</span>
@@ -37,6 +74,12 @@
         </form>
     </div>
 </nav>
+
+<style>
+    @media (min-width: 1024px) {
+        body { padding-top: 4rem; }
+    }
+</style>
 
 <!-- Slide-up Modal for PT Scan -->
 <div id="scanModalOverlay" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] opacity-0 pointer-events-none transition-opacity duration-300" onclick="closeScanModal()"></div>
