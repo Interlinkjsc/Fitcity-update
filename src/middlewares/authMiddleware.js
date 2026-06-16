@@ -32,11 +32,24 @@ exports.checkPermission = (resource, action, checkBranch = true) => {
         }
 
         if (!hasAccess) {
-            const wantsHtml = req.accepts('html') && !req.xhr && req.method === 'GET';
-            if (wantsHtml) {
+            // Yêu cầu thực sự cần JSON (gọi từ AJAX/fetch, hoặc client không
+            // accept html) thì vẫn trả JSON 403 như cũ.
+            const wantsJson = req.xhr || !req.accepts('html') || req.is('application/json');
+
+            if (!wantsJson && typeof req.flash === 'function') {
                 req.flash('error_msg', 'Bạn không có quyền truy cập chức năng này.');
-                return res.redirect('/auth/login');
+                // Thiếu quyền 1 chức năng không nên đăng xuất user khỏi session.
+                // Ưu tiên quay lại trang trước (Referer); nếu không có, về dashboard
+                // tương ứng theo role thay vì kick về trang login.
+                const referer = req.get('Referer');
+                if (referer) {
+                    return res.redirect(referer);
+                }
+                if (user.role === 'PT') return res.redirect('/pt');
+                if (user.role === 'Client') return res.redirect('/client');
+                return res.redirect('/admin');
             }
+
             return res.status(403).json({ status: 'fail', message: 'Forbidden' });
         }
 

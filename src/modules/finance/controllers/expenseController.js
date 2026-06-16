@@ -182,10 +182,16 @@ exports.getAllExpenses = async (req, res, next) => {
 
 exports.saveExpense = async (req, res, next) => {
     try {
+        const branchId = req.body.branchId || req.session.user.branch;
+        if (!branchId) {
+            req.flash('error_msg', 'Vui lòng chọn chi nhánh cho khoản chi này.');
+            return res.redirect('/admin/expenses');
+        }
+
         const fields = await buildExpenseFields(req.body);
 
         const expense = await Expense.create({
-            branch: req.body.branchId || req.session.user.branch,
+            branch: branchId,
             recordedBy: req.session.user.id,
             ...fields
         });
@@ -204,7 +210,10 @@ exports.saveExpense = async (req, res, next) => {
                 /* ignore */
             }
         }
-        req.flash('error_msg', err.message);
+        const friendlyMessage = err.name === 'ValidationError'
+            ? 'Dữ liệu khoản chi không hợp lệ. Vui lòng kiểm tra chi nhánh, loại chi phí và số tiền.'
+            : err.message;
+        req.flash('error_msg', friendlyMessage);
         res.redirect('/admin/expenses');
     }
 };

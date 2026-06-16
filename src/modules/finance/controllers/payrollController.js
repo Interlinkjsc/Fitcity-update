@@ -7,6 +7,7 @@ const payrollService = require('../services/payrollService');
 const systemSettingsService = require('../../platform/services/systemSettingsService');
 
 const { getPagination } = require('../../../utils/paginationHelper');
+const permissionService = require('../../../core/permissionService');
 
 async function computeStaffCommission(staff, startOfMonth, endOfMonth) {
     if (staff.role === 'PT') {
@@ -153,6 +154,8 @@ exports.getPayrollSummary = async (req, res, next) => {
         const pagination = getPagination(totalDocs, page, limit);
         const branches = await Branch.find({ status: 'Open' });
         const settings = await systemSettingsService.getGlobalSettings();
+        await permissionService.ensureCache();
+        const canManagePayroll = permissionService.userHasPermissionSync(req.session.user, 'payroll', 'manage');
 
         res.render('admin/payroll/summary', {
             payrollData,
@@ -165,6 +168,7 @@ exports.getPayrollSummary = async (req, res, next) => {
             branchId: branchFilter,
             branches,
             isManager: req.session.user.role === 'Manager',
+            canManagePayroll,
             activePage: 'payroll',
             query: req.query,
             ptPayrollMode: settings.ptPayrollMode || 'contract',

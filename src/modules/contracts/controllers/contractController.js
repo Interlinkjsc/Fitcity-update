@@ -10,6 +10,7 @@ const fs = require('fs');
 const path = require('path');
 const notificationService = require('../../platform/services/notificationService');
 const mongoose = require('mongoose');
+const permissionService = require('../../../core/permissionService');
 
 const PAYMENT_STATUS_ALLOWED = new Set(['Paid', 'Deposit', 'Unpaid', 'Pending_Paid']);
 const PAYMENT_METHODS_ALLOWED = new Set(['Cash', 'Transfer', 'Card', 'Installment']);
@@ -112,14 +113,20 @@ exports.getContractList = async (req, res, next) => {
             branches = await Branch.find({ _id: user.branch }).select('name').lean();
         }
 
-        res.render('admin/contracts/list', { 
+        await permissionService.ensureCache();
+        const canManageContract = permissionService.userHasPermissionSync(user, 'contract', 'manage');
+        const canDeleteContract = permissionService.userHasPermissionSync(user, 'contract', 'delete');
+
+        res.render('admin/contracts/list', {
             contracts,
             pagination,
             query: req.query,
             branches,
             totalAfterTax: revSummary.totalAfterTax,
             totalBeforeTax: Math.round(revSummary.totalNet || 0),
-            totalPaid: revSummary.totalPaid
+            totalPaid: revSummary.totalPaid,
+            canManageContract,
+            canDeleteContract
         });
     } catch (err) {
         next(err);

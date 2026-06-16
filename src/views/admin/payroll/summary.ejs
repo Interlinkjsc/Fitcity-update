@@ -68,6 +68,7 @@
         <a href="/admin/payroll/export-csv?month=<%= month %>&year=<%= year %>&role=<%= typeof role !== 'undefined' ? role : 'All' %>&branchId=<%= typeof branchId !== 'undefined' ? branchId : 'all' %>&payStatus=<%= typeof payStatus !== 'undefined' ? payStatus : 'all' %>" class="px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-all inline-flex items-center gap-1.5">
             <span class="material-symbols-outlined text-sm">download</span> CSV
         </a>
+        <% if (typeof canManagePayroll === 'undefined' || canManagePayroll) { %>
         <form method="POST" action="/admin/payroll/auto-suggest" class="inline-block" onsubmit="return confirm('Hệ thống sẽ tạo 2 kỳ lương (ngày 5 & 15) cho tất cả nhân viên đang hoạt động. Tiếp tục?');">
             <input type="hidden" name="month" value="<%= month %>">
             <input type="hidden" name="year" value="<%= year %>">
@@ -75,6 +76,11 @@
                 <span class="material-symbols-outlined text-sm">bolt</span> Đề xuất 2 Kỳ
             </button>
         </form>
+        <% } else { %>
+        <span title="Bạn không có quyền phê duyệt / thanh toán lương" class="px-3 py-2 bg-slate-200 text-slate-400 rounded-lg text-xs font-bold inline-flex items-center gap-1.5 cursor-not-allowed">
+            <span class="material-symbols-outlined text-sm">bolt</span> Đề xuất 2 Kỳ
+        </span>
+        <% } %>
         <button onclick="window.print()" class="px-3 py-2 bg-slate-900 text-white rounded-lg text-xs font-bold hover:bg-slate-800 transition-all inline-flex items-center gap-1.5">
             <span class="material-symbols-outlined text-sm">print</span> In
         </button>
@@ -271,22 +277,27 @@
                                 <td class="px-3 py-3 text-center">
                                     <% if(pr.record) { %>
                                         <% if(pr.record.status === 'Pending') { %>
-                                            <button type="button" 
-                                                data-payroll-id="<%= pr.record._id %>" 
-                                                data-staff-name="<%= p.staff.name %> — Kỳ <%= pr.num %>" 
-                                                data-total-salary="<%= pr.record.totalSalary %>" 
+                                            <% if (typeof canManagePayroll === 'undefined' || canManagePayroll) { %>
+                                            <button type="button"
+                                                data-payroll-id="<%= pr.record._id %>"
+                                                data-staff-name="<%= p.staff.name %> — Kỳ <%= pr.num %>"
+                                                data-total-salary="<%= pr.record.totalSalary %>"
                                                 data-bonus="<%= pr.record.bonus %>"
                                                 data-deductions="<%= pr.record.deductions %>"
                                                 data-tax="<%= pr.record.tax || 0 %>"
                                                 data-insurance="<%= pr.record.insurance || 0 %>"
-                                                onclick="openPaymentModal(this.dataset.payrollId, this.dataset.staffName, this.dataset.totalSalary, this.dataset.bonus, this.dataset.deductions, this.dataset.tax, this.dataset.insurance)" 
+                                                onclick="openPaymentModal(this.dataset.payrollId, this.dataset.staffName, this.dataset.totalSalary, this.dataset.bonus, this.dataset.deductions, this.dataset.tax, this.dataset.insurance)"
                                                 class="px-3 py-1 bg-blue-600 text-white rounded-lg text-[11px] font-bold hover:bg-blue-700 transition-all">
                                                 Thanh toán
                                             </button>
+                                            <% } else { %>
+                                            <span title="Bạn không có quyền phê duyệt / thanh toán lương" class="px-3 py-1 bg-slate-200 text-slate-400 rounded-lg text-[11px] font-bold cursor-not-allowed">Thanh toán</span>
+                                            <% } %>
                                         <% } else { %>
                                             <span class="text-emerald-500 text-[11px] font-bold">✓ Đã trả</span>
                                         <% } %>
                                     <% } else { %>
+                                        <% if (typeof canManagePayroll === 'undefined' || canManagePayroll) { %>
                                         <form action="/admin/payroll/approve" method="POST" class="inline-block">
                                             <input type="hidden" name="staffId" value="<%= p.staff._id %>">
                                             <input type="hidden" name="month" value="<%= month %>">
@@ -296,6 +307,9 @@
                                                 Phê duyệt
                                             </button>
                                         </form>
+                                        <% } else { %>
+                                        <span title="Bạn không có quyền phê duyệt / thanh toán lương" class="px-3 py-1 bg-slate-200 text-slate-400 rounded-lg text-[11px] font-bold cursor-not-allowed">Phê duyệt</span>
+                                        <% } %>
                                     <% } %>
                                 </td>
                             </tr>

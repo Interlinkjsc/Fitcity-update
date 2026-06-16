@@ -37,7 +37,10 @@ router.post('/requests/approve/:id', checkPermission('contract', 'manage'), cont
 router.post('/requests/reject/:id', checkPermission('contract', 'manage'), contractController.rejectPauseRequest);
 
 // ========== PAYMENT & PREVIEW ==========
-router.post('/:id/payments/store', checkPermission('contract', 'manage'), paymentController.storePayment);
+// Sales chỉ có quyền contract.create (không có contract.manage) nhưng vẫn cần
+// ghi nhận thanh toán cho hợp đồng do mình phụ trách, nên dùng action 'create'
+// thay vì 'manage' ở đây.
+router.post('/:id/payments/store', checkPermission('contract', 'create'), paymentController.storePayment);
 router.get('/:id/preview/receipt/:transactionId', checkPermission('contract', 'view'), paymentController.previewReceipt);
 
 module.exports = router;

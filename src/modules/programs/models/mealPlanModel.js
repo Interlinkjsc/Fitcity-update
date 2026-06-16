@@ -26,7 +26,7 @@ const mealPlanSchema = new mongoose.Schema({
     },
     goal: {
         type: String,
-        enum: ['Weight Loss', 'Muscle Gain', 'Maintenance', 'Endurance'],
+        enum: ['Weight Loss', 'Weight Gain', 'Muscle Gain', 'Maintenance', 'Endurance', 'Other'],
         default: 'Maintenance'
     },
     dailyCalories: {

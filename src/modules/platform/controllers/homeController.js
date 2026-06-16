@@ -61,13 +61,11 @@ exports.getAdminDashboard = async (req, res, next) => {
                 end.setHours(23, 59, 59, 999);
                 dateFilter.createdAt.$lte = end;
             }
-        } else {
-            // Default to this month
-            const startOfMonth = new Date();
-            startOfMonth.setDate(1);
-            startOfMonth.setHours(0,0,0,0);
-            dateFilter.createdAt = { $gte: startOfMonth };
         }
+        // No filter selected -> default to all-time, to match the contract list page
+        // (/admin/contracts/list), which has no date-range filter and always shows
+        // all-time totals. This keeps the dashboard KPI cards consistent with the
+        // contract list's revenue summary when no explicit date filter is applied.
 
         if (branchId && branchId !== 'all') {
             dateFilter.branch = branchId;
@@ -86,6 +84,7 @@ exports.getAdminDashboard = async (req, res, next) => {
 
         const totalRevenueAfterTax = revenueStats[0] ? revenueStats[0].totalAfterTax : 0;
         const totalRevenueBeforeTax = revenueStats[0] ? revenueStats[0].totalNet : 0;
+        const totalPaidAmount = revenueStats[0] ? revenueStats[0].totalPaid : 0;
 
         
         // 3. Expenses (vận hành + lương đã thanh toán) — dùng field `date` / `paymentDate`, không dùng createdAt HĐ
@@ -288,11 +287,12 @@ exports.getAdminDashboard = async (req, res, next) => {
         res.render('admin/dashboard', {
             totalRevenueAfterTax,
             totalRevenueBeforeTax,
+            totalPaidAmount,
+            pendingReceivables,
             totalExpenses,
             totalOperatingExpenses,
             totalPayrollPaid,
             netProfit,
-            pendingReceivables,
             activeMembers,
             onlineMembers,
             membersWithActiveContract,
@@ -473,7 +473,7 @@ exports.getPtSchedule = async (req, res, next) => {
             monday,
             sunday,
             activeContracts,
-            activePage: 'dashboard'
+            activePage: 'pt-slots'
         });
     } catch (error) {
         next(error);

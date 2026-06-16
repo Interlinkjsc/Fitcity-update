@@ -47,13 +47,23 @@ exports.storeReward = async (req, res) => {
             expiresAt,
             couponId: couponId || null,
             notes,
-            assignedBy: req.session.user._id
+            assignedBy: req.session.user.id
         });
 
         req.flash('success_msg', 'Đã gán Reward thành công! Khách hàng đã nhận được thông báo.');
         res.redirect('/admin/rewards');
     } catch (err) {
-        req.flash('error_msg', err.message);
+        if (err.name === 'ValidationError') {
+            const fieldMessages = Object.values(err.errors || {}).map((e) => e.message);
+            req.flash(
+                'error_msg',
+                fieldMessages.length
+                    ? `Dữ liệu không hợp lệ: ${fieldMessages.join('; ')}`
+                    : `Dữ liệu không hợp lệ: ${err.message}`
+            );
+        } else {
+            req.flash('error_msg', err.message);
+        }
         res.redirect('/admin/rewards/create');
     }
 };
