@@ -2,6 +2,18 @@ const paymentService = require('../services/paymentService');
 const Contract = require('../models/contractModel.js');
 const notificationService = require('../../platform/services/notificationService');
 const contractScope = require('../services/contractScopeService');
+const { decrypt } = require('../../../utils/encryption');
+
+const decryptField = (val) => { try { return val ? decrypt(val) : val; } catch { return val; } };
+function decryptContractUsers(contract) {
+    if (contract.client) {
+        contract.client.phone = decryptField(contract.client.phone);
+        contract.client.email = decryptField(contract.client.email);
+    }
+    if (contract.pt) {
+        contract.pt.phone = decryptField(contract.pt.phone);
+    }
+}
 
 function denyContractAccess(req, res, contract) {
     req.flash(
@@ -77,6 +89,8 @@ exports.previewContract = async (req, res, next) => {
             return denyContractAccess(req, res, contract);
         }
 
+        decryptContractUsers(contract);
+
         // Render template preview (full page, không dùng layout admin)
         res.render('admin/contracts/templates/contract-preview', {
             contract,
@@ -108,6 +122,8 @@ exports.previewReceipt = async (req, res, next) => {
         if (!contractScope.canAccessContract(req.session.user, contract)) {
             return denyContractAccess(req, res, contract);
         }
+
+        decryptContractUsers(contract);
 
         // Render template phiếu thu
         res.render('admin/contracts/templates/receipt-preview', {

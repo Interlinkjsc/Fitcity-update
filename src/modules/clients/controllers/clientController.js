@@ -7,6 +7,18 @@ const PaymentTransaction = require('../../contracts/models/transactionModel.js')
 const Notification = require('../../platform/models/notificationModel.js');
 const PTChangeRequest = require('../../pt/models/ptChangeRequestModel.js');
 const notificationService = require('../../platform/services/notificationService');
+const { decrypt } = require('../../../utils/encryption');
+
+const _decryptField = (val) => { try { return val ? decrypt(val) : val; } catch { return val; } };
+function _decryptContractUsers(contract) {
+    if (contract && contract.client) {
+        contract.client.phone = _decryptField(contract.client.phone);
+        contract.client.email = _decryptField(contract.client.email);
+    }
+    if (contract && contract.pt) {
+        contract.pt.phone = _decryptField(contract.pt.phone);
+    }
+}
 
 /**
  * POST /client/sessions/:id/feedback — Đánh giá PT sau buổi tập
@@ -425,6 +437,8 @@ exports.previewMyContract = async (req, res, next) => {
             return res.redirect('/client/contracts');
         }
 
+        _decryptContractUsers(contract);
+
         // Dùng chung template preview với admin
         res.render('admin/contracts/templates/contract-preview', {
             contract,
@@ -455,6 +469,8 @@ exports.previewMyReceipt = async (req, res, next) => {
             req.flash('error_msg', 'Không tìm thấy hợp đồng hoặc bạn không có quyền xem!');
             return res.redirect('/client/contracts');
         }
+
+        _decryptContractUsers(contract);
 
         const transaction = await paymentService.getTransactionDetail(req.params.transactionId);
 

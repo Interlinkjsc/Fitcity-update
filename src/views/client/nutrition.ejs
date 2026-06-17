@@ -24,20 +24,20 @@
             <form action="/client/meal-log" method="POST" class="space-y-3">
                 <input type="hidden" name="logDate" value="<%= typeof todayStr !== 'undefined' ? todayStr : '' %>">
                 <div class="grid grid-cols-2 gap-2">
-                    <select name="mealType" required class="border border-slate-200 rounded-xl px-3 py-2 text-sm">
+                    <select name="mealType" required class="border border-slate-200 rounded-xl px-3 py-2 text-base">
                         <option value="Breakfast">Sáng</option>
                         <option value="Lunch">Trưa</option>
                         <option value="Dinner">Tối</option>
                         <option value="Snack">Phụ</option>
                     </select>
-                    <select name="compliance" class="border border-slate-200 rounded-xl px-3 py-2 text-sm">
+                    <select name="compliance" class="border border-slate-200 rounded-xl px-3 py-2 text-base">
                         <option value="Followed">Đúng thực đơn</option>
                         <option value="Partial">Một phần</option>
                         <option value="Skipped">Bỏ qua</option>
                     </select>
                 </div>
-                <input type="text" name="description" placeholder="Mô tả bữa ăn..." class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm">
-                <input type="number" name="calories" min="0" placeholder="Kcal ước tính" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm">
+                <input type="text" name="description" placeholder="Mô tả bữa ăn..." class="w-full border border-slate-200 rounded-xl px-3 py-2 text-base">
+                <input type="number" name="calories" min="0" placeholder="Kcal ước tính" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-base">
                 <button type="submit" class="w-full py-3 bg-primary text-white font-black rounded-xl text-xs uppercase tracking-widest">Ghi nhật ký</button>
             </form>
             <% if (typeof todayLogs !== 'undefined' && todayLogs.length) { %>

@@ -80,16 +80,10 @@ exports.getSessions = async (req, res) => {
                     ? ptName
                     : clientName;
 
-                const start = session.startTime || session.scheduledTime;
-                let end = session.endTime;
-                if (!end && start) {
-                    const startMs = new Date(start).getTime();
-                    const defaultMins =
-                        session.status === 'Completed' && session.startTime
-                            ? 60
-                            : 60;
-                    end = new Date(startMs + defaultMins * 60 * 1000);
-                }
+                // Always anchor to scheduledTime so the event stays in the booked slot
+                // across all calendar views (startTime/endTime are actual check-in/out times)
+                const start = session.scheduledTime;
+                const end = new Date(new Date(start).getTime() + 60 * 60 * 1000);
 
                 return {
                     id: session._id,
