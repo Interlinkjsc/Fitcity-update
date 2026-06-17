@@ -11,6 +11,7 @@ const path = require('path');
 const notificationService = require('../../platform/services/notificationService');
 const mongoose = require('mongoose');
 const permissionService = require('../../../core/permissionService');
+const { decrypt } = require('../../../utils/encryption');
 
 const PAYMENT_STATUS_ALLOWED = new Set(['Paid', 'Deposit', 'Unpaid', 'Pending_Paid']);
 const PAYMENT_METHODS_ALLOWED = new Set(['Cash', 'Transfer', 'Card', 'Installment']);
@@ -655,6 +656,17 @@ exports.getDetail = async (req, res, next) => {
 
         if (!contractScope.canAccessContract(req.session.user, contract)) {
             return denyContractAccess(req, res, contract);
+        }
+
+        // .lean() bypasses Mongoose getters so encrypted fields come back raw — decrypt manually
+        const decryptField = (val) => { try { return val ? decrypt(val) : val; } catch { return val; } };
+        if (contract.client) {
+            contract.client.phone = decryptField(contract.client.phone);
+            contract.client.email = decryptField(contract.client.email);
+        }
+        if (contract.pt) {
+            contract.pt.phone = decryptField(contract.pt.phone);
+            contract.pt.email = decryptField(contract.pt.email);
         }
 
         // Lấy lịch sử thanh toán

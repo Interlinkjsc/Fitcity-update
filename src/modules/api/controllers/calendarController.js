@@ -74,13 +74,11 @@ exports.getSessions = async (req, res) => {
                 const ptName = (session.pt && typeof session.pt === 'object') ? (session.pt.name || 'Unknown') : 'Unknown PT';
                 const branchName = (session.branch && typeof session.branch === 'object') ? (session.branch.name || 'Cơ sở') : 'Cơ sở';
                 
-                const startTime = session.startTime || session.scheduledTime;
-                const timeStr = new Date(startTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
                 const workoutTitle = session.workoutPlan || session.title || 'Buổi tập';
-                
+
                 const title = user.role === 'Client'
-                    ? `${timeStr} · ${ptName}`
-                    : `${timeStr} - ${clientName}`;
+                    ? ptName
+                    : clientName;
 
                 const start = session.startTime || session.scheduledTime;
                 let end = session.endTime;

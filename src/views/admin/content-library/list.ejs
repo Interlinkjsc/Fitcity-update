@@ -88,6 +88,12 @@
 async function checkLocalFile(e, el) {
     e.preventDefault();
     const url = el.href;
+    // External URLs (Drive, etc.) — open directly, no HEAD check
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+        window.open(url, '_blank');
+        return;
+    }
+    // Local server file — verify it exists first
     try {
         const res = await fetch(url, { method: 'HEAD' });
         if (res.ok) {

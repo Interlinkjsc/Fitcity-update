@@ -112,16 +112,21 @@
             <form id="createSessionForm" class="space-y-4">
                 <div>
                     <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Khách hàng (Hợp đồng Active)</label>
-                    <select id="csContractSelect" name="contractId" required
-                            class="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/30 overflow-y-auto"
-                            size="<%= (typeof activeContracts !== 'undefined' && activeContracts.length > 0) ? Math.min(activeContracts.length + 1, 6) : 2 %>">
-                        <option value="">-- Chọn khách hàng --</option>
-                        <% if (typeof activeContracts !== 'undefined') { activeContracts.forEach(function(c) { %>
-                            <option value="<%= c._id %>" data-client-id="<%= c.client._id %>" data-remaining="<%= c.remainingSessions %>">
-                                <%= c.client.name %> (còn <%= c.remainingSessions %> buổi)
-                            </option>
-                        <% }); } %>
-                    </select>
+                    <input type="hidden" id="csContractSelect" name="contractId" required>
+                    <div id="clientListBox" class="w-full border border-slate-200 rounded-xl overflow-y-auto bg-white" style="max-height:220px; min-height:48px;">
+                        <% if (typeof activeContracts === 'undefined' || activeContracts.length === 0) { %>
+                            <div class="px-4 py-3 text-sm text-slate-400 italic">Không có hợp đồng active</div>
+                        <% } else { %>
+                            <% activeContracts.forEach(function(c) { %>
+                            <div class="client-option px-4 py-3 text-sm font-semibold text-slate-700 cursor-pointer hover:bg-primary/10 border-b border-slate-100 last:border-0"
+                                 data-value="<%= c._id %>"
+                                 data-client-id="<%= c.client._id %>"
+                                 data-remaining="<%= c.remainingSessions %>">
+                                <%= c.client.name %> <span class="text-xs font-normal text-slate-400">(còn <%= c.remainingSessions %> buổi)</span>
+                            </div>
+                            <% }); } %>
+                    </div>
+                    <p id="clientSelectError" class="text-xs text-red-500 mt-1 hidden">Vui lòng chọn khách hàng</p>
                 </div>
 
                 <div>
@@ -355,8 +360,28 @@
             setTimeout(() => {
                 modal.style.display = 'none';
                 document.getElementById('csErrorMsg').classList.add('hidden');
+                // Reset custom list selection
+                document.querySelectorAll('.client-option').forEach(el => {
+                    el.classList.remove('bg-primary/20', 'text-primary', 'font-black');
+                });
+                document.getElementById('csContractSelect').value = '';
+                selectedClientId = null;
             }, 200);
         }
+
+        // Custom client list selection
+        let selectedClientId = null;
+        document.getElementById('clientListBox').addEventListener('click', function(e) {
+            const item = e.target.closest('.client-option');
+            if (!item) return;
+            document.querySelectorAll('.client-option').forEach(el => {
+                el.classList.remove('bg-primary/20', 'text-primary', 'font-black');
+            });
+            item.classList.add('bg-primary/20', 'text-primary', 'font-black');
+            document.getElementById('csContractSelect').value = item.dataset.value;
+            selectedClientId = item.dataset.clientId;
+            document.getElementById('clientSelectError').classList.add('hidden');
+        });
 
         document.getElementById('createSessionForm').addEventListener('submit', async function(e) {
             e.preventDefault();
@@ -364,10 +389,8 @@
             const errorMsg = document.getElementById('csErrorMsg');
             errorMsg.classList.add('hidden');
 
-            const select = document.getElementById('csContractSelect');
-            const selectedOption = select.options[select.selectedIndex];
-            const contractId = select.value;
-            const clientId = selectedOption.dataset.clientId;
+            const contractId = document.getElementById('csContractSelect').value;
+            const clientId = selectedClientId;
             const scheduledTime = document.getElementById('csScheduledTime').value;
             const notes = document.getElementById('csNotes').value;
 
