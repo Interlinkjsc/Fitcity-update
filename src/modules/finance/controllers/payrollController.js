@@ -270,6 +270,46 @@ exports.markAsPaid = async (req, res, next) => {
     }
 };
 
+/**
+ * Tính lại hoa hồng cho các bản ghi lương đang Pending (chưa thanh toán).
+ * Dùng khi Sale/PT có hợp đồng mới sau khi đã tạo bản ghi lương.
+ */
+exports.recalculateCommission = async (req, res, next) => {
+    try {
+        const { staffId, month, year } = req.body;
+        const m = Number(month);
+        const y = Number(year);
+
+        const staff = await User.findById(staffId);
+        if (!staff) throw new Error('Nhân viên không tồn tại');
+
+        const startOfMonth = new Date(y, m - 1, 1);
+        const endOfMonth = new Date(y, m, 0, 23, 59, 59);
+
+        const computed = await computeStaffCommission(staff, startOfMonth, endOfMonth);
+        const commission = computed.commission;
+        const halfCommission = Math.round(commission / 2);
+
+        const updated = await Payroll.updateMany(
+            { staff: staffId, month: m, year: y, status: 'Pending' },
+            { $set: { commission: halfCommission } }
+        );
+
+        // Recalculate totalSalary for each updated record
+        const records = await Payroll.find({ staff: staffId, month: m, year: y, status: 'Pending' });
+        for (const rec of records) {
+            rec.totalSalary = (rec.baseSalary || 0) + (rec.commission || 0) + (rec.bonus || 0) - (rec.deductions || 0);
+            await rec.save();
+        }
+
+        req.flash('success_msg', `Đã tính lại hoa hồng cho ${staff.name}: ${new Intl.NumberFormat('vi-VN').format(commission)}đ (${updated.modifiedCount} kỳ cập nhật).`);
+        res.redirect(`/admin/payroll?month=${m}&year=${y}`);
+    } catch (err) {
+        req.flash('error_msg', err.message);
+        res.redirect('/admin/payroll');
+    }
+};
+
 exports.exportPayrollCSV = async (req, res, next) => {
     try {
         const now = new Date();

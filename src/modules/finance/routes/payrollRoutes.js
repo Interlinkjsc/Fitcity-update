@@ -12,6 +12,7 @@ router.get('/export-csv', checkPermission('payroll', 'view'), payrollController.
 router.post('/approve', checkPermission('payroll', 'manage'), payrollController.finalizePayroll);
 router.post('/auto-suggest', checkPermission('payroll', 'manage'), payrollController.autoSuggestPayroll);
 router.post('/mark-paid/:id', checkPermission('payroll', 'manage'), payrollController.markAsPaid);
+router.post('/recalculate', checkPermission('payroll', 'manage'), payrollController.recalculateCommission);
 
 module.exports = router;
 

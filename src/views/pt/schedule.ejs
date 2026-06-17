@@ -98,7 +98,7 @@
 
     <!-- Modal Tạo Lịch Tập Trực Tiếp -->
     <div id="createSessionModal" class="fixed inset-0 z-[100] items-center justify-center p-4" style="display:none; backdrop-filter:blur(4px); background-color:rgba(0,0,0,0.4);">
-        <div class="bg-white rounded-[24px] shadow-2xl w-full max-w-md p-6 transform transition-all scale-95 opacity-0 duration-200" id="createSessionDialog">
+        <div class="bg-white rounded-[24px] shadow-2xl w-full max-w-md p-6 transform transition-all scale-95 opacity-0 duration-200 max-h-[90vh] overflow-y-auto" id="createSessionDialog">
             <div class="flex justify-between items-start mb-6">
                 <div>
                     <h3 class="text-xl font-black text-slate-900">Lên lịch tập cho Khách hàng</h3>
@@ -112,7 +112,9 @@
             <form id="createSessionForm" class="space-y-4">
                 <div>
                     <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Khách hàng (Hợp đồng Active)</label>
-                    <select id="csContractSelect" name="contractId" required class="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/30">
+                    <select id="csContractSelect" name="contractId" required
+                            class="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/30 overflow-y-auto"
+                            size="<%= (typeof activeContracts !== 'undefined' && activeContracts.length > 0) ? Math.min(activeContracts.length + 1, 6) : 2 %>">
                         <option value="">-- Chọn khách hàng --</option>
                         <% if (typeof activeContracts !== 'undefined') { activeContracts.forEach(function(c) { %>
                             <option value="<%= c._id %>" data-client-id="<%= c.client._id %>" data-remaining="<%= c.remainingSessions %>">
@@ -219,7 +221,15 @@
                 slotMaxTime: '22:00:00',
                 allDaySlot: false,
                 height: 'auto',
-                events: '/api/calendar/sessions', // Fetch events directly via HTTP GET
+                events: '/api/calendar/sessions',
+                dayMaxEvents: true, // show "+N more" when many events in month view
+                eventDidMount: function(info) {
+                    // Add tooltip showing status & client on hover
+                    const props = info.event.extendedProps;
+                    if (props && props.status) {
+                        info.el.title = `${info.event.title}\nTrạng thái: ${props.status}`;
+                    }
+                },
                 eventClick: function(info) {
                     showEventModal(info.event);
                 }
@@ -365,6 +375,24 @@
                 errorMsg.textContent = 'Vui lòng chọn khách hàng và thời gian tập.';
                 errorMsg.classList.remove('hidden');
                 return;
+            }
+
+            // Kiểm tra overlap với lịch đã booked (dùng events từ calendar)
+            if (calendarApp) {
+                const pickedTime = new Date(scheduledTime).getTime();
+                const existingEvents = calendarApp.getEvents();
+                const conflict = existingEvents.find(ev => {
+                    const evStart = ev.start ? ev.start.getTime() : 0;
+                    const evEnd = ev.end ? ev.end.getTime() : evStart + 3600000;
+                    const status = ev.extendedProps && ev.extendedProps.status;
+                    if (status === 'Cancelled') return false;
+                    return pickedTime >= evStart && pickedTime < evEnd;
+                });
+                if (conflict) {
+                    errorMsg.textContent = `⚠️ Trùng giờ với buổi "${conflict.title}" đang booked. Vui lòng chọn giờ khác.`;
+                    errorMsg.classList.remove('hidden');
+                    return;
+                }
             }
 
             submitBtn.disabled = true;

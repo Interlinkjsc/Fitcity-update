@@ -53,10 +53,16 @@
             </div>
 
             <div class="mt-5 flex flex-col gap-2">
-                <button type="button" class="px-4 py-3 bg-primary text-white font-black uppercase rounded-2xl hover:brightness-110 active:scale-[0.99] transition-all shadow-lg shadow-accent/20"
+                <button type="button" id="copyBtn" class="px-4 py-3 bg-primary text-white font-black uppercase rounded-2xl hover:brightness-110 active:scale-[0.99] transition-all shadow-lg shadow-accent/20"
                         onclick="copyToken()">
-                    Copy mã (fallback)
+                    Copy mã để gửi cho PT
                 </button>
+                <div id="tokenFallback" class="hidden flex gap-2 items-center">
+                    <input id="tokenFallbackInput" type="text" readonly
+                           class="flex-1 rounded-2xl bg-slate-50 border border-slate-200 text-slate-700 text-xs px-3 py-2 font-mono"
+                           onclick="this.select()" />
+                    <span class="text-[10px] text-slate-400 shrink-0">Nhấn vào → chọn tất cả → copy</span>
+                </div>
                 <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">
                     Nếu PT không quét được camera, gửi mã thủ công để PT dán vào màn quét.
                 </p>
@@ -75,12 +81,29 @@
             color: { dark: '#0F172A', light: '#ffffff' }
         });
 
+        // Hiển thị token trong ô text để người dùng chọn & copy thủ công (fallback cho HTTP/iOS)
+        function showTokenFallback() {
+            const fallbackDiv = document.getElementById('tokenFallback');
+            const input = document.getElementById('tokenFallbackInput');
+            if (!fallbackDiv || !input) return;
+            input.value = token;
+            fallbackDiv.classList.remove('hidden');
+            fallbackDiv.classList.add('flex');
+            setTimeout(() => { input.select(); }, 50);
+        }
+
         async function copyToken() {
+            // Clipboard API requires HTTPS — fallback to visible input on HTTP
+            if (!window.isSecureContext) {
+                showTokenFallback();
+                return;
+            }
             try {
                 await navigator.clipboard.writeText(token);
-                alert('Đã copy mã.');
+                const btn = document.getElementById('copyBtn');
+                if (btn) { btn.textContent = '✓ Đã copy!'; setTimeout(() => { btn.textContent = 'Copy mã để gửi cho PT'; }, 2000); }
             } catch (e) {
-                prompt('Copy mã bên dưới:', token);
+                showTokenFallback();
             }
         }
     </script>

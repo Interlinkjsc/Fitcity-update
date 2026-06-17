@@ -100,6 +100,11 @@
         <div id="scanReader" class="w-full rounded-3xl overflow-hidden border-2 border-slate-100 shadow-inner bg-slate-50 min-h-[260px] flex items-center justify-center relative">
             <!-- Camera UI will be rendered here -->
         </div>
+        <div id="cameraBlockedMsg" class="hidden w-full rounded-3xl border-2 border-amber-200 bg-amber-50 p-6 text-center mt-3">
+            <span class="material-symbols-outlined text-amber-500 text-4xl mb-2 block">videocam_off</span>
+            <p class="text-sm font-black text-amber-800 mb-1">Camera không khả dụng</p>
+            <p class="text-xs text-amber-700 leading-relaxed">Trình duyệt chặn camera do kết nối chưa bảo mật (HTTP).<br>Vui lòng dùng <strong>nhập tay token</strong> bên dưới.</p>
+        </div>
     </div>
     
     <div class="w-full mt-6 space-y-4">
@@ -145,31 +150,44 @@
         stopScanner();
     }
 
+    function showCameraBlocked() {
+        document.getElementById('scanReader').classList.add('hidden');
+        document.getElementById('cameraBlockedMsg').classList.remove('hidden');
+        const tokenInput = document.querySelector('#manualScanForm input[name="token"]');
+        if (tokenInput) tokenInput.focus();
+    }
+
     async function startScanner() {
         if (isScanning) return;
-        
+
+        // Camera requires HTTPS (secure context) — skip silently on HTTP
+        if (!window.isSecureContext) {
+            showCameraBlocked();
+            return;
+        }
+
         try {
             if (!html5QrcodeScanner) {
                 html5QrcodeScanner = new Html5Qrcode('scanReader');
             }
-            
+
             const cams = await Html5Qrcode.getCameras();
             if (!cams || cams.length === 0) {
-                console.warn('Không tìm thấy camera.');
+                showCameraBlocked();
                 return;
             }
-            
-            const camId = cams[0].id;
+
             isScanning = true;
-            
+
             await html5QrcodeScanner.start(
-                { facingMode: "environment" }, // Prefer back camera
+                { facingMode: "environment" },
                 { fps: 10, qrbox: { width: 220, height: 220 } },
                 onScanSuccess
             );
         } catch (e) {
             console.error('Lỗi khởi động camera:', e);
             isScanning = false;
+            showCameraBlocked();
         }
     }
 
