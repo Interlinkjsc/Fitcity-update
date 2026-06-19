@@ -10,33 +10,42 @@ const { getPagination } = require('../../../utils/paginationHelper');
 const permissionService = require('../../../core/permissionService');
 
 async function computeStaffCommission(staff, startOfMonth, endOfMonth) {
+    // PT: commission from PT training work (ptCommission on contracts where pt=staff)
+    let ptCommission = 0, ptDetailCount = 0, ptCommissionSource, contractCommission, timesheetCommission;
     if (staff.role === 'PT') {
         const resolved = await payrollService.resolvePTPayrollCommission(
             staff._id,
             startOfMonth,
             endOfMonth
         );
-        return {
-            commission: resolved.commission,
-            detailCount: resolved.detailCount,
-            commissionSource: resolved.commissionSource,
-            contractCommission: resolved.contractCommission,
-            timesheetCommission: resolved.timesheetCommission
-        };
+        ptCommission = resolved.commission;
+        ptDetailCount = resolved.detailCount;
+        ptCommissionSource = resolved.commissionSource;
+        contractCommission = resolved.contractCommission;
+        timesheetCommission = resolved.timesheetCommission;
     }
-    if (staff.role === 'Sales' || staff.role === 'Manager' || staff.role === 'Marketing') {
-        const contracts = await Contract.find({
-            sales: staff._id,
-            paymentStatus: 'Paid',
-            createdAt: { $gte: startOfMonth, $lte: endOfMonth }
-        });
-        const rate = staff.salesCommissionRate || 5;
-        return {
-            commission: payrollService.calculateSalesCommission(contracts, rate),
-            detailCount: contracts.length
-        };
-    }
-    return { commission: 0, detailCount: 0 };
+
+    // ALL roles: sales commission for contracts where they are the sales person
+    const salesContracts = await Contract.find({
+        sales: staff._id,
+        paymentStatus: 'Paid',
+        createdAt: { $gte: startOfMonth, $lte: endOfMonth }
+    });
+    const rate = staff.salesCommissionRate || 5;
+    const salesCommission = payrollService.calculateSalesCommission(salesContracts, rate);
+
+    const totalCommission = ptCommission + salesCommission;
+    const totalDetailCount = ptDetailCount + salesContracts.length;
+
+    return {
+        commission: totalCommission,
+        detailCount: totalDetailCount,
+        commissionSource: ptCommissionSource || 'contract',
+        contractCommission: contractCommission || salesCommission,
+        timesheetCommission: timesheetCommission || 0,
+        salesCommission,
+        salesContractCount: salesContracts.length
+    };
 }
 
 async function buildPayrollRow(staff, month, year) {
@@ -119,7 +128,7 @@ exports.getPayrollSummary = async (req, res, next) => {
         const skip = (page - 1) * limit;
 
         let staffQuery = {
-            role: { $in: ['Sales', 'PT', 'Manager', 'Marketing'] },
+            role: { $in: ['Sales', 'PT', 'Manager', 'Marketing', 'CEO', 'Admin', 'Accountant'] },
             status: 'Active'
         };
         if (roleFilter !== 'All') {
@@ -205,8 +214,8 @@ exports.autoSuggestPayroll = async (req, res, next) => {
         const year = parseInt(req.body.year) || now.getFullYear();
 
         const staffList = await User.find({ 
-            role: { $in: ['Sales', 'PT', 'Manager', 'Marketing'] }, 
-            status: 'Active' 
+            role: { $in: ['Sales', 'PT', 'Manager', 'Marketing', 'CEO', 'Admin', 'Accountant'] },
+            status: 'Active'
         });
 
         let createdCount = 0;
@@ -317,9 +326,9 @@ exports.exportPayrollCSV = async (req, res, next) => {
         const year = parseInt(req.query.year) || now.getFullYear();
         const roleFilter = req.query.role || 'All';
 
-        let query = { 
-            role: { $in: ['Sales', 'PT', 'Manager', 'Marketing'] }, 
-            status: 'Active' 
+        let query = {
+            role: { $in: ['Sales', 'PT', 'Manager', 'Marketing', 'CEO', 'Admin', 'Accountant'] },
+            status: 'Active'
         };
         if (roleFilter !== 'All') {
             query.role = roleFilter;

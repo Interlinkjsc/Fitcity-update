@@ -113,7 +113,7 @@
                 <div>
                     <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Khách hàng (Hợp đồng Active)</label>
                     <input type="hidden" id="csContractSelect" name="contractId" required>
-                    <div id="clientListBox" class="w-full border border-slate-200 rounded-xl overflow-y-auto bg-white" style="max-height:220px; min-height:48px;">
+                    <div id="clientListBox" class="w-full border border-slate-200 rounded-xl overflow-y-auto bg-white" style="max-height:220px; min-height:48px; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; touch-action: pan-y;">
                         <% if (typeof activeContracts === 'undefined' || activeContracts.length === 0) { %>
                             <div class="px-4 py-3 text-sm text-slate-400 italic">Không có hợp đồng active</div>
                         <% } else { %>
@@ -227,12 +227,28 @@
                 allDaySlot: false,
                 height: 'auto',
                 events: '/api/calendar/sessions',
-                dayMaxEvents: true, // show "+N more" when many events in month view
+                dayMaxEvents: true,
+                eventContent: function(arg) {
+                    const props = arg.event.extendedProps;
+                    const view = arg.view.type;
+                    if (view === 'dayGridMonth') {
+                        const statusMap = { 'Scheduled': '🟢', 'Pending_Admin': '🟡', 'In_Progress': '🟠', 'Completed': '✅', 'Cancelled': '❌' };
+                        const icon = statusMap[props.status] || '🔵';
+                        const time = arg.event.start ? arg.event.start.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : '';
+                        return { html: `<div style="font-size:11px;padding:1px 3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${icon} ${time} ${arg.event.title}</div>` };
+                    }
+                    return true;
+                },
                 eventDidMount: function(info) {
-                    // Add tooltip showing status & client on hover
                     const props = info.event.extendedProps;
+                    const statusLabel = { 'Scheduled': 'Đã lên lịch', 'Pending_Admin': 'Chờ duyệt', 'In_Progress': 'Đang tập', 'Completed': 'Đã hoàn thành', 'Cancelled': 'Đã hủy' };
                     if (props && props.status) {
-                        info.el.title = `${info.event.title}\nTrạng thái: ${props.status}`;
+                        info.el.title = `${info.event.title}\nTrạng thái: ${statusLabel[props.status] || props.status}`;
+                    }
+                    const colorMap = { 'Scheduled': '#16a34a', 'Pending_Admin': '#d97706', 'In_Progress': '#ea580c', 'Completed': '#6b7280', 'Cancelled': '#ef4444' };
+                    if (props && props.status && colorMap[props.status]) {
+                        info.el.style.backgroundColor = colorMap[props.status];
+                        info.el.style.borderColor = colorMap[props.status];
                     }
                 },
                 eventClick: function(info) {

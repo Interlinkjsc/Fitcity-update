@@ -164,7 +164,7 @@ exports.getCreateForm = async (req, res, next) => {
             .lean();
 
         let salesStaff = await User.find({
-            role: { $in: ['Sales', 'Manager', 'Admin', 'SA', 'PT'] },
+            role: { $in: ['Sales', 'Manager', 'Admin', 'SA', 'PT', 'Marketing', 'CEO', 'Accountant'] },
             status: 'Active'
         })
             .select('name _id role')
@@ -174,9 +174,10 @@ exports.getCreateForm = async (req, res, next) => {
         const backUrl = req.originalUrl.startsWith('/pt') ? '/pt' : '/admin/contracts/list';
 
         const viewPath = req.user && req.user.role === 'PT' ? 'pt/contracts/create' : 'admin/contracts/form';
+        const currentUserId = req.session.user ? String(req.session.user.id) : null;
 
-        res.render(viewPath, { 
-            isEdit: false, 
+        res.render(viewPath, {
+            isEdit: false,
             contract: new Contract(),
             clients,
             packages,
@@ -184,7 +185,8 @@ exports.getCreateForm = async (req, res, next) => {
             salesStaff,
             pts,
             formAction,
-            backUrl
+            backUrl,
+            currentUserId
         });
     } catch (err) {
         next(err);
@@ -210,7 +212,10 @@ exports.storeContract = async (req, res, next) => {
         const { customPkgName, customPkgType, customPkgDuration, customPkgSessions, customPkgPrice } = req.body;
         const back = req.originalUrl.startsWith('/pt') ? '/pt/contracts/create' : '/admin/contracts/create';
 
-        if (!isValidObjectId(client) || !isValidObjectId(branch) || !isValidObjectId(sales)) {
+        // Default sales to current logged-in user if not provided
+        const salesId = (sales && isValidObjectId(sales)) ? sales : String(req.session.user.id);
+
+        if (!isValidObjectId(client) || !isValidObjectId(branch) || !isValidObjectId(salesId)) {
             req.flash('error_msg', 'Thông tin khách hàng/chi nhánh/sales không hợp lệ.');
             return res.redirect(back);
         }
@@ -271,7 +276,7 @@ exports.storeContract = async (req, res, next) => {
         const serviceData = {
             clientId: client,
             branchId: branch,
-            salesId: sales,
+            salesId: salesId,
             ptId: pt || null,
             discount: discountNum,
             couponCode: couponCode,
@@ -327,7 +332,7 @@ exports.storeContract = async (req, res, next) => {
 
         // NOTIFY SALES: Sale contribution recognized
         await notificationService.pushNotification(
-            sales,
+            salesId,
             'Ghi nhận doanh thu',
             `Bạn vừa chốt thành công 01 hợp đồng (${newContract.contractCode}). Chúc mừng!`,
             'Success'

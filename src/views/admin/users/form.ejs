@@ -232,8 +232,8 @@
                         </div>
                         <p class="mt-1 text-[11px] text-slate-500">Khi tạo HĐ: HH = netAmount × %. Payroll cộng ptCommission trên HĐ Paid.</p>
                     </div>
-                    <div x-show="['Sales','Manager','Marketing'].includes(selectedRole)" x-cloak class="sm:col-span-2">
-                        <label for="salesCommissionRate" class="block text-sm font-medium text-slate-700 mb-1">Hoa hồng (% trên giá trị HĐ trước VAT)</label>
+                    <div x-show="!['Client','SA'].includes(selectedRole)" x-cloak class="sm:col-span-2">
+                        <label for="salesCommissionRate" class="block text-sm font-medium text-slate-700 mb-1">Hoa hồng bán hàng (% trên giá trị HĐ trước VAT)</label>
                         <div class="relative max-w-xs">
                             <input type="number" id="salesCommissionRate" name="salesCommissionRate" min="0" max="100" step="0.1"
                                 value="<%= (typeof userData !== 'undefined' && userData.salesCommissionRate != null) ? userData.salesCommissionRate : 5 %>"
