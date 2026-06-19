@@ -491,7 +491,7 @@ exports.getClientDashboard = async (req, res, next) => {
     try {
         const clientId = req.session.user.id;
         
-        const contract = await Contract.findOne({ client: clientId, contractStatus: 'Active' })
+        const contract = await Contract.findOne({ client: clientId, $or: [{ contractStatus: 'Active' }, { contractStatus: 'Draft', paymentStatus: 'Deposit' }] })
             .populate('servicePackage')
             .populate('pt', 'name avatar')
             .sort({ createdAt: -1 });

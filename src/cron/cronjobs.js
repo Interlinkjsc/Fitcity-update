@@ -9,10 +9,10 @@ const startCronJobs = () => {
         try {
             const now = new Date();
             
-            // 1. Thanh lý hợp đồng nợ quá 15 ngày (Chưa đóng đủ tiền)
+            // 1. Thanh lý hợp đồng nợ quá 15 ngày (chỉ Unpaid — Deposit được giữ nguyên)
             const unpaidContracts = await Contract.find({
                 contractStatus: { $nin: ['Cancelled', 'Liquidated'] },
-                paymentStatus: { $ne: 'Paid' },
+                paymentStatus: 'Unpaid',
                 paymentDeadline: { $lte: now }
             });
  

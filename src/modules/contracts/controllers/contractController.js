@@ -148,9 +148,10 @@ exports.getContractList = async (req, res, next) => {
 exports.getCreateForm = async (req, res, next) => {
     try {
         // Cần truyền list options cho dropdowns
-        const clients = await User.find({ role: 'Client', status: 'Active' })
+        const _decryptF = (v) => { try { return v ? decrypt(v) : v; } catch { return v; } };
+        const clients = (await User.find({ role: 'Client', status: 'Active' })
             .select('name phone email branch _id')
-            .lean();
+            .lean()).map(c => ({ ...c, phone: _decryptF(c.phone), email: _decryptF(c.email) }));
         const packages = await ServicePackage.find({ status: 'Active' }).lean();
         const branches = await Branch.find({ status: { $ne: 'Closed' } }).lean();
         if (branches.length === 0) {
