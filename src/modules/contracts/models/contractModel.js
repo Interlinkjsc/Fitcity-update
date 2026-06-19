@@ -109,6 +109,9 @@ const contractSchema = new mongoose.Schema({
     paymentDeadline: {
         type: Date
     },
+    paidAt: {
+        type: Date
+    },
     contractStatus: {
         type: String,
         enum: ['Draft', 'Active', 'Expired', 'Paused', 'Cancelled', 'Liquidated'],

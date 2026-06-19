@@ -39,10 +39,15 @@ exports.resolvePTPayrollCommission = async (staffId, startOfMonth, endOfMonth) =
     const rate = settings.timesheetRatePerShift ?? 120000;
     const mode = settings.ptPayrollMode || 'contract';
 
+    // Use paidAt for commission period — contract paid this month gets commission this month.
+    // Fallback to updatedAt for contracts without paidAt (legacy data).
     const contracts = await Contract.find({
         pt: staffId,
         paymentStatus: 'Paid',
-        createdAt: { $gte: startOfMonth, $lte: endOfMonth }
+        $or: [
+            { paidAt: { $gte: startOfMonth, $lte: endOfMonth } },
+            { paidAt: { $exists: false }, updatedAt: { $gte: startOfMonth, $lte: endOfMonth } }
+        ]
     });
     const contractCommission = exports.calculatePTCommissionFromContracts(contracts);
     const timesheetCommission = await exports.calculatePTCommissionFromTimesheets(

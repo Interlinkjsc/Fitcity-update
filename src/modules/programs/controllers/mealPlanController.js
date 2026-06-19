@@ -24,9 +24,12 @@ exports.getMyClientsMealPlans = async (req, res, next) => {
 
 exports.getCreateForm = async (req, res, next) => {
     try {
-        const contracts = await Contract.find({ 
-            pt: req.session.user.id, 
-            contractStatus: 'Active' 
+        const contracts = await Contract.find({
+            pt: req.session.user.id,
+            $or: [
+                { contractStatus: 'Active' },
+                { contractStatus: 'Draft', paymentStatus: 'Deposit' }
+            ]
         }).populate('client');
 
         res.render('pt/meal-plans/form', { 

@@ -266,12 +266,15 @@ exports.createDirectSession = async (req, res, next) => {
         const ptId = req.session.user.id;
         const { contractId, clientId, scheduledTime, durationMinutes, notes } = req.body;
 
-        // 1. Xác thực hợp đồng active và được gán cho PT này
+        // 1. Xác thực hợp đồng được gán cho PT này (Active hoặc Draft+Deposit)
         const contract = await Contract.findOne({
             _id: contractId,
             client: clientId,
             pt: ptId,
-            contractStatus: 'Active'
+            $or: [
+                { contractStatus: 'Active' },
+                { contractStatus: 'Draft', paymentStatus: 'Deposit' }
+            ]
         });
 
         if (!contract) {

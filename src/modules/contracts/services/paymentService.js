@@ -47,8 +47,10 @@ exports.createPayment = async (data) => {
     if (newPaidAmount >= contract.totalAmount) {
         updateData.paymentStatus = 'Paid';
         updateData.contractStatus = 'Active';
+        updateData.paidAt = new Date();
     } else if (newPaidAmount > 0) {
         updateData.paymentStatus = 'Deposit';
+        updateData.contractStatus = 'Active'; // Deposit → allow scheduling
     }
 
     // Also track payment method used

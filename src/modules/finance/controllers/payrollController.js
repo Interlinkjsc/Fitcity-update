@@ -25,11 +25,15 @@ async function computeStaffCommission(staff, startOfMonth, endOfMonth) {
         timesheetCommission = resolved.timesheetCommission;
     }
 
-    // ALL roles: sales commission for contracts where they are the sales person
+    // ALL roles: sales commission for contracts where they are the sales person.
+    // Use paidAt (month contract was paid) for commission period attribution.
     const salesContracts = await Contract.find({
         sales: staff._id,
         paymentStatus: 'Paid',
-        createdAt: { $gte: startOfMonth, $lte: endOfMonth }
+        $or: [
+            { paidAt: { $gte: startOfMonth, $lte: endOfMonth } },
+            { paidAt: { $exists: false }, updatedAt: { $gte: startOfMonth, $lte: endOfMonth } }
+        ]
     });
     const rate = staff.salesCommissionRate || 5;
     const salesCommission = payrollService.calculateSalesCommission(salesContracts, rate);

@@ -315,8 +315,12 @@ exports.storeContract = async (req, res, next) => {
         if (paymentStatus === 'Paid') {
             newContract.paidAmount = newContract.totalAmount;
             newContract.contractStatus = 'Active';
+            newContract.paidAt = new Date();
+        } else if (paymentStatus === 'Deposit') {
+            // Deposit = đã đặt cọc → cho phép bắt đầu lịch tập
+            newContract.contractStatus = 'Active';
         }
-        
+
         await newContract.save();
 
         const pkgDisplayName = newContract.packageSnapshot ? newContract.packageSnapshot.name : 'N/A';
@@ -434,10 +438,13 @@ exports.updateContract = async (req, res, next) => {
             updateData.notes = req.body.notes;
         }
         
-        // Handle logic for checking Paid status
+        // Handle payment status changes → activate contract
         if (updateData.paymentStatus === 'Paid') {
             const tempContract = await Contract.findById(contractId);
             updateData.paidAmount = tempContract.totalAmount;
+            updateData.contractStatus = 'Active';
+            updateData.paidAt = new Date();
+        } else if (updateData.paymentStatus === 'Deposit') {
             updateData.contractStatus = 'Active';
         }
 

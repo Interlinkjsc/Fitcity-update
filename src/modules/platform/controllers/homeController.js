@@ -460,10 +460,17 @@ exports.getPtSchedule = async (req, res, next) => {
             };
         });
 
-        // Lấy danh sách hợp đồng active để PT lên lịch trực tiếp
-        const activeContracts = await Contract.find({ pt: ptId, contractStatus: 'Active' })
+        // Lấy tất cả hợp đồng có thể lên lịch: Active hoặc Deposit (đã đặt cọc)
+        const activeContracts = await Contract.find({
+            pt: ptId,
+            $or: [
+                { contractStatus: 'Active' },
+                { contractStatus: 'Draft', paymentStatus: 'Deposit' }
+            ],
+            remainingSessions: { $gt: 0 }
+        })
             .populate('client', 'name avatar')
-            .select('_id client remainingSessions')
+            .select('_id client remainingSessions paymentStatus')
             .sort({ createdAt: -1 })
             .lean();
 
