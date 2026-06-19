@@ -372,21 +372,22 @@ exports.getEditForm = async (req, res, next) => {
         const packages = await ServicePackage.find({ status: 'Active' });
         const branches = await Branch.find();
         const salesStaff = await User.find({
-            role: { $in: ['Sales', 'Manager', 'Admin', 'SA', 'PT'] },
+            role: { $in: ['Sales', 'Manager', 'Admin', 'SA', 'PT', 'Marketing', 'CEO', 'Accountant'] },
             status: 'Active'
         })
             .select('name _id role')
             .lean();
         const pts = await User.find({ role: 'PT', status: 'Active' });
 
-        res.render('admin/contracts/form', { 
-            isEdit: true, 
+        res.render('admin/contracts/form', {
+            isEdit: true,
             contract,
             clients,
             packages,
             branches,
             salesStaff,
-            pts
+            pts,
+            currentUserId: req.session.user ? String(req.session.user.id) : null
         });
     } catch (err) {
         next(err);
