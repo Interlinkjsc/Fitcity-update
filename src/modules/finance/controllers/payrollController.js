@@ -365,7 +365,7 @@ exports.exportPayrollCSV = async (req, res, next) => {
                         status: 'Pending',
                         date: { $gte: startOfMonth, $lte: endOfMonth }
                     });
-                    const totalPenalty = violations.reduce((sum, v) => sum + (v.fineAmount || 0), 0);
+                    const totalPenalty = violations.reduce((sum, v) => sum + (v.penaltyAmount || 0), 0);
                     penalty = Math.round(totalPenalty / 2);
                 }
 

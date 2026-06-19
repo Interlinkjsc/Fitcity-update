@@ -402,7 +402,7 @@ exports.getPtClients = async (req, res, next) => {
     try {
         const ptId = req.session.user.id;
 
-        const contracts = await Contract.find({ pt: ptId, contractStatus: 'Active' })
+        const contracts = await Contract.find({ pt: ptId, $or: [{ contractStatus: 'Active' }, { contractStatus: 'Draft', paymentStatus: 'Deposit' }] })
             .populate('client', 'name email phone avatar')
             .populate('servicePackage', 'name type sessionType duration sessions')
             .sort({ createdAt: -1 });

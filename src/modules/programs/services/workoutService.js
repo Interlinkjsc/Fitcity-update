@@ -5,7 +5,8 @@ const notificationService = require('../../platform/services/notificationService
 async function ensureSessionAndContractUsable(session) {
     if (!session) throw new Error('Buổi tập không tồn tại');
     const contract = await Contract.findById(session.contract);
-    if (!contract || contract.contractStatus !== 'Active') {
+    const schedulable = contract && (contract.contractStatus === 'Active' || (contract.contractStatus === 'Draft' && contract.paymentStatus === 'Deposit'));
+    if (!schedulable) {
         const status = contract ? contract.contractStatus : 'N/A';
         throw new Error(`Không thể thực hiện. Hợp đồng đang ở trạng thái: ${status}.`);
     }

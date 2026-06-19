@@ -46,7 +46,7 @@ exports.getActiveAssignment = async (clientId) =>
 
 exports.getPtClientsForAssignment = async (ptId) => {
     const Contract = require('../../contracts/models/contractModel');
-    const contracts = await Contract.find({ pt: ptId, contractStatus: 'Active' }).populate(
+    const contracts = await Contract.find({ pt: ptId, $or: [{ contractStatus: 'Active' }, { contractStatus: 'Draft', paymentStatus: 'Deposit' }] }).populate(
         'client',
         'name email avatar'
     );

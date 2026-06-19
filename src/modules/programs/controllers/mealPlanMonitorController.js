@@ -9,7 +9,7 @@ exports.getPtClientMealLogs = async (req, res, next) => {
     const ptId = req.session.user.id;
     const { clientId } = req.params;
     // Verify PT owns this client
-    const contract = await Contract.findOne({ pt: ptId, client: clientId, contractStatus: 'Active' })
+    const contract = await Contract.findOne({ pt: ptId, client: clientId, $or: [{ contractStatus: 'Active' }, { contractStatus: 'Draft', paymentStatus: 'Deposit' }] })
       .populate('client', 'name avatar').lean();
     if (!contract) { req.flash('error_msg', 'Bạn không có quyền xem khách hàng này.'); return res.redirect('/pt/clients'); }
     const days = parseInt(req.query.days) || 14;

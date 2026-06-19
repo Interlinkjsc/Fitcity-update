@@ -11,7 +11,7 @@ exports.getSchedule = async (req, res, next) => {
         const clientId = req.session.user.id;
         const rescheduleSessionId = req.query.rescheduleSessionId || null;
 
-        const contract = await Contract.findOne({ client: clientId, contractStatus: 'Active' })
+        const contract = await Contract.findOne({ client: clientId, $or: [{ contractStatus: 'Active' }, { contractStatus: 'Draft', paymentStatus: 'Deposit' }] })
             .populate('pt', 'name avatar')
             .populate('branch', 'name address')
             .sort({ createdAt: -1 })

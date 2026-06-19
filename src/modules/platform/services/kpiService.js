@@ -132,7 +132,7 @@ async function getSalesKPI(user, monthOverride, yearOverride) {
     const leadActual = await Lead.countDocuments({
         ...(user.branch ? { branch: user.branch } : {}),
         ...dateFilter,
-        ...(user.role === 'Sales' ? { assignedTo: user._id } : {})
+        ...(['Sales', 'Marketing'].includes(user.role) ? { assignedTo: user._id } : {})
     });
 
     const revenueActual = Math.round(revenueResult[0]?.totalNet || 0);
