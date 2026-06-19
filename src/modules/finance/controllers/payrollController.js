@@ -24,7 +24,7 @@ async function computeStaffCommission(staff, startOfMonth, endOfMonth) {
             timesheetCommission: resolved.timesheetCommission
         };
     }
-    if (staff.role === 'Sales' || staff.role === 'Manager') {
+    if (staff.role === 'Sales' || staff.role === 'Manager' || staff.role === 'Marketing') {
         const contracts = await Contract.find({
             sales: staff._id,
             paymentStatus: 'Paid',
@@ -119,7 +119,7 @@ exports.getPayrollSummary = async (req, res, next) => {
         const skip = (page - 1) * limit;
 
         let staffQuery = {
-            role: { $in: ['Sales', 'PT', 'Manager'] },
+            role: { $in: ['Sales', 'PT', 'Manager', 'Marketing'] },
             status: 'Active'
         };
         if (roleFilter !== 'All') {
@@ -205,7 +205,7 @@ exports.autoSuggestPayroll = async (req, res, next) => {
         const year = parseInt(req.body.year) || now.getFullYear();
 
         const staffList = await User.find({ 
-            role: { $in: ['Sales', 'PT', 'Manager'] }, 
+            role: { $in: ['Sales', 'PT', 'Manager', 'Marketing'] }, 
             status: 'Active' 
         });
 
@@ -318,7 +318,7 @@ exports.exportPayrollCSV = async (req, res, next) => {
         const roleFilter = req.query.role || 'All';
 
         let query = { 
-            role: { $in: ['Sales', 'PT', 'Manager'] }, 
+            role: { $in: ['Sales', 'PT', 'Manager', 'Marketing'] }, 
             status: 'Active' 
         };
         if (roleFilter !== 'All') {

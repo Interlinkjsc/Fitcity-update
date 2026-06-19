@@ -2,6 +2,12 @@ const WorkoutSession = require('../models/workoutSessionModel');
 const User = require('../../users/models/userModel');
 const notificationService = require('../../platform/services/notificationService');
 
+function parseVNDateTime(str) {
+    if (!str) return null;
+    const s = str.length === 16 ? str + ':00' : str.substring(0, 19);
+    return new Date(s + '+07:00');
+}
+
 // GET /admin/sessions/pending
 exports.getPendingList = async (req, res, next) => {
   try {
@@ -55,7 +61,7 @@ exports.editAndApprove = async (req, res, next) => {
     const session = await WorkoutSession.findById(req.params.id);
     if (!session) { req.flash('error_msg', 'Không tìm thấy buổi tập.'); return res.redirect('/admin/sessions/pending'); }
     if (session.status !== 'Pending_Admin') { req.flash('error_msg', 'Buổi tập không ở trạng thái chờ duyệt.'); return res.redirect('/admin/sessions/pending'); }
-    if (scheduledTime) session.scheduledTime = new Date(scheduledTime);
+    if (scheduledTime) session.scheduledTime = parseVNDateTime(scheduledTime);
     if (notes) session.notes = notes;
     session.status = 'Scheduled';
     await session.save();

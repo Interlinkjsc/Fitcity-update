@@ -3,6 +3,14 @@ const workoutService = require('../../programs/services/workoutService.js');
 const notificationService = require('../../platform/services/notificationService');
 const Contract = require('../../contracts/models/contractModel.js');
 
+// datetime-local input ("2024-06-18T17:00") comes without timezone.
+// The Docker container runs UTC, so we must treat it as Vietnam time (UTC+7).
+function parseVNDateTime(str) {
+    if (!str) return null;
+    const s = str.length === 16 ? str + ':00' : str.substring(0, 19);
+    return new Date(s + '+07:00');
+}
+
 exports.checkOutSession = async (req, res, next) => {
     try {
         const sessionId = req.params.id;
@@ -280,7 +288,7 @@ exports.createDirectSession = async (req, res, next) => {
             pt: ptId,
             contract: contractId,
             branch: contract.branch || req.session.user.branch,
-            scheduledTime: new Date(scheduledTime),
+            scheduledTime: parseVNDateTime(scheduledTime),
             status: 'Pending_Admin',
             notes: notes || ''
         });
