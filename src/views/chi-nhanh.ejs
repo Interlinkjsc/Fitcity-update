@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ thống Chi nhánh - FitCity</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
+    <script>tailwind.config = { theme: { extend: { colors: { primary: '#16A34A' } } } }</script>
+    <style>body { font-family: 'Inter', sans-serif; background: #F8FAF7; }</style>
+</head>
+<body>
+    <nav class="px-6 py-4 flex justify-between items-center bg-white border-b border-slate-200 sticky top-0 z-50">
+        <a href="/" class="text-xl font-black text-primary">FITCITY</a>
+        <div class="flex gap-6 text-sm font-semibold text-slate-600">
+            <a href="/chi-nhanh" class="text-primary">Chi nhánh</a>
+            <a href="/chuong-trinh" class="hover:text-primary">Chương trình</a>
+            <a href="/blog" class="hover:text-primary">Blog</a>
+            <a href="/contact" class="hover:text-primary">Liên hệ</a>
+        </div>
+    </nav>
+
+    <main class="max-w-5xl mx-auto px-6 py-14">
+        <h1 class="text-4xl font-black text-slate-900 mb-2">Hệ thống Chi nhánh</h1>
+        <p class="text-slate-500 mb-10">Tìm phòng tập FitCity gần bạn nhất.</p>
+
+        <% if (!branches || branches.length === 0) { %>
+        <div class="text-center py-20 text-slate-400">
+            <p class="text-5xl mb-4">📍</p>
+            <p class="font-semibold">Đang cập nhật thông tin chi nhánh...</p>
+        </div>
+        <% } else { %>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <% branches.forEach(b => { %>
+            <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                <% if (b.imageUrl) { %>
+                <img src="<%= b.imageUrl %>" alt="<%= b.name %>" class="w-full h-48 object-cover">
+                <% } else { %>
+                <div class="w-full h-48 bg-gradient-to-br from-green-50 to-slate-100 flex items-center justify-center">
+                    <span class="text-5xl">🏋️</span>
+                </div>
+                <% } %>
+                <div class="p-6">
+                    <div class="flex items-start justify-between gap-2 mb-3">
+                        <h2 class="text-xl font-black text-slate-900"><%= b.name %></h2>
+                        <% if (b.isMain) { %>
+                        <span class="px-2 py-0.5 bg-primary text-white text-[10px] font-black uppercase rounded-full shrink-0">Chính</span>
+                        <% } %>
+                    </div>
+                    <% if (b.address) { %>
+                    <p class="text-sm text-slate-600 flex items-start gap-1.5 mb-1">
+                        <svg class="w-4 h-4 shrink-0 mt-0.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                        <%= b.address %><% if (b.district) { %>, <%= b.district %><% } %><% if (b.city) { %>, <%= b.city %><% } %>
+                    </p>
+                    <% } %>
+                    <% if (b.phone) { %>
+                    <p class="text-sm text-slate-600 flex items-center gap-1.5 mb-1">
+                        <svg class="w-4 h-4 shrink-0 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                        <%= b.phone %>
+                    </p>
+                    <% } %>
+                    <% if (b.hours) { %>
+                    <p class="text-sm text-slate-600 flex items-center gap-1.5 mb-3">
+                        <svg class="w-4 h-4 shrink-0 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <%= b.hours %>
+                    </p>
+                    <% } %>
+                    <% if (b.metric || b.coach) { %>
+                    <div class="flex gap-3 mt-3 pt-3 border-t border-slate-100">
+                        <% if (b.metric) { %><span class="text-xs text-slate-500 font-medium"><%= b.metric %></span><% } %>
+                        <% if (b.coach) { %><span class="text-xs text-slate-500 font-medium"><%= b.coach %></span><% } %>
+                    </div>
+                    <% } %>
+                </div>
+            </div>
+            <% }) %>
+        </div>
+        <% } %>
+
+        <div class="mt-14 text-center">
+            <a href="#" onclick="window.history.back(); return false;" class="inline-block px-6 py-3 bg-primary text-white font-bold rounded-xl hover:brightness-110 transition-all">← Trang chủ</a>
+        </div>
+    </main>
+
+    <footer class="py-10 border-t border-slate-200 bg-white mt-10">
+        <div class="max-w-5xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="text-lg font-black text-primary">FITCITY</div>
+            <div class="text-[11px] text-slate-400">© 2026 FitCity. Toàn quyền bảo lưu.</div>
+        </div>
+    </footer>
+</body>
+</html>

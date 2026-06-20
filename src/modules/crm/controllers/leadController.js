@@ -1,5 +1,9 @@
 const Lead = require('../models/leadModel.js');
 const Branch = require('../models/branchModel.js');
+const WebBranch = require('../../website/models/webBranchModel');
+const WebProgram = require('../../website/models/webProgramModel');
+const WebPost = require('../../website/models/webPostModel');
+const WebSetting = require('../../website/models/webSettingModel');
 const User = require('../../users/models/userModel.js');
 const Contract = require('../../contracts/models/contractModel.js');
 const clientManagementService = require('../../clients/services/clientManagementService.js');
@@ -37,12 +41,17 @@ async function notifyLeadCreated(lead, branchId, name, interestedPackage) {
  */
 exports.getLandingPage = async (req, res, next) => {
     try {
-        const [branches, banners, homeSeo] = await Promise.all([
+        const [branches, banners, homeSeo, webBranches, webPrograms, webSettingRows] = await Promise.all([
             Branch.find({ status: 'Open' }),
             cmsService.getPublishedBanners(),
-            cmsService.getHomeSeo()
+            cmsService.getHomeSeo(),
+            WebBranch.find({ published: true }).sort({ sort: 1 }),
+            WebProgram.find({ published: true }).sort({ sort: 1 }),
+            WebSetting.find(),
         ]);
-        res.render('landing', { branches, banners, homeSeo });
+        const webSettings = {};
+        webSettingRows.forEach(r => { webSettings[r.key] = r.value; });
+        res.render('landing', { branches, banners, homeSeo, webBranches, webPrograms, webSettings });
     } catch (err) {
         next(err);
     }
@@ -59,7 +68,7 @@ exports.getContactPage = async (req, res, next) => {
 
 exports.getBlogList = async (req, res, next) => {
     try {
-        const posts = await cmsService.getPublishedPosts(24);
+        const posts = await WebPost.find({ status: 'published' }).sort({ publishedAt: -1 }).limit(24).populate('author', 'name');
         res.render('blog/list', { posts });
     } catch (err) {
         next(err);
@@ -68,12 +77,30 @@ exports.getBlogList = async (req, res, next) => {
 
 exports.getBlogPost = async (req, res, next) => {
     try {
-        const post = await cmsService.getPostBySlug(req.params.slug);
+        const post = await WebPost.findOne({ slug: req.params.slug, status: 'published' }).populate('author', 'name');
         if (!post) {
             req.flash('error_msg', 'Bài viết không tồn tại hoặc chưa xuất bản.');
             return res.redirect('/blog');
         }
         res.render('blog/detail', { post });
+    } catch (err) {
+        next(err);
+    }
+};
+
+exports.getChiNhanh = async (req, res, next) => {
+    try {
+        const branches = await WebBranch.find({ published: true }).sort({ sort: 1 });
+        res.render('chi-nhanh', { branches });
+    } catch (err) {
+        next(err);
+    }
+};
+
+exports.getChuongTrinh = async (req, res, next) => {
+    try {
+        const programs = await WebProgram.find({ published: true }).sort({ sort: 1 });
+        res.render('chuong-trinh', { programs });
     } catch (err) {
         next(err);
     }
