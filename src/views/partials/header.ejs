@@ -203,26 +203,12 @@
                             <p class="text-[10px] font-medium text-gray-400 mt-1 uppercase tracking-wider"><%= user.role %></p>
                         </div>
                         <%
-                            const _r = user.role;
-                            const _avatarRole = _r === 'PT' ? 'pt' : _r === 'Manager' ? 'manager' : 'client';
-                            const _avatarDefault = '/images/default-avatar-' + _avatarRole + '.svg';
-                            const _isAdminRole = ['SA','Admin','CEO','Accountant','Sales','Marketing'].includes(_r);
-                            const _hasRealAvatar = user.avatar && !user.avatar.includes('default-avatar.png') && user.avatar.startsWith('http');
+                            const _hasRealAvatar = user.avatar && user.avatar.startsWith('http') && !user.avatar.includes('default-avatar');
                         %>
-                        <% if (!_hasRealAvatar && _isAdminRole) { %>
-                            <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#9333ea);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:11px;flex-shrink:0;box-shadow:0 1px 3px rgba(0,0,0,.2);">
-                                <%= (user.name || 'A').split(' ').pop().slice(0, 2).toUpperCase() %>
-                            </div>
-                        <% } else if (_hasRealAvatar) { %>
-                            <img src="<%= user.avatar %>"
-                                 style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.15);flex-shrink:0;"
-                                 alt="Avatar"
-                                 onerror="this.src='<%= _avatarDefault %>'">
-                        <% } else { %>
-                            <img src="<%= _avatarDefault %>"
-                                 style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.15);flex-shrink:0;"
-                                 alt="Avatar">
-                        <% } %>
+                        <img src="<%= _hasRealAvatar ? user.avatar : '/images/default-avatar-client.svg' %>"
+                             style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.15);flex-shrink:0;background:#EFF6FF;"
+                             alt="Avatar"
+                             onerror="this.onerror=null;this.src='/images/default-avatar-client.svg'">
                     </a>
 
                     <div class="flex items-center gap-1 ml-2">

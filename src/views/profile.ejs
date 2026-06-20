@@ -23,24 +23,12 @@
                     <!-- Avatar Section -->
                     <div class="relative group mx-auto md:mx-0">
                         <%
-                            const _pr = user.role;
-                            const _pAvatarRole = _pr === 'PT' ? 'pt' : _pr === 'Manager' ? 'manager' : 'client';
-                            const _pAvatarDefault = '/images/default-avatar-' + _pAvatarRole + '.svg';
-                            const _pIsAdminRole = ['SA','Admin','CEO','Accountant','Sales','Marketing'].includes(_pr);
-                            const _pHasRealAvatar = user.avatar && !user.avatar.includes('default-avatar.png') && user.avatar.startsWith('http');
+                            const _pHasRealAvatar = user.avatar && user.avatar.startsWith('http') && !user.avatar.includes('default-avatar');
                         %>
-                        <% if (!_pHasRealAvatar && _pIsAdminRole) { %>
-                            <div style="width:128px;height:128px;border-radius:12px;background:linear-gradient(135deg,#6366f1,#9333ea);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:2.5rem;box-shadow:0 2px 8px rgba(0,0,0,.18);border:2px solid #e2e8f0;">
-                                <%= (user.name || 'A').split(' ').pop().slice(0, 2).toUpperCase() %>
-                            </div>
-                        <% } else if (_pHasRealAvatar) { %>
-                            <img src="<%= user.avatar %>" alt="Avatar"
-                                 class="w-32 h-32 rounded-lg border-2 border-slate-100 shadow-sm object-cover bg-white"
-                                 onerror="this.src='<%= _pAvatarDefault %>'">
-                        <% } else { %>
-                            <img src="<%= _pAvatarDefault %>" alt="Avatar"
-                                 class="w-32 h-32 rounded-lg border-2 border-slate-100 shadow-sm object-cover bg-white">
-                        <% } %>
+                        <img src="<%= _pHasRealAvatar ? user.avatar : '/images/default-avatar-client.svg' %>"
+                             alt="Avatar"
+                             style="width:128px;height:128px;border-radius:12px;border:2px solid #e2e8f0;box-shadow:0 1px 4px rgba(0,0,0,.1);object-fit:cover;background:#EFF6FF;"
+                             onerror="this.onerror=null;this.src='/images/default-avatar-client.svg'">
                         <div class="absolute -bottom-2 -right-2 p-2 bg-white rounded-full shadow-md border border-slate-100 text-slate-500 hover:text-lime-600 cursor-pointer transition-colors">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                         </div>
