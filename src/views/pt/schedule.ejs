@@ -20,14 +20,14 @@
             --fc-neutral-text-color: #64748B;
         }
         
+        #calendar-wrapper { overflow-x: auto; width: 100%; }
         #calendar {
             min-height: 500px;
-            min-width: 560px;
             width: 100%;
             font-family: 'Inter', sans-serif;
         }
-        
-        /* Responsive toolbar — prevent title from wrapping on mobile */
+
+        /* Responsive toolbar */
         .fc .fc-toolbar.fc-header-toolbar {
             display: flex;
             flex-wrap: nowrap;
@@ -54,13 +54,10 @@
             word-break: keep-all !important;
             overflow: hidden;
             text-overflow: ellipsis;
-            max-width: 200px;
         }
         @media (max-width: 640px) {
-            .fc .fc-toolbar.fc-header-toolbar { flex-wrap: nowrap; }
-            .fc .fc-toolbar-chunk:nth-child(2) { flex: 1; min-width: 0; justify-content: center; overflow: hidden; }
-            .fc .fc-toolbar-title { font-size: 0.78rem !important; white-space: nowrap !important; word-break: keep-all !important; max-width: 160px; }
-            .fc .fc-button { padding: 0.25rem 0.5rem !important; font-size: 0.68rem !important; }
+            .fc .fc-toolbar-title { font-size: 0.82rem !important; }
+            .fc .fc-button { padding: 0.3rem 0.6rem !important; font-size: 0.72rem !important; }
         }
 
         .fc-button-primary {
@@ -136,7 +133,7 @@
                     Lên lịch tập cho Khách hàng
                 </button>
             </div>
-            <div id='calendar'></div>
+            <div id="calendar-wrapper"><div id='calendar'></div></div>
         </div>
     </main>
 

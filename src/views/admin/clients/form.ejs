@@ -32,7 +32,7 @@
             </div>
 
             <div>
-                <label for="password" class="block text-sm font-medium text-slate-700 mb-1">Mật khẩu <%= isEdit ? '(chỉ nhập khi đổi mật khẩu)' : '<span class="text-red-500">*</span>' %></label>
+                <label for="password" class="block text-sm font-medium text-slate-700 mb-1">Mật khẩu <%- isEdit ? '(chỉ nhập khi đổi mật khẩu)' : '<span class="text-red-500">*</span>' %></label>
                 <input type="password" id="password" name="password" minlength="6" maxlength="128" <%= isEdit ? '' : 'required' %>
                     class="block w-full rounded-md border-slate-300 shadow-sm focus:border-lime-500 focus:ring focus:ring-lime-500 text-sm py-2 px-3 border bg-white"
                     placeholder="Tối thiểu 6 ký tự">
