@@ -49,10 +49,10 @@
                         <tr class="hover:bg-slate-50/70 transition-colors">
                             <td class="p-4">
                                 <div class="flex items-center">
-                                    <img class="h-10 w-10 rounded-full border border-slate-200 object-cover" src="<%= client.avatar || '/images/default-avatar.png' %>" alt="">
+                                    <img class="h-10 w-10 rounded-full border border-slate-200 object-cover" src="<%= client.avatar || '/images/default-avatar-client.svg' %>" alt="" onerror="this.src='/images/default-avatar-client.svg'">
                                     <div class="ml-4">
                                         <div class="font-semibold text-slate-800"><%= client.name || 'Chưa cập nhật' %></div>
-                                        <div class="text-xs text-slate-500">ID: <%= client._id %></div>
+                                        <% if (client.referralCode) { %><div class="text-xs text-slate-400">Mã: <%= client.referralCode %></div><% } %>
                                     </div>
                                 </div>
                             </td>

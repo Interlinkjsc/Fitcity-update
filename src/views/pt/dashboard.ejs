@@ -20,7 +20,7 @@
             <% } %>
         </button>
         <a href="/auth/profile" class="h-10 w-10 rounded-full border-2 border-primary/30 overflow-hidden shadow-sm hover:scale-105 transition-transform">
-            <img alt="PT Avatar" class="h-full w-full object-cover" src="<%= user && user.avatar ? user.avatar : 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.name) + '&background=ccff00&color=121212' %>"/>
+            <img alt="PT Avatar" class="h-full w-full object-cover" src="<%= user && user.avatar ? user.avatar : '/images/default-avatar-pt.svg' %>" onerror="this.src='/images/default-avatar-pt.svg'"/>
         </a>
     </div>
 </header>

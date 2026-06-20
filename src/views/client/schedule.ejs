@@ -96,6 +96,16 @@
         
         .fc-event-title, .fc-event-time {
             font-weight: 700 !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            white-space: nowrap !important;
+        }
+        .fc-daygrid-event {
+            overflow: hidden !important;
+        }
+        @media (max-width: 480px) {
+            .fc-event-title { font-size: 0.65rem !important; }
+            .fc-daygrid-event-dot { display: none !important; }
         }
         
         /* Modal background */

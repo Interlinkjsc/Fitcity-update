@@ -16,11 +16,11 @@
 <!-- Revenue Summary Cards -->
 <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
     <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm border-l-4 border-l-blue-500">
-        <p class="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">Tổng DT trước thuế (net)</p>
+        <p class="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">Tổng giá trị HĐ (trước thuế)</p>
         <h3 class="text-xl font-extrabold text-blue-600"><%= new Intl.NumberFormat('vi-VN').format(typeof totalBeforeTax !== 'undefined' ? totalBeforeTax : 0) %> <small class="text-xs font-normal text-slate-400">VNĐ</small></h3>
     </div>
     <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm border-l-4 border-l-emerald-500">
-        <p class="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">Tổng DT sau thuế (VAT)</p>
+        <p class="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">Tổng giá trị HĐ (sau thuế)</p>
         <h3 class="text-xl font-extrabold text-emerald-600"><%= new Intl.NumberFormat('vi-VN').format(typeof totalAfterTax !== 'undefined' ? totalAfterTax : 0) %> <small class="text-xs font-normal text-slate-400">VNĐ</small></h3>
     </div>
     <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm border-l-4 border-l-lime-500">

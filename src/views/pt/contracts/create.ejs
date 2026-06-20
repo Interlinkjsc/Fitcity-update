@@ -258,7 +258,7 @@
                             <div class="flex justify-between items-center mb-1">
                                 <span class="text-[9px] font-black text-slate-500 uppercase">Thanh toán</span>
                                 <span class="text-[9px] font-black uppercase px-2 py-0.5 rounded-full" 
-                                    :class="paymentStatus === 'Paid' ? 'bg-primary text-white' : 'bg-amber-500 text-white'" x-text="paymentStatusLabel"></span>
+                                    :class="paymentStatus === 'Paid' ? 'bg-primary text-white' : paymentStatus === 'Deposit' ? 'bg-amber-500 text-white' : 'bg-slate-500 text-white'" x-text="paymentStatusLabel"></span>
                             </div>
                             <p class="text-xl font-black text-primary italic" x-text="new Intl.NumberFormat('vi-VN').format(totalPrice) + ' VNĐ'"></p>
                         </div>

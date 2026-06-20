@@ -127,6 +127,7 @@ exports.getPayrollSummary = async (req, res, next) => {
         const roleFilter = req.query.role || 'All';
         const payStatus = req.query.payStatus || 'all';
         const branchFilter = req.query.branchId || 'all';
+        const staffName = (req.query.staffName || '').trim();
         const page = parseInt(req.query.page, 10) || 1;
         const limit = 10;
         const skip = (page - 1) * limit;
@@ -137,6 +138,9 @@ exports.getPayrollSummary = async (req, res, next) => {
         };
         if (roleFilter !== 'All') {
             staffQuery.role = roleFilter;
+        }
+        if (staffName) {
+            staffQuery.name = { $regex: staffName, $options: 'i' };
         }
         if (req.session.user.role === 'Manager' && req.session.user.branch) {
             staffQuery.branch = req.session.user.branch;
@@ -179,6 +183,7 @@ exports.getPayrollSummary = async (req, res, next) => {
             role: roleFilter,
             payStatus,
             branchId: branchFilter,
+            staffName,
             branches,
             isManager: req.session.user.role === 'Manager',
             canManagePayroll,
@@ -329,6 +334,7 @@ exports.exportPayrollCSV = async (req, res, next) => {
         const month = parseInt(req.query.month) || (now.getMonth() + 1);
         const year = parseInt(req.query.year) || now.getFullYear();
         const roleFilter = req.query.role || 'All';
+        const staffNameFilter = (req.query.staffName || '').trim();
 
         let query = {
             role: { $in: ['Sales', 'PT', 'Manager', 'Marketing', 'CEO', 'Admin', 'Accountant'] },
@@ -336,6 +342,9 @@ exports.exportPayrollCSV = async (req, res, next) => {
         };
         if (roleFilter !== 'All') {
             query.role = roleFilter;
+        }
+        if (staffNameFilter) {
+            query.name = { $regex: staffNameFilter, $options: 'i' };
         }
 
         const staffList = await User.find(query);
