@@ -121,8 +121,14 @@
         --fc-button-hover-bg-color: #0f172a;
         --fc-button-active-bg-color: #0f172a;
     }
-    #calendar { max-width: 100%; margin: 0 auto; }
-    .fc-toolbar-title { font-weight: 800 !important; font-size: 1.1rem !important; }
+    #calendar { max-width: 100%; margin: 0 auto; min-width: 320px; }
+    .fc-toolbar-title { font-weight: 800 !important; font-size: 1.1rem !important; white-space: nowrap !important; word-break: keep-all !important; overflow: hidden; text-overflow: ellipsis; }
+    .fc .fc-toolbar.fc-header-toolbar { flex-wrap: nowrap; gap: 4px; }
+    .fc .fc-toolbar-chunk:nth-child(2) { flex: 1; min-width: 0; justify-content: center; overflow: hidden; }
+    @media (max-width: 768px) {
+        .fc-toolbar-title { font-size: 0.8rem !important; }
+        .fc .fc-button { padding: 0.25rem 0.5rem !important; font-size: 0.68rem !important; }
+    }
     .fc-event { cursor: pointer; border: none !important; padding: 1px 2px !important; border-radius: 4px !important; }
     .fc-event-title { font-size: 0.75rem !important; font-weight: 700 !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; }
     .fc-timegrid-slot { height: 2.5em !important; }
@@ -144,9 +150,14 @@
         var calendarEl = document.getElementById('calendar');
         if (!calendarEl || calendarApp) return;
 
+        const _slotMob = window.innerWidth < 768;
         calendarApp = new FullCalendar.Calendar(calendarEl, {
-            initialView: window.innerWidth < 768 ? 'timeGridDay' : 'timeGridWeek',
-            headerToolbar: {
+            initialView: _slotMob ? 'timeGridDay' : 'timeGridWeek',
+            headerToolbar: _slotMob ? {
+                left: 'prev,next',
+                center: 'title',
+                right: 'today'
+            } : {
                 left: 'prev,next today',
                 center: 'title',
                 right: 'dayGridMonth,timeGridWeek,timeGridDay'

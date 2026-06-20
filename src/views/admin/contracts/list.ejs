@@ -68,18 +68,27 @@
     </div>
     
     <script>
+        function _normVi(s) {
+            return s.normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
+        }
         const contractSearchInput = document.getElementById('contractSearch');
         if (contractSearchInput) {
             contractSearchInput.addEventListener('input', filterContracts);
+            contractSearchInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') { e.preventDefault(); filterContracts(); }
+            });
         }
+        const searchIconEl = contractSearchInput && contractSearchInput.previousElementSibling;
+        if (searchIconEl) searchIconEl.style.cursor = 'pointer', searchIconEl.addEventListener('click', filterContracts);
 
         function filterContracts() {
             const status = document.getElementById('statusFilter').value;
-            const keyword = (document.getElementById('contractSearch')?.value || '').toLowerCase().trim();
+            const raw = (document.getElementById('contractSearch')?.value || '').trim();
+            const keyword = _normVi(raw);
             const rows = document.querySelectorAll('tbody tr');
-            
+
             rows.forEach(row => {
-                const text = row.innerText.toLowerCase();
+                const text = _normVi(row.innerText);
                 let matchStatus = true;
                 let matchKeyword = !keyword || text.includes(keyword);
 
