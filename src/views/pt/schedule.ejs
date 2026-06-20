@@ -26,13 +26,47 @@
             font-family: 'Inter', sans-serif;
         }
         
+        /* Responsive toolbar — prevent title from wrapping on mobile */
+        .fc .fc-toolbar.fc-header-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 12px !important;
+            align-items: center;
+        }
+        .fc .fc-toolbar-chunk {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
         .fc-toolbar-title {
-            font-size: 1.25rem !important;
+            font-size: 1rem !important;
             font-weight: 800 !important;
             text-transform: capitalize;
             color: #0F172A;
+            white-space: nowrap;
         }
-        
+        @media (max-width: 640px) {
+            /* Stack: view-toggle row on top, then prev/title/next below */
+            .fc .fc-toolbar.fc-header-toolbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .fc .fc-toolbar-chunk:last-child {
+                order: -1;
+                justify-content: center;
+            }
+            .fc .fc-toolbar-chunk:first-child {
+                justify-content: center;
+            }
+            .fc .fc-toolbar-chunk:nth-child(2) {
+                justify-content: center;
+            }
+            .fc-toolbar-title { font-size: 0.9rem !important; }
+            .fc .fc-button { padding: 0.3rem 0.5rem !important; font-size: 0.7rem !important; }
+        }
+
         .fc-button-primary {
             background-color: #16A34A !important;
             border-color: #16A34A !important;
@@ -64,8 +98,22 @@
         
         .fc-event-title, .fc-event-time {
             font-weight: 700 !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            white-space: nowrap !important;
         }
-        
+        .fc-daygrid-event, .fc-timegrid-event { overflow: hidden !important; }
+        .fc-timegrid-event .fc-event-main { overflow: hidden !important; padding: 2px 4px !important; }
+        .fc-timegrid-event .fc-event-title { font-size: 0.72rem !important; }
+        .fc-timegrid-event .fc-event-time { font-size: 0.65rem !important; }
+        .fc-col-header-cell-cushion { font-size: 0.72rem !important; font-weight: 700 !important; padding: 4px 2px !important; }
+        .fc-timegrid-slot-label { font-size: 0.65rem !important; }
+        @media (max-width: 480px) {
+            .fc-timegrid-event .fc-event-title { font-size: 0.6rem !important; }
+            .fc-col-header-cell-cushion { font-size: 0.6rem !important; }
+            .fc-timegrid-slot-label { font-size: 0.55rem !important; }
+        }
+
         /* Modal background */
         #eventModal {
             display: none;
