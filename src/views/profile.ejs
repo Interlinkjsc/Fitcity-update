@@ -22,13 +22,17 @@
                 <div class="flex flex-col md:flex-row gap-8 items-start mb-8 pb-8 border-b border-slate-100">
                     <!-- Avatar Section -->
                     <div class="relative group mx-auto md:mx-0">
-                        <%
-                            const _pHasRealAvatar = user.avatar && user.avatar.startsWith('http') && !user.avatar.includes('default-avatar');
-                        %>
-                        <img src="<%= _pHasRealAvatar ? user.avatar : '/images/default-avatar-client.svg' %>"
-                             alt="Avatar"
-                             style="width:128px;height:128px;border-radius:12px;border:2px solid #e2e8f0;box-shadow:0 1px 4px rgba(0,0,0,.1);object-fit:cover;background:#EFF6FF;"
-                             onerror="this.onerror=null;this.src='/images/default-avatar-client.svg'">
+                        <% const _pHasRealAvatar = user.avatar && user.avatar.startsWith('http') && !user.avatar.includes('default-avatar'); %>
+                        <% if (_pHasRealAvatar) { %>
+                            <img src="<%= user.avatar %>" alt="Avatar"
+                                 style="width:128px;height:128px;border-radius:12px;border:2px solid #e2e8f0;box-shadow:0 1px 4px rgba(0,0,0,.1);object-fit:cover;">
+                        <% } else { %>
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" width="128" height="128" style="border-radius:12px;border:2px solid #e2e8f0;display:block;">
+                                <circle cx="20" cy="20" r="20" fill="#E0F2FE"/>
+                                <circle cx="20" cy="16" r="6" fill="#0EA5E9"/>
+                                <ellipse cx="20" cy="30" rx="10" ry="6" fill="#0EA5E9"/>
+                            </svg>
+                        <% } %>
                         <div class="absolute -bottom-2 -right-2 p-2 bg-white rounded-full shadow-md border border-slate-100 text-slate-500 hover:text-lime-600 cursor-pointer transition-colors">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                         </div>
