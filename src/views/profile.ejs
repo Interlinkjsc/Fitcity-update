@@ -30,7 +30,7 @@
                             const _pHasRealAvatar = user.avatar && !user.avatar.includes('default-avatar.png') && user.avatar.startsWith('http');
                         %>
                         <% if (!_pHasRealAvatar && _pIsAdminRole) { %>
-                            <div class="w-32 h-32 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-black text-4xl shadow-sm border-2 border-slate-100">
+                            <div style="width:128px;height:128px;border-radius:12px;background:linear-gradient(135deg,#6366f1,#9333ea);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:2.5rem;box-shadow:0 2px 8px rgba(0,0,0,.18);border:2px solid #e2e8f0;">
                                 <%= (user.name || 'A').split(' ').pop().slice(0, 2).toUpperCase() %>
                             </div>
                         <% } else if (_pHasRealAvatar) { %>

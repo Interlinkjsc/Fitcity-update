@@ -210,17 +210,17 @@
                             const _hasRealAvatar = user.avatar && !user.avatar.includes('default-avatar.png') && user.avatar.startsWith('http');
                         %>
                         <% if (!_hasRealAvatar && _isAdminRole) { %>
-                            <div class="h-9 w-9 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-black text-xs shadow-sm ring-1 ring-white flex-shrink-0">
+                            <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#9333ea);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:11px;flex-shrink:0;box-shadow:0 1px 3px rgba(0,0,0,.2);">
                                 <%= (user.name || 'A').split(' ').pop().slice(0, 2).toUpperCase() %>
                             </div>
                         <% } else if (_hasRealAvatar) { %>
                             <img src="<%= user.avatar %>"
-                                 class="h-9 w-9 rounded-full object-cover border-2 border-white shadow-sm ring-1 ring-gray-100"
+                                 style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.15);flex-shrink:0;"
                                  alt="Avatar"
                                  onerror="this.src='<%= _avatarDefault %>'">
                         <% } else { %>
                             <img src="<%= _avatarDefault %>"
-                                 class="h-9 w-9 rounded-full object-cover border-2 border-white shadow-sm ring-1 ring-gray-100"
+                                 style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.15);flex-shrink:0;"
                                  alt="Avatar">
                         <% } %>
                     </a>
