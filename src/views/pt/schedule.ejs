@@ -132,7 +132,7 @@
     </header>
 
     <main class="px-6 relative">
-        <div class="glass rounded-[32px] p-6 mb-8 mt-2 overflow-hidden bg-white shadow-sm">
+        <div class="glass rounded-[32px] p-4 md:p-6 mb-8 mt-2 bg-white shadow-sm" style="overflow-x:auto;">
             <div class="flex justify-between items-center mb-4">
                 <span></span>
                 <button onclick="openCreateSessionModal()" class="flex items-center gap-2 px-5 py-2.5 bg-primary text-white text-sm font-bold rounded-xl hover:bg-green-700 transition-all shadow-md">
@@ -257,7 +257,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             const calendarEl = document.getElementById('calendar');
             calendarApp = new FullCalendar.Calendar(calendarEl, {
-                initialView: 'timeGridWeek',
+                initialView: window.innerWidth < 640 ? 'timeGridDay' : 'timeGridWeek',
                 headerToolbar: {
                     left: 'prev,next today',
                     center: 'title',
