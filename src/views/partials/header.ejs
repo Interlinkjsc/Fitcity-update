@@ -203,13 +203,21 @@
                             <p class="text-[10px] font-medium text-gray-400 mt-1 uppercase tracking-wider"><%= user.role %></p>
                         </div>
                         <%
-                            const _avatarRole = user.role === 'PT' ? 'pt' : user.role === 'Manager' ? 'manager' : 'client';
+                            const _r = user.role;
+                            const _avatarRole = _r === 'PT' ? 'pt' : _r === 'Manager' ? 'manager' : 'client';
                             const _avatarDefault = '/images/default-avatar-' + _avatarRole + '.svg';
+                            const _isAdminRole = ['SA','Admin','CEO','Accountant','Sales','Marketing'].includes(_r);
                         %>
-                        <img src="<%= user.avatar || _avatarDefault %>"
-                             class="h-9 w-9 rounded-full object-cover border-2 border-white shadow-sm ring-1 ring-gray-100"
-                             alt="Avatar"
-                             onerror="this.src='<%= _avatarDefault %>'">
+                        <% if (!user.avatar && _isAdminRole) { %>
+                            <div class="h-9 w-9 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-black text-xs shadow-sm ring-1 ring-white flex-shrink-0">
+                                <%= (user.name || 'A').split(' ').pop().slice(0, 2).toUpperCase() %>
+                            </div>
+                        <% } else { %>
+                            <img src="<%= user.avatar || _avatarDefault %>"
+                                 class="h-9 w-9 rounded-full object-cover border-2 border-white shadow-sm ring-1 ring-gray-100"
+                                 alt="Avatar"
+                                 onerror="this.src='<%= _avatarDefault %>'">
+                        <% } %>
                     </a>
 
                     <div class="flex items-center gap-1 ml-2">
