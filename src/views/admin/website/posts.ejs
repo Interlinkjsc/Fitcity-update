@@ -1,0 +1,56 @@
+<%- include('../../partials/header', { title: 'Bài viết Website', activePage: 'website' }) %>
+
+<div class="mb-6 flex items-center justify-between">
+    <div>
+        <h2 class="text-2xl font-bold text-slate-800">Bài viết Website</h2>
+        <p class="text-slate-500 text-sm mt-1">Quản lý blog và tin tức trên website công khai.</p>
+    </div>
+    <a href="/admin/website/posts/create" class="flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-sm font-bold rounded-lg shadow-sm transition-all">
+        <span class="material-symbols-outlined text-[18px]">edit_note</span> Viết bài mới
+    </a>
+</div>
+
+<div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+    <table class="w-full text-sm">
+        <thead class="bg-slate-50 border-b border-slate-200">
+            <tr>
+                <th class="text-left px-4 py-3 font-semibold text-slate-600">Tiêu đề</th>
+                <th class="text-left px-4 py-3 font-semibold text-slate-600 hidden md:table-cell">Tác giả</th>
+                <th class="text-center px-4 py-3 font-semibold text-slate-600">Trạng thái</th>
+                <th class="text-left px-4 py-3 font-semibold text-slate-600 hidden md:table-cell">Ngày đăng</th>
+                <th class="text-right px-4 py-3 font-semibold text-slate-600">Thao tác</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+            <% if (posts.length === 0) { %>
+            <tr><td colspan="5" class="text-center text-slate-400 py-8 italic">Chưa có bài viết nào.</td></tr>
+            <% } %>
+            <% posts.forEach(p => { %>
+            <tr class="hover:bg-slate-50">
+                <td class="px-4 py-3 font-bold text-slate-800"><%= p.title %></td>
+                <td class="px-4 py-3 text-slate-600 hidden md:table-cell"><%= p.author ? p.author.name : '—' %></td>
+                <td class="px-4 py-3 text-center">
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase <%= p.status === 'published' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700' %>">
+                        <%= p.status === 'published' ? 'Đã đăng' : 'Nháp' %>
+                    </span>
+                </td>
+                <td class="px-4 py-3 text-slate-500 text-xs hidden md:table-cell">
+                    <%= p.publishedAt ? new Date(p.publishedAt).toLocaleDateString('vi-VN') : '—' %>
+                </td>
+                <td class="px-4 py-3 text-right">
+                    <a href="/admin/website/posts/edit/<%= p._id %>" class="inline-flex items-center px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-lg mr-1">
+                        <span class="material-symbols-outlined text-[14px]">edit</span>
+                    </a>
+                    <form action="/admin/website/posts/delete/<%= p._id %>" method="POST" class="inline" onsubmit="return confirm('Xoá bài viết này?')">
+                        <button type="submit" class="inline-flex items-center px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 text-xs font-bold rounded-lg">
+                            <span class="material-symbols-outlined text-[14px]">delete</span>
+                        </button>
+                    </form>
+                </td>
+            </tr>
+            <% }) %>
+        </tbody>
+    </table>
+</div>
+
+<%- include('../../partials/footer') %>
