@@ -26,7 +26,7 @@
             <% mealPlans.forEach(plan => { %>
                 <div class="glass p-6 rounded-[32px] group hover:border-primary/30 transition-all shadow-sm">
                     <div class="flex items-center gap-4 mb-6">
-                        <img src="<%= plan.client.avatar || '/images/default-avatar.png' %>" class="w-14 h-14 rounded-2xl object-cover border border-slate-200">
+                        <img src="<%= plan.client.avatar || '/images/default-avatar-client.svg' %>" class="w-14 h-14 rounded-2xl object-cover border border-slate-200">
                         <div class="flex-1">
                             <h3 class="font-bold text-lg text-slate-900"><%= plan.client.name %></h3>
                             <div class="flex gap-2 mt-1">
