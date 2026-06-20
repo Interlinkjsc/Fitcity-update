@@ -51,26 +51,16 @@
             font-weight: 800 !important;
             color: #0F172A;
             white-space: nowrap !important;
+            word-break: keep-all !important;
             overflow: hidden;
             text-overflow: ellipsis;
+            max-width: 200px;
         }
         @media (max-width: 640px) {
-            /* Stack view buttons on top, nav+title on bottom row */
-            .fc .fc-toolbar.fc-header-toolbar {
-                flex-wrap: wrap;
-                flex-direction: row;
-            }
-            .fc .fc-toolbar-chunk:last-child {
-                order: -1;
-                width: 100%;
-                justify-content: center;
-                margin-bottom: 4px;
-            }
-            .fc .fc-toolbar-chunk:first-child { flex-shrink: 0; }
-            .fc .fc-toolbar-chunk:nth-child(2) { flex: 1; min-width: 0; justify-content: center; }
-            .fc .fc-toolbar-title { font-size: 0.75rem !important; white-space: nowrap !important; }
-            .fc .fc-button { padding: 0.25rem 0.4rem !important; font-size: 0.65rem !important; }
-            .fc .fc-button-group .fc-button { padding: 0.25rem 0.5rem !important; }
+            .fc .fc-toolbar.fc-header-toolbar { flex-wrap: nowrap; }
+            .fc .fc-toolbar-chunk:nth-child(2) { flex: 1; min-width: 0; justify-content: center; overflow: hidden; }
+            .fc .fc-toolbar-title { font-size: 0.78rem !important; white-space: nowrap !important; word-break: keep-all !important; max-width: 160px; }
+            .fc .fc-button { padding: 0.25rem 0.5rem !important; font-size: 0.68rem !important; }
         }
 
         .fc-button-primary {
@@ -262,9 +252,14 @@
 
         document.addEventListener('DOMContentLoaded', function() {
             const calendarEl = document.getElementById('calendar');
+            const _mob = window.innerWidth < 640;
             calendarApp = new FullCalendar.Calendar(calendarEl, {
-                initialView: window.innerWidth < 640 ? 'timeGridDay' : 'timeGridWeek',
-                headerToolbar: {
+                initialView: _mob ? 'timeGridDay' : 'timeGridWeek',
+                headerToolbar: _mob ? {
+                    left: 'prev,next',
+                    center: 'title',
+                    right: 'today'
+                } : {
                     left: 'prev,next today',
                     center: 'title',
                     right: 'dayGridMonth,timeGridWeek,timeGridDay'
