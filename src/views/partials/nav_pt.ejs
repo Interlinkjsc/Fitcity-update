@@ -7,7 +7,7 @@
     </a>
     <div class="flex items-center gap-1">
         <a href="/pt" class="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold transition-all <%= activePage === 'dashboard' ? 'text-primary bg-primary/10' : 'text-slate-500 hover:text-primary hover:bg-slate-50' %>">
-            <span class="material-symbols-outlined text-[18px]">calendar_month</span> Lịch dạy
+            <span class="material-symbols-outlined text-[18px]">home</span> Trang chủ
         </a>
         <a href="/pt/schedule" class="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold transition-all <%= activePage === 'pt-slots' ? 'text-primary bg-primary/10' : 'text-slate-500 hover:text-primary hover:bg-slate-50' %>">
             <span class="material-symbols-outlined text-[18px]">calendar_add_on</span> Lịch dạy
@@ -38,9 +38,9 @@
 <!-- Mobile bottom nav (hidden on lg and up — desktop uses the top nav above) -->
 <nav class="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[95%] max-w-lg z-50">
     <div class="bg-white/95 backdrop-blur-xl border border-slate-200 rounded-full px-2 py-3 grid grid-cols-8 items-center shadow-xl">
-        <a class="flex flex-col items-center gap-1 <%= activePage === 'dashboard' ? 'text-primary' : 'text-slate-500 hover:text-primary' %> transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 rounded-xl" href="/pt" aria-label="Lịch dạy">
-            <span class="material-symbols-outlined text-[20px] <%= activePage === 'dashboard' ? 'fill-[1]' : '' %>">calendar_month</span>
-            <span class="text-[7px] font-black uppercase tracking-tighter leading-none">Lịch dạy</span>
+        <a class="flex flex-col items-center gap-1 <%= activePage === 'dashboard' ? 'text-primary' : 'text-slate-500 hover:text-primary' %> transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 rounded-xl" href="/pt" aria-label="Trang chủ">
+            <span class="material-symbols-outlined text-[20px] <%= activePage === 'dashboard' ? 'fill-[1]' : '' %>">home</span>
+            <span class="text-[7px] font-black uppercase tracking-tighter leading-none">Trang chủ</span>
         </a>
         <a class="flex flex-col items-center gap-1 <%= activePage === 'pt-slots' ? 'text-primary' : 'text-slate-500 hover:text-primary' %> transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 rounded-xl" href="/pt/schedule" aria-label="Lịch dạy">
             <span class="material-symbols-outlined text-[20px] <%= activePage === 'pt-slots' ? 'fill-[1]' : '' %>">calendar_add_on</span>

@@ -202,13 +202,14 @@
                             <p class="text-sm font-bold text-gray-800 leading-none group-hover:text-primary transition-colors"><%= user.name %></p>
                             <p class="text-[10px] font-medium text-gray-400 mt-1 uppercase tracking-wider"><%= user.role %></p>
                         </div>
-                        <% if (user.avatar) { %>
-                            <img src="<%= user.avatar %>" class="h-9 w-9 rounded-full object-cover border-2 border-white shadow-sm ring-1 ring-gray-100" alt="Avatar">
-                        <% } else { %>
-                            <div class="h-9 w-9 rounded-full bg-gradient-to-br from-lime-400 to-green-500 flex items-center justify-center text-white font-black text-xs shadow-sm ring-1 ring-white">
-                                <%= user.name.split(' ').pop().slice(0, 2).toUpperCase() %>
-                            </div>
-                        <% } %>
+                        <%
+                            const _avatarRole = user.role === 'PT' ? 'pt' : user.role === 'Manager' ? 'manager' : 'client';
+                            const _avatarDefault = '/images/default-avatar-' + _avatarRole + '.svg';
+                        %>
+                        <img src="<%= user.avatar || _avatarDefault %>"
+                             class="h-9 w-9 rounded-full object-cover border-2 border-white shadow-sm ring-1 ring-gray-100"
+                             alt="Avatar"
+                             onerror="this.src='<%= _avatarDefault %>'">
                     </a>
 
                     <div class="flex items-center gap-1 ml-2">

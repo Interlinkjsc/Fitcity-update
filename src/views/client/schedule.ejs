@@ -100,12 +100,40 @@
             text-overflow: ellipsis !important;
             white-space: nowrap !important;
         }
-        .fc-daygrid-event {
+        .fc-daygrid-event, .fc-timegrid-event {
             overflow: hidden !important;
         }
+        /* Weekly view (timeGridWeek) */
+        .fc-timegrid-event .fc-event-main {
+            overflow: hidden !important;
+            padding: 2px 4px !important;
+        }
+        .fc-timegrid-event .fc-event-title {
+            font-size: 0.72rem !important;
+            line-height: 1.2 !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+        }
+        .fc-timegrid-event .fc-event-time {
+            font-size: 0.65rem !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+        }
+        .fc-col-header-cell-cushion {
+            font-size: 0.72rem !important;
+            font-weight: 700 !important;
+            padding: 4px 2px !important;
+        }
+        .fc-timegrid-slot-label {
+            font-size: 0.65rem !important;
+        }
         @media (max-width: 480px) {
-            .fc-event-title { font-size: 0.65rem !important; }
+            .fc-event-title { font-size: 0.6rem !important; }
             .fc-daygrid-event-dot { display: none !important; }
+            .fc-timegrid-event .fc-event-title { font-size: 0.6rem !important; }
+            .fc-col-header-cell-cushion { font-size: 0.6rem !important; padding: 2px 1px !important; }
+            .fc-timegrid-slot-label { font-size: 0.55rem !important; }
         }
         
         /* Modal background */
