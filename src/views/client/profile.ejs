@@ -197,9 +197,9 @@
                     body: JSON.stringify(data)
                 });
                 const result = await res.json();
-                if (result.status === 'success') { alert('Đổi mật khẩu thành công!'); closeChangePassword(); }
-                else { alert(result.message || 'Có lỗi xảy ra'); }
-            } catch (err) { alert('Lỗi kết nối server'); }
+                if (result.status === 'success') { alert('Đổi mật khẩu thành công'); closeChangePassword(); }
+                else { alert('Đổi mật khẩu không thành công'); }
+            } catch (err) { alert('Đổi mật khẩu không thành công'); }
         });
     </script>
 </body>
