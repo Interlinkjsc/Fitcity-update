@@ -54,7 +54,7 @@
                 <p class="text-slate-600 text-xs mt-2 leading-relaxed">
                     <strong><%= nextSession.workoutPlan || 'Buổi tập cá nhân' %></strong>
                     · HLV <%= nextSession.pt && nextSession.pt.name ? nextSession.pt.name : '—' %>
-                    · <%= new Date(nextSession.scheduledTime).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false, day: '2-digit', month: '2-digit' }) %>
+                    · <%= new Date(nextSession.scheduledTime).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', hour: '2-digit', minute: '2-digit', hour12: false, day: '2-digit', month: '2-digit' }) %>
                 </p>
             <% } else { %>
                 <p class="text-lg font-black text-slate-900 mt-1">Chưa có lịch</p>

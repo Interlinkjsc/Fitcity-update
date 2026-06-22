@@ -49,6 +49,11 @@ function buildContractListFilter(user, query = {}) {
         }
     }
 
+    if (query.search && query.search.trim()) {
+        const re = new RegExp(query.search.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+        conditions.push({ contractCode: re });
+    }
+
     if (query.status && query.status !== 'all') {
         const statusMap = {
             frozen: { contractStatus: 'Paused' },

@@ -80,7 +80,7 @@
                                 <div class="flex items-center gap-2 mt-2">
                                     <span class="text-[10px] text-slate-500 font-bold uppercase tracking-widest flex items-center gap-1">
                                         <span class="material-symbols-outlined text-[12px]">schedule</span>
-                                        <%= new Date(displaySession.scheduledTime).toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }) %>
+                                        <%= new Date(displaySession.scheduledTime).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }) %>
                                     </span>
                                     <span class="w-1 h-1 rounded-full bg-slate-300"></span>
                                     <span class="px-2 py-0.5 <%= displaySession.status === 'Completed' ? 'bg-primary/20 text-primary' : (displaySession.status === 'Confirmed' ? 'bg-emerald-500/20 text-emerald-700' : (displaySession.status === 'Scheduled' ? 'bg-blue-500/20 text-blue-500' : (displaySession.status === 'Cancel_Requested' ? 'bg-amber-500/20 text-amber-700' : (displaySession.status === 'Cancelled' ? 'bg-red-500/20 text-red-500' : 'bg-orange-500/20 text-orange-500')))) %> text-[10px] font-black rounded-full uppercase">

@@ -210,7 +210,7 @@
                             <div>
                                 <h4 class="text-base font-black text-slate-900 tracking-tight"><%= session.client.name %></h4>
                                 <div class="flex items-center gap-3 text-[10px] text-slate-400 font-bold uppercase mt-1">
-                                    <span class="flex items-center gap-1.5 bg-slate-100 px-2 py-0.5 rounded-lg"><span class="material-symbols-outlined text-[16px]">schedule</span> <%= new Date(session.scheduledTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false }) %></span>
+                                    <span class="flex items-center gap-1.5 bg-slate-100 px-2 py-0.5 rounded-lg"><span class="material-symbols-outlined text-[16px]">schedule</span> <%= new Date(session.scheduledTime).toLocaleTimeString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', hour: '2-digit', minute: '2-digit', hour12: false }) %></span>
                                     <span class="flex items-center gap-1.5 px-2 py-0.5 rounded-lg <%= session.status === 'Completed' ? 'bg-emerald-50 text-emerald-600' : (session.status === 'In_Progress' ? 'bg-accent/10 text-accent' : 'bg-slate-50 text-slate-400') %> italic">
                                         <%= session.status %>
                                     </span>

@@ -88,16 +88,43 @@ exports.getContractList = async (req, res, next) => {
 
         const listFilter = contractScope.buildContractListFilter(user, req.query);
 
-        const totalDocs = await Contract.countDocuments(listFilter);
-        const contracts = await Contract.find(listFilter)
-            .populate('client', 'name email phone')
-            .populate('servicePackage', 'name type price duration')
-            .populate('pt', 'name')
-            .populate('sales', 'name')
-            .populate('branch', 'name')
-            .sort({ createdAt: -1 })
-            .skip(skip)
-            .limit(limit);
+        // If searching by client name, use aggregate with $lookup
+        let contracts, totalDocs;
+        const searchTerm = req.query.search && req.query.search.trim();
+        const isNameSearch = searchTerm && !searchTerm.match(/^[A-Z0-9-]+$/i); // likely name not code
+
+        if (searchTerm && isNameSearch) {
+            const nameRe = new RegExp(searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+            const pipeline = [
+                { $match: listFilter },
+                { $lookup: { from: 'users', localField: 'client', foreignField: '_id', as: 'clientDoc' } },
+                { $unwind: { path: '$clientDoc', preserveNullAndEmpty: true } },
+                { $match: { $or: [{ 'clientDoc.name': nameRe }, { contractCode: nameRe }] } },
+                { $sort: { createdAt: -1 } }
+            ];
+            const countPipeline = [...pipeline, { $count: 'total' }];
+            const countRes = await Contract.aggregate(countPipeline);
+            totalDocs = countRes[0] ? countRes[0].total : 0;
+            const rawContracts = await Contract.aggregate([...pipeline, { $skip: skip }, { $limit: limit }]);
+            contracts = await Contract.populate(rawContracts, [
+                { path: 'client', select: 'name email phone' },
+                { path: 'servicePackage', select: 'name type price duration' },
+                { path: 'pt', select: 'name' },
+                { path: 'sales', select: 'name' },
+                { path: 'branch', select: 'name' }
+            ]);
+        } else {
+            totalDocs = await Contract.countDocuments(listFilter);
+            contracts = await Contract.find(listFilter)
+                .populate('client', 'name email phone')
+                .populate('servicePackage', 'name type price duration')
+                .populate('pt', 'name')
+                .populate('sales', 'name')
+                .populate('branch', 'name')
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limit);
+        }
 
         const pagination = getPagination(totalDocs, page, limit);
 
@@ -413,6 +440,15 @@ exports.updateContract = async (req, res, next) => {
 
         // ONLY update explicitly permitted fields for payment status changes
         const updateData = {};
+
+        // Allow Admin/SA/Manager to change PT
+        const actorRole = req.session.user.role;
+        if (['SA', 'Admin', 'CEO', 'Manager'].includes(actorRole) && req.body.pt !== undefined) {
+            const mongoose = require('mongoose');
+            updateData.pt = req.body.pt && mongoose.Types.ObjectId.isValid(req.body.pt)
+                ? req.body.pt : null;
+        }
+
         if (req.body.paymentStatus) {
             if (!PAYMENT_STATUS_ALLOWED.has(req.body.paymentStatus)) {
                 req.flash('error_msg', 'Trạng thái bill không hợp lệ.');
