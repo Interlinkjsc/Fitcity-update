@@ -22,6 +22,7 @@ const MODULE_LABELS = {
     finance: 'Tài chính & KPI',
     pt_ops: 'Vận hành PT',
     programs: 'Chương trình & Gói tập',
+    website: 'Website & CMS',
 };
 
 /** @type {Record<string, { icon: string, collapsible: boolean }>} */
@@ -34,6 +35,7 @@ const MODULE_META = {
     finance: { icon: 'account_balance', collapsible: true },
     pt_ops: { icon: 'fitness_center', collapsible: true },
     programs: { icon: 'category', collapsible: true },
+    website: { icon: 'language', collapsible: true },
 };
 
 const STORAGE_KEY_MODULES = 'fitcity_sidebar_modules';
@@ -292,6 +294,46 @@ const MENU_ITEMS = [
         icon: 'restaurant_menu',
         permission: { resource: 'meal_plan_approval', action: 'view' },
         roles: ['SA', 'Admin', 'Manager'],
+    },
+    {
+        key: 'website',
+        moduleId: 'website',
+        label: 'Tổng quan Website',
+        href: '/admin/website',
+        icon: 'language',
+        roles: ['SA', 'Admin'],
+    },
+    {
+        key: 'website-branches',
+        moduleId: 'website',
+        label: 'Chi nhánh Website',
+        href: '/admin/website/branches',
+        icon: 'add_location_alt',
+        roles: ['SA', 'Admin'],
+    },
+    {
+        key: 'website-programs',
+        moduleId: 'website',
+        label: 'Chương trình Website',
+        href: '/admin/website/programs',
+        icon: 'fitness_center',
+        roles: ['SA', 'Admin'],
+    },
+    {
+        key: 'website-posts',
+        moduleId: 'website',
+        label: 'Bài viết Website',
+        href: '/admin/website/posts',
+        icon: 'article',
+        roles: ['SA', 'Admin'],
+    },
+    {
+        key: 'website-settings',
+        moduleId: 'website',
+        label: 'Cài đặt Website',
+        href: '/admin/website/settings',
+        icon: 'tune',
+        roles: ['SA', 'Admin'],
     },
 ];
 

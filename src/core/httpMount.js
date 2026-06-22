@@ -14,6 +14,8 @@ function mountFeatureRouters(app) {
     const { leadRoutes, cmsRoutes, contentLibraryRoutes, branchRoutes, violationRoutes } =
         require('../modules/crm/routes');
     const { calendarRoutes } = require('../modules/api/routes');
+    const websiteRoutes = require('../modules/website/routes/websiteRoutes');
+    const webApiRoutes = require('../modules/website/routes/webApiRoutes');
     const rolePermissionRoutes = require('../modules/platform/routes/rolePermissionRoutes');
     const {
         checklistRoutes,
@@ -54,6 +56,8 @@ function mountFeatureRouters(app) {
     app.use('/admin/sessions', sessionApprovalRoutes);
     app.use('/admin/meal-plans', mealPlanApprovalRoutes);
     app.use('/api/calendar', calendarRoutes);
+    app.use('/admin/website', websiteRoutes);
+    app.use('/api/web', webApiRoutes);
 }
 
 /**
