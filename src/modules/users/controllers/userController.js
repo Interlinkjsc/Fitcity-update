@@ -433,7 +433,6 @@ exports.updateMyPassword = async (req, res, next) => {
         res.redirect('back');
     } catch (err) {
         if (isJson) return res.status(500).json({ status: 'error', message: 'Đổi mật khẩu không thành công' });
->>>>>>> fix/bugfix-17-06-2026
         next(err);
     }
 };
