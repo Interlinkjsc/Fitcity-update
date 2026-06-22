@@ -77,6 +77,28 @@ exports.processQrScan = async (sessionId, authUserId) => {
         session.startTime = new Date();
         session.status = 'In_Progress';
         await session.save();
+
+        // ZNS check-in notification (fire-and-forget, never blocks)
+        try {
+            const User = require('../../users/models/userModel');
+            const Branch = require('../../crm/models/branchModel');
+            const zaloService = require('../../platform/services/zaloService');
+            const [client, pt, branch] = await Promise.all([
+                User.findById(session.client),
+                User.findById(session.pt),
+                Branch.findById(session.branch)
+            ]);
+            await zaloService.sendZnsCheckin(
+                client && client.phone,
+                client && client.name,
+                pt && pt.name,
+                session.startTime,
+                branch ? branch.name : ''
+            );
+        } catch (e) {
+            console.error('[ZaloZNS] checkin error', e.message);
+        }
+
         return session;
     }
 
@@ -97,6 +119,25 @@ exports.processQrScan = async (sessionId, authUserId) => {
             );
         } catch (_notifErr) {
             // Không block luồng chính nếu notification lỗi
+        }
+
+        // ZNS check-out notification (fire-and-forget, never blocks)
+        try {
+            const User = require('../../users/models/userModel');
+            const zaloService = require('../../platform/services/zaloService');
+            const [client, pt] = await Promise.all([
+                User.findById(session.client),
+                User.findById(session.pt)
+            ]);
+            await zaloService.sendZnsCheckout(
+                client && client.phone,
+                client && client.name,
+                pt && pt.name,
+                session.startTime,
+                session.endTime
+            );
+        } catch (e) {
+            console.error('[ZaloZNS] checkout error', e.message);
         }
 
         return session;
