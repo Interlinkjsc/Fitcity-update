@@ -434,10 +434,11 @@ router.post('/admin/media', requireAdminKey, async (req, res) => {
     }
 });
 
-// DELETE /api/web/admin/media/:key — remove media record by key (URL-encoded)
-router.delete('/admin/media/:key(*)', requireAdminKey, async (req, res) => {
+// DELETE /api/web/admin/media/* — remove media record by key (slash-containing keys supported)
+router.delete('/admin/media/*', requireAdminKey, async (req, res) => {
     try {
-        await WebMedia.deleteOne({ key: req.params.key });
+        const key = req.params[0] || '';
+        await WebMedia.deleteOne({ key });
         res.json({ ok: true });
     } catch (err) {
         res.status(500).json({ error: err.message });
