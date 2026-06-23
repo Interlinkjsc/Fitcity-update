@@ -434,10 +434,12 @@ router.post('/admin/media', requireAdminKey, async (req, res) => {
     }
 });
 
-// DELETE /api/web/admin/media/* — remove media record by key (slash-containing keys supported)
-router.delete('/admin/media/*', requireAdminKey, async (req, res) => {
+// DELETE /api/web/admin/media?key=<key> — remove media record; key passed as query param
+// (avoids path-to-regexp wildcard issues with slash-containing R2 keys)
+router.delete('/admin/media', requireAdminKey, async (req, res) => {
     try {
-        const key = req.params[0] || '';
+        const key = String(req.query.key || '');
+        if (!key) return res.status(400).json({ error: 'key query param required' });
         await WebMedia.deleteOne({ key });
         res.json({ ok: true });
     } catch (err) {
