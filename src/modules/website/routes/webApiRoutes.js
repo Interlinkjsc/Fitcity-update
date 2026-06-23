@@ -4,6 +4,8 @@ const WebBranch = require('../models/webBranchModel');
 const WebProgram = require('../models/webProgramModel');
 const WebPost = require('../models/webPostModel');
 const WebSetting = require('../models/webSettingModel');
+const WebMedia = require('../models/webMediaModel');
+const WebSlotImage = require('../models/webSlotImageModel');
 
 // ── Auth middleware for write endpoints ──────────────────────────────────────
 function requireAdminKey(req, res, next) {
@@ -389,6 +391,85 @@ router.post('/admin/settings', requireAdminKey, async (req, res) => {
         const result = {};
         rows.forEach(r => { result[r.key] = r.value; });
         res.json(result);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ── Media ─────────────────────────────────────────────────────────────────────
+
+// GET /api/web/media — list media items, optional ?grp=<group>
+router.get('/media', async (req, res) => {
+    try {
+        const filter = req.query.grp ? { grp: req.query.grp } : {};
+        const items = await WebMedia.find(filter).sort({ createdAt: -1 }).lean();
+        res.json(items.map(m => ({
+            key: m.key,
+            filename: m.filename || '',
+            alt: m.alt || '',
+            width: m.width || 0,
+            height: m.height || 0,
+            bytes: m.bytes || 0,
+            grp: m.grp || 'general',
+        })));
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// POST /api/web/admin/media — add a media record (metadata only; R2 upload handled by CF worker)
+router.post('/admin/media', requireAdminKey, async (req, res) => {
+    try {
+        const { key, filename, alt, width, height, bytes, grp } = req.body;
+        if (!key) return res.status(400).json({ error: 'key required' });
+        const doc = await WebMedia.findOneAndUpdate(
+            { key },
+            { key, filename: filename || '', alt: alt || '', width: width || 0,
+              height: height || 0, bytes: bytes || 0, grp: grp || 'general' },
+            { upsert: true, new: true, setDefaultsOnInsert: true }
+        );
+        res.status(201).json({ key: doc.key, filename: doc.filename, alt: doc.alt, grp: doc.grp });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// DELETE /api/web/admin/media/:key — remove media record by key (URL-encoded)
+router.delete('/admin/media/:key(*)', requireAdminKey, async (req, res) => {
+    try {
+        await WebMedia.deleteOne({ key: req.params.key });
+        res.json({ ok: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ── Slot Images ───────────────────────────────────────────────────────────────
+
+// GET /api/web/slot-images — return { slotId: mediaKey } map
+router.get('/slot-images', async (req, res) => {
+    try {
+        const rows = await WebSlotImage.find().lean();
+        const map = {};
+        rows.forEach(r => { map[r.slotId] = r.mediaKey; });
+        res.json(map);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// POST /api/web/admin/slot-images — upsert a slot → mediaKey mapping
+// Body: { slot_id: string, media_key: string }
+router.post('/admin/slot-images', requireAdminKey, async (req, res) => {
+    try {
+        const { slot_id, media_key } = req.body;
+        if (!slot_id) return res.status(400).json({ error: 'slot_id required' });
+        await WebSlotImage.findOneAndUpdate(
+            { slotId: slot_id },
+            { slotId: slot_id, mediaKey: media_key || '' },
+            { upsert: true, new: true }
+        );
+        res.json({ ok: true, slotId: slot_id, mediaKey: media_key || '' });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
