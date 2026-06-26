@@ -378,6 +378,15 @@ exports.getPtDashboard = async (req, res, next) => {
         const estimatedCommission = payrollService.calculatePTCommissionFromContracts(paidContractsThisMonth);
         const totalEstimatedIncome = baseSalary + estimatedCommission - totalDeductions;
 
+        const recentFeedbacks = await WorkoutSession.find({
+            pt: ptId,
+            'feedback.rating': { $exists: true, $ne: null }
+        })
+        .populate('client', 'name')
+        .sort({ updatedAt: -1 })
+        .limit(5)
+        .lean();
+
         res.render('pt/dashboard', {
             estimatedCommission,
             totalEstimatedIncome,
@@ -388,7 +397,8 @@ exports.getPtDashboard = async (req, res, next) => {
             completedSessions,
             rosterCount: roster.length,
             roster,
-            violations: violations.slice(0, 3) // Lấy 3 vi phạm gần nhất để hiển thị cảnh báo
+            recentFeedbacks,
+            violations: violations.slice(0, 3)
         });
     } catch (error) {
         next(error);
@@ -559,9 +569,12 @@ exports.getClientDashboard = async (req, res, next) => {
         const { computeMealNutrition } = require('../../../utils/mealNutritionHelper');
         const mealNutritionByMeal = mealPlan ? computeMealNutrition(mealPlan) : [];
 
+        const remainingSessions = contract ? (contract.remainingSessions ?? (contract.totalSessions - sessionsCompleted)) : 0;
+
         res.render('client/dashboard', {
             sessionsCompleted,
             totalSessions: contract ? contract.totalSessions : 0,
+            remainingSessions: Math.max(0, remainingSessions),
             packageName: contract && contract.servicePackage ? contract.servicePackage.name : "Chưa có gói tập",
             contract,
             pendingConfirmation,

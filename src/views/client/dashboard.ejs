@@ -24,6 +24,9 @@
         <div class="absolute inset-0 flex flex-col items-center justify-end pb-2">
             <span class="text-4xl font-black text-slate-900 tracking-tighter"><%= typeof sessionsCompleted !== 'undefined' ? sessionsCompleted : 0 %><span class="text-xl text-slate-400">/<%= typeof totalSessions !== 'undefined' ? totalSessions : 0 %></span></span>
             <span class="text-[10px] uppercase tracking-widest text-primary font-bold mt-1">Đã hoàn thành</span>
+            <% if (typeof remainingSessions !== 'undefined' && totalSessions > 0) { %>
+            <span class="text-[9px] uppercase tracking-widest text-slate-500 font-bold">Còn lại: <strong class="text-slate-900"><%= remainingSessions %></strong> buổi</span>
+            <% } %>
         </div>
     </div>
     <h3 class="text-slate-900 text-lg font-black tracking-tight relative z-10"><%= typeof packageName !== 'undefined' ? packageName : 'Chưa đăng ký Gói' %></h3>

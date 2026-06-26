@@ -84,7 +84,19 @@ exports.getContractList = async (req, res, next) => {
         const skip = (page - 1) * limit;
         const user = req.session.user;
 
-        const listFilter = contractScope.buildContractListFilter(user, req.query);
+        let listFilter = contractScope.buildContractListFilter(user, req.query);
+
+        if (req.query.search && req.query.search.trim()) {
+            const searchRe = { $regex: req.query.search.trim(), $options: 'i' };
+            const matchingClients = await User.find({ name: searchRe }).select('_id').lean();
+            const clientIds = matchingClients.map(u => u._id);
+            const searchCond = { $or: [{ contractCode: searchRe }, { client: { $in: clientIds } }] };
+            listFilter = listFilter.$and
+                ? { $and: [...listFilter.$and, searchCond] }
+                : Object.keys(listFilter).length
+                    ? { $and: [listFilter, searchCond] }
+                    : searchCond;
+        }
 
         const totalDocs = await Contract.countDocuments(listFilter);
         const contracts = await Contract.find(listFilter)

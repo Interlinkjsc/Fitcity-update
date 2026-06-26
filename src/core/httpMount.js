@@ -52,8 +52,17 @@ function mountFeatureRouters(app) {
     app.use('/admin/timesheets', timesheetRoutes);
     app.use('/admin/pt-leave-requests', ptLeaveRoutes);
     app.use('/admin/sessions', sessionApprovalRoutes);
+    app.get('/admin/pt-feedback', require('../middlewares/authMiddleware').protect, require('../middlewares/authMiddleware').checkPermission('session_approval', 'view'), require('../modules/programs/controllers/sessionApprovalController').getPtFeedbackList);
     app.use('/admin/meal-plans', mealPlanApprovalRoutes);
     app.use('/api/calendar', calendarRoutes);
+
+    // Public web settings API (no auth)
+    const webSettingCtrl = require('../modules/website/controllers/webSettingController');
+    app.get('/api/web/settings', webSettingCtrl.apiGetSettings);
+
+    // Admin website settings CMS
+    const webSettingRoutes = require('../modules/website/routes/webSettingRoutes');
+    app.use('/admin/website/settings', webSettingRoutes);
 }
 
 /**

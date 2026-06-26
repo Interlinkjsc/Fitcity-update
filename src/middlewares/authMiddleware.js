@@ -3,7 +3,11 @@ const permissionService = require('../core/permissionService');
 
 exports.protect = (req, res, next) => {
     if (!req.session || !req.session.user) {
-        return res.status(401).json({ status: 'fail', message: 'Vui lòng đăng nhập.' });
+        const isApi = req.path.startsWith('/api/') ||
+            (req.headers.accept && req.headers.accept.includes('application/json')) ||
+            req.xhr;
+        if (isApi) return res.status(401).json({ status: 'fail', message: 'Vui lòng đăng nhập.' });
+        return res.redirect('/auth/login');
     }
     req.user = req.session.user;
     next();

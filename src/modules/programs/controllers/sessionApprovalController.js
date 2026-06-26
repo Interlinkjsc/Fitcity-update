@@ -1,5 +1,6 @@
 const WorkoutSession = require('../models/workoutSessionModel');
 const User = require('../../users/models/userModel');
+const Branch = require('../../crm/models/branchModel');
 const notificationService = require('../../platform/services/notificationService');
 
 // GET /admin/sessions/pending
@@ -45,6 +46,36 @@ exports.rejectSession = async (req, res, next) => {
     await notificationService.pushNotification(session.pt, 'Lịch tập bị từ chối', `Admin đã từ chối lịch tập bạn tạo. Lý do: ${reason || 'Không có'}`, 'Error', '/pt', req.session.user.id);
     req.flash('success_msg', 'Đã từ chối lịch tập.');
     res.redirect('/admin/sessions/pending');
+  } catch (err) { next(err); }
+};
+
+// GET /admin/pt-feedback — Vận hành PT: feedback khách hàng theo chi nhánh
+exports.getPtFeedbackList = async (req, res, next) => {
+  try {
+    const user = req.session.user;
+    const branchId = req.query.branchId;
+    const sessionFilter = { 'feedback.rating': { $exists: true, $ne: null }, status: 'Completed' };
+
+    if (user.role === 'Manager' && user.branch) {
+      sessionFilter.branch = user.branch;
+    } else if (branchId && branchId !== 'all') {
+      sessionFilter.branch = branchId;
+    }
+
+    const sessions = await WorkoutSession.find(sessionFilter)
+      .populate('client', 'name avatar')
+      .populate('pt', 'name')
+      .populate('branch', 'name')
+      .sort({ updatedAt: -1 })
+      .limit(100)
+      .lean();
+
+    let branches = [];
+    if (['SA', 'Admin', 'CEO'].includes(user.role)) {
+      branches = await Branch.find().select('name').sort({ name: 1 }).lean();
+    }
+
+    res.render('admin/sessions/pt-feedback', { sessions, branches, branchId: branchId || 'all', activePage: 'pt-feedback' });
   } catch (err) { next(err); }
 };
 

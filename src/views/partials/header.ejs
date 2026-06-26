@@ -98,7 +98,7 @@
                     </svg>
                 </button>
             </div>
-            <nav class="flex-1 mt-6 px-3 space-y-1 overflow-y-auto no-scrollbar">
+            <nav id="sidebar-nav-scroll" class="flex-1 mt-6 px-3 space-y-1 overflow-y-auto no-scrollbar">
                 <%- include('./admin-sidebar-nav') %>
 
                 <form action="/auth/logout" method="POST" id="logout-form-sidebar" class="hidden"></form>

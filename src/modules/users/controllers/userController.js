@@ -318,6 +318,20 @@ exports.getDetail = async (req, res, next) => {
 
         // Fetch contracts managed by this user if PT
         const Contract = require('../../contracts/models/contractModel.js');
+        const WorkoutSession = require('../../programs/models/workoutSessionModel.js');
+
+        let sessionsThisMonth = 0;
+        if (userData.role === 'PT') {
+            const startOfMonth = new Date();
+            startOfMonth.setDate(1);
+            startOfMonth.setHours(0, 0, 0, 0);
+            sessionsThisMonth = await WorkoutSession.countDocuments({
+                pt: userData._id,
+                status: 'Completed',
+                scheduledTime: { $gte: startOfMonth }
+            });
+        }
+
         const managedContracts = await Contract.find({ pt: userData._id })
             .populate('client', 'name email')
             .select('contractCode contractStatus paymentStatus netAmount totalAmount createdAt')
@@ -351,7 +365,8 @@ exports.getDetail = async (req, res, next) => {
             employeeKPITarget,
             canSetEmployeeKPI,
             kpiMonth,
-            kpiYear
+            kpiYear,
+            sessionsThisMonth
         });
     } catch (err) {
         next(err);
