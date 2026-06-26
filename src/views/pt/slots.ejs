@@ -14,7 +14,7 @@
     </div>
     <button onclick="openAddSlotModal()"
         class="flex items-center gap-1.5 bg-primary text-white text-xs font-black uppercase tracking-wider px-4 py-2.5 rounded-full shadow-md hover:bg-green-700 transition-all">
-        <span class="material-symbols-outlined text-[18px]">add</span>Thêm slot
+        <span class="material-symbols-outlined text-[18px]">add</span>Thêm lịch dạy
     </button>
 </header>
 
@@ -40,7 +40,7 @@
         <span class="material-symbols-outlined text-5xl text-slate-200 mb-3">calendar_add_on</span>
         <p class="text-slate-400 font-bold text-sm">Chưa có khung giờ nào</p>
         <% if (tab === 'upcoming') { %>
-        <p class="text-slate-400 text-xs mt-1">Nhấn <strong>+ Thêm slot</strong> để đăng ký khung giờ mở</p>
+        <p class="text-slate-400 text-xs mt-1">Nhấn <strong>+ Thêm lịch dạy</strong> để đăng ký khung giờ mở</p>
         <% } %>
     </div>
     <% } else { %>
@@ -117,13 +117,22 @@
     style="display:none; backdrop-filter:blur(4px); background-color:rgba(0,0,0,0.4);">
     <div class="bg-white rounded-[28px] shadow-2xl w-full max-w-sm p-6 transform transition-all scale-95 opacity-0 duration-200" id="addSlotDialog">
         <div class="flex items-center justify-between mb-5">
-            <h3 class="text-lg font-black text-slate-900">Thêm khung giờ mở</h3>
+            <h3 class="text-lg font-black text-slate-900">Thêm lịch dạy mới</h3>
             <button onclick="closeAddSlotModal()" class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200 transition-all text-slate-500">
                 <span class="material-symbols-outlined text-[18px]">close</span>
             </button>
         </div>
 
         <form action="/pt/slots/add" method="POST" class="space-y-4">
+            <div>
+                <label class="block text-xs font-black uppercase tracking-wider text-slate-500 mb-1.5">Khách hàng (tuỳ chọn)</label>
+                <select name="clientId" class="w-full border border-slate-200 rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-primary/40 outline-none bg-slate-50">
+                    <option value="">-- Khung giờ mở (không chỉ định KH) --</option>
+                    <% if (typeof clientList !== 'undefined' && clientList.length > 0) { clientList.forEach(c => { %>
+                    <option value="<%= c._id %>"><%= c.name %></option>
+                    <% }) } %>
+                </select>
+            </div>
             <div>
                 <label class="block text-xs font-black uppercase tracking-wider text-slate-500 mb-1.5">Thời gian bắt đầu</label>
                 <input type="datetime-local" name="startTime" required

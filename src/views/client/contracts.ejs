@@ -62,6 +62,12 @@
                         </p>
                     </div>
                     <div>
+                        <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Buổi còn lại</p>
+                        <p class="text-sm font-bold text-primary mt-1">
+                            <%= contract.remainingSessions != null ? contract.remainingSessions + ' buổi' : '-' %>
+                        </p>
+                    </div>
+                    <div>
                         <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Bắt đầu</p>
                         <p class="text-sm font-bold text-slate-900 mt-1"><%= contract.startDate ? new Date(contract.startDate).toLocaleDateString('vi-VN') : '-' %></p>
                     </div>

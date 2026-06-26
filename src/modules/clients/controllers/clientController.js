@@ -412,18 +412,20 @@ exports.previewMyContract = async (req, res, next) => {
     try {
         const clientId = req.session.user.id;
 
-        const contract = await Contract.findOne({ _id: req.params.id, client: clientId })
+        const contractDoc = await Contract.findOne({ _id: req.params.id, client: clientId })
             .populate('client', 'name email phone avatar cccdHash')
             .populate('servicePackage', 'name price durationInMonths maxSessions type')
             .populate('pt', 'name phone')
             .populate('branch', 'name address')
-            .populate('sales', 'name')
-            .lean();
+            .populate('sales', 'name');
 
-        if (!contract) {
+        if (!contractDoc) {
             req.flash('error_msg', 'Không tìm thấy hợp đồng hoặc bạn không có quyền xem!');
             return res.redirect('/client/contracts');
         }
+
+        // toObject({ getters: true }) để decrypt phone/email bị mã hóa trong populated docs
+        const contract = contractDoc.toObject({ getters: true });
 
         // Dùng chung template preview với admin
         res.render('admin/contracts/templates/contract-preview', {

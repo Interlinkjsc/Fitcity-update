@@ -376,7 +376,21 @@ exports.getPtDashboard = async (req, res, next) => {
         const totalDeductions = violations.reduce((sum, v) => sum + v.penaltyAmount, 0);
 
         const estimatedCommission = payrollService.calculatePTCommissionFromContracts(paidContractsThisMonth);
-        const totalEstimatedIncome = baseSalary + estimatedCommission - totalDeductions;
+
+        // Hoa hồng chốt HĐ trong tháng (salesCommissionRate * netAmount)
+        const ptUserFull = ptUser || await User.findById(ptId).lean();
+        const salesCommissionRate = ptUserFull ? (ptUserFull.salesCommissionRate || 0) : 0;
+        const salesCommissionResult = await Contract.aggregate([
+            { $match: {
+                pt: new mongoose.Types.ObjectId(ptId),
+                paymentStatus: 'Paid',
+                createdAt: { $gte: startOfMonth }
+            }},
+            { $group: { _id: null, total: { $sum: contractScope.NET_AMOUNT_EXPR } } }
+        ]);
+        const salesCommission = ((salesCommissionResult[0]?.total || 0) * salesCommissionRate) / 100;
+
+        const totalEstimatedIncome = baseSalary + estimatedCommission + salesCommission - totalDeductions;
 
         const recentFeedbacks = await WorkoutSession.find({
             pt: ptId,
@@ -389,6 +403,7 @@ exports.getPtDashboard = async (req, res, next) => {
 
         res.render('pt/dashboard', {
             estimatedCommission,
+            salesCommission,
             totalEstimatedIncome,
             baseSalary,
             totalDeductions,

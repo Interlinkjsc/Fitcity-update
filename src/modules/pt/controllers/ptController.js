@@ -338,7 +338,14 @@ exports.getPtSlots = async (req, res, next) => {
             .limit(50)
             .lean();
 
-        res.render('pt/slots', { slots, tab, activePage: 'pt-slots', user: req.session.user });
+        const activeContracts = await Contract.find({ pt: ptId, contractStatus: 'Active' })
+            .populate('client', 'name _id')
+            .lean();
+        const clientList = activeContracts
+            .filter(c => c.client)
+            .map(c => ({ _id: c.client._id, name: c.client.name }));
+
+        res.render('pt/slots', { slots, tab, clientList, activePage: 'pt-slots', user: req.session.user });
     } catch (err) {
         next(err);
     }
