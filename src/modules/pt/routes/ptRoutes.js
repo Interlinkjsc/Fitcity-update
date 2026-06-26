@@ -28,6 +28,7 @@ router.post('/contracts/store', checkPermission('contract', 'create'), require('
 
 router.get('/clients', homeController.getPtClients);
 router.get('/schedule', homeController.getPtSchedule);
+router.get('/slots', homeController.getPtSchedule);
 
 router.get('/income', ptController.getIncome);
 
