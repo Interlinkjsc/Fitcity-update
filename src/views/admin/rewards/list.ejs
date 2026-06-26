@@ -1,95 +1,121 @@
 <%- include('../../partials/header', { title: 'Phần thưởng', activePage: 'rewards' }) %>
 
-<div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1><i class="fas fa-gift"></i> Quản lý Voucher & Reward</h1>
-        <a href="/admin/rewards/create" class="btn btn-success"><i class="fas fa-plus"></i> Gán Reward</a>
+<div class="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+    <div>
+        <h2 class="text-xl font-bold text-slate-800">Quản lý Voucher & Phần thưởng</h2>
+        <p class="text-slate-500 text-xs mt-0.5">Gán và theo dõi reward cho khách hàng.</p>
     </div>
+    <a href="/admin/rewards/create"
+       class="inline-flex items-center gap-2 px-4 py-2.5 bg-lime-500 hover:bg-lime-600 text-slate-900 font-bold rounded-lg text-sm transition-colors shadow-sm">
+        <span class="material-symbols-outlined text-[18px]">add</span>Gán Reward
+    </a>
+</div>
 
-    <!-- Filters -->
-    <form method="GET" class="row g-3 mb-4">
-        <div class="col-md-3">
-            <select name="type" class="form-select">
-                <option value="">-- Loại --</option>
-                <option value="Voucher" <%= filters.type === 'Voucher' ? 'selected' : '' %>>Voucher</option>
-                <option value="FreeSession" <%= filters.type === 'FreeSession' ? 'selected' : '' %>>Buổi tập miễn phí</option>
-                <option value="Discount" <%= filters.type === 'Discount' ? 'selected' : '' %>>Giảm giá</option>
-                <option value="Gift" <%= filters.type === 'Gift' ? 'selected' : '' %>>Quà tặng</option>
-            </select>
-        </div>
-        <div class="col-md-3">
-            <select name="status" class="form-select">
-                <option value="">-- Trạng thái --</option>
-                <option value="Active" <%= filters.status === 'Active' ? 'selected' : '' %>>Active</option>
-                <option value="Used" <%= filters.status === 'Used' ? 'selected' : '' %>>Đã dùng</option>
-                <option value="Expired" <%= filters.status === 'Expired' ? 'selected' : '' %>>Hết hạn</option>
-            </select>
-        </div>
-        <div class="col-md-2">
-            <button type="submit" class="btn btn-outline-primary w-100">Lọc</button>
-        </div>
-    </form>
+<!-- Filters -->
+<form method="GET" class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 mb-5 flex flex-wrap gap-4 items-end">
+    <div>
+        <label class="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wider">Loại</label>
+        <select name="type" class="border border-slate-300 rounded-lg text-sm py-2 px-3 focus:ring-2 focus:ring-lime-500 outline-none">
+            <option value="">-- Tất cả --</option>
+            <option value="Voucher" <%= filters.type === 'Voucher' ? 'selected' : '' %>>Voucher</option>
+            <option value="FreeSession" <%= filters.type === 'FreeSession' ? 'selected' : '' %>>Buổi tập miễn phí</option>
+            <option value="Discount" <%= filters.type === 'Discount' ? 'selected' : '' %>>Giảm giá</option>
+            <option value="Gift" <%= filters.type === 'Gift' ? 'selected' : '' %>>Quà tặng</option>
+        </select>
+    </div>
+    <div>
+        <label class="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wider">Trạng thái</label>
+        <select name="status" class="border border-slate-300 rounded-lg text-sm py-2 px-3 focus:ring-2 focus:ring-lime-500 outline-none">
+            <option value="">-- Tất cả --</option>
+            <option value="Active" <%= filters.status === 'Active' ? 'selected' : '' %>>Active</option>
+            <option value="Used" <%= filters.status === 'Used' ? 'selected' : '' %>>Đã dùng</option>
+            <option value="Expired" <%= filters.status === 'Expired' ? 'selected' : '' %>>Hết hạn</option>
+        </select>
+    </div>
+    <button type="submit" class="px-4 py-2 border border-slate-300 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors">
+        Lọc
+    </button>
+    <% if (filters.type || filters.status) { %>
+    <a href="/admin/rewards" class="px-4 py-2 text-sm text-slate-400 hover:text-slate-700 transition-colors">Xóa lọc</a>
+    <% } %>
+</form>
 
-    <!-- Rewards Table -->
-    <div class="table-responsive">
-        <table class="table table-hover align-middle">
-            <thead class="table-dark">
-                <tr>
-                    <th>#</th>
-                    <th>Khách hàng</th>
-                    <th>Loại</th>
-                    <th>Tiêu đề</th>
-                    <th>Giá trị</th>
-                    <th>Trạng thái</th>
-                    <th>Hết hạn</th>
-                    <th>Người gán</th>
-                    <th>Thao tác</th>
-                </tr>
-            </thead>
-            <tbody>
-                <% if (rewards && rewards.length > 0) { %>
-                    <% rewards.forEach((r, i) => { %>
-                    <tr>
-                        <td><%= i + 1 %></td>
-                        <td><%= r.client ? r.client.name : 'N/A' %></td>
-                        <td>
-                            <% if (r.type === 'Voucher') { %>
-                                <span class="badge bg-primary">Voucher</span>
-                            <% } else if (r.type === 'FreeSession') { %>
-                                <span class="badge bg-success">Free Session</span>
-                            <% } else if (r.type === 'Discount') { %>
-                                <span class="badge bg-warning text-dark">Discount</span>
-                            <% } else { %>
-                                <span class="badge bg-info">Gift</span>
-                            <% } %>
-                        </td>
-                        <td><%= r.title %></td>
-                        <td><%= r.value ? r.value.toLocaleString('vi-VN') + 'đ' : '-' %></td>
-                        <td>
-                            <% if (r.status === 'Active') { %>
-                                <span class="badge bg-success">Active</span>
-                            <% } else if (r.status === 'Used') { %>
-                                <span class="badge bg-secondary">Đã dùng</span>
-                            <% } else { %>
-                                <span class="badge bg-danger">Hết hạn</span>
-                            <% } %>
-                        </td>
-                        <td><%= new Date(r.expiresAt).toLocaleDateString('vi-VN') %></td>
-                        <td><%= r.assignedBy ? r.assignedBy.name : 'System' %></td>
-                        <td>
-                            <a href="/admin/rewards/detail/<%= r._id %>" class="btn btn-sm btn-outline-info"><i class="fas fa-eye"></i></a>
-                            <form action="/admin/rewards/delete/<%= r._id %>" method="POST" class="d-inline" onsubmit="return confirm('Xóa reward này?')">
-                                <button class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></button>
+<!-- Table -->
+<div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+    <table class="w-full text-sm">
+        <thead class="bg-slate-50 border-b border-slate-200">
+            <tr>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">#</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Khách hàng</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Loại</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Tiêu đề</th>
+                <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Giá trị</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Trạng thái</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Hết hạn</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Người gán</th>
+                <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">Thao tác</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+            <% if (rewards && rewards.length > 0) { %>
+                <% rewards.forEach((r, i) => { %>
+                <tr class="hover:bg-slate-50 transition-colors">
+                    <td class="px-4 py-3 text-slate-500 font-mono text-xs"><%= i + 1 %></td>
+                    <td class="px-4 py-3 font-medium text-slate-800"><%= r.client ? r.client.name : '—' %></td>
+                    <td class="px-4 py-3">
+                        <% if (r.type === 'Voucher') { %>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700 uppercase">Voucher</span>
+                        <% } else if (r.type === 'FreeSession') { %>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-100 text-green-700 uppercase">Free Session</span>
+                        <% } else if (r.type === 'Discount') { %>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700 uppercase">Discount</span>
+                        <% } else { %>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-700 uppercase">Gift</span>
+                        <% } %>
+                    </td>
+                    <td class="px-4 py-3 text-slate-700"><%= r.title || '—' %></td>
+                    <td class="px-4 py-3 text-right font-mono font-semibold text-slate-800">
+                        <%= r.value ? new Intl.NumberFormat('vi-VN').format(r.value) + 'đ' : '—' %>
+                    </td>
+                    <td class="px-4 py-3">
+                        <% if (r.status === 'Active') { %>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-100 text-green-700 uppercase">Active</span>
+                        <% } else if (r.status === 'Used') { %>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-500 uppercase">Đã dùng</span>
+                        <% } else { %>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-600 uppercase">Hết hạn</span>
+                        <% } %>
+                    </td>
+                    <td class="px-4 py-3 text-slate-500 text-xs">
+                        <%= r.expiresAt ? new Date(r.expiresAt).toLocaleDateString('vi-VN') : '—' %>
+                    </td>
+                    <td class="px-4 py-3 text-slate-500 text-xs"><%= r.assignedBy ? r.assignedBy.name : 'System' %></td>
+                    <td class="px-4 py-3 text-center">
+                        <div class="flex items-center justify-center gap-2">
+                            <a href="/admin/rewards/detail/<%= r._id %>"
+                               class="px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors">
+                                Xem
+                            </a>
+                            <form action="/admin/rewards/delete/<%= r._id %>" method="POST" class="inline"
+                                  onsubmit="return confirm('Xóa reward này?')">
+                                <button class="px-3 py-1.5 border border-red-200 rounded-lg text-xs font-semibold text-red-500 hover:bg-red-50 transition-colors">
+                                    Xóa
+                                </button>
                             </form>
-                        </td>
-                    </tr>
-                    <% }) %>
-                <% } else { %>
-                    <tr><td colspan="9" class="text-center text-muted">Chưa có reward nào</td></tr>
-                <% } %>
-            </tbody>
-        </table>
-    </div>
+                        </div>
+                    </td>
+                </tr>
+                <% }) %>
+            <% } else { %>
+                <tr>
+                    <td colspan="9" class="px-4 py-12 text-center">
+                        <span class="material-symbols-outlined text-4xl text-slate-200 block mb-2">card_giftcard</span>
+                        <p class="text-slate-400 font-medium">Chưa có reward nào</p>
+                    </td>
+                </tr>
+            <% } %>
+        </tbody>
+    </table>
 </div>
 
 <%- include('../../partials/footer') %>

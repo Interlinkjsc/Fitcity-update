@@ -100,7 +100,7 @@
             <h3 class="text-lg font-bold text-slate-800 mb-4 border-b border-slate-100 pb-2">Thông tin Khách Hàng</h3>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="flex items-center gap-4">
-                    <img src="<%= contract.client.avatar || '/images/default-avatar.png' %>" class="w-16 h-16 rounded-full border border-slate-200 object-cover"
+                    <img src="<%= contract.client.avatar || '/images/default-avatar-client.svg' %>" class="w-16 h-16 rounded-full border border-slate-200 object-cover"
                          onerror="this.src='https://ui-avatars.com/api/?name=<%= encodeURIComponent(contract.client.name) %>&background=e2e8f0&color=475569'">
                     <div>
                         <h4 class="font-bold text-slate-800 text-lg"><%= contract.client.name %></h4>
@@ -153,11 +153,26 @@
                     <label class="text-xs text-slate-500 font-semibold uppercase">HLV Cá nhân (PT)</label>
                     <% if (contract.pt) { %>
                         <div class="flex items-center gap-2 mt-1">
-                            <img src="<%= contract.pt.avatar || '/images/default-avatar.png' %>" class="w-6 h-6 rounded-full border border-slate-200" onerror="this.src='https://ui-avatars.com/api/?name=<%= encodeURIComponent(contract.pt.name) %>'"/>
+                            <img src="<%= contract.pt.avatar || '/images/default-avatar-client.svg' %>" class="w-6 h-6 rounded-full border border-slate-200" onerror="this.src='https://ui-avatars.com/api/?name=<%= encodeURIComponent(contract.pt.name) %>'"/>
                             <span class="text-sm font-bold text-slate-800"><%= contract.pt.name %></span>
                         </div>
                     <% } else { %>
                         <p class="text-sm text-slate-500 mt-1 italic">Không có HLV phụ trách (Tự tập)</p>
+                    <% } %>
+                    <% if (pts && pts.length > 0) { %>
+                    <form action="/admin/contracts/<%= contract._id %>/change-pt" method="POST" class="mt-2 flex items-center gap-2">
+                        <select name="newPtId" class="text-xs border border-slate-300 rounded-lg px-2 py-1.5 focus:ring-1 focus:ring-lime-500 outline-none flex-1">
+                            <option value="">-- Đổi PT --</option>
+                            <% pts.forEach(p => { %>
+                            <option value="<%= p._id %>" <%= contract.pt && String(contract.pt._id) === String(p._id) ? 'selected' : '' %>>
+                                <%= p.name %><%= p.branch ? ' (' + p.branch.name + ')' : '' %>
+                            </option>
+                            <% }) %>
+                        </select>
+                        <button type="submit" class="text-xs px-3 py-1.5 bg-lime-500 hover:bg-lime-600 text-slate-900 font-bold rounded-lg transition-colors">
+                            Lưu
+                        </button>
+                    </form>
                     <% } %>
                 </div>
                 <div>

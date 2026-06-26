@@ -36,6 +36,9 @@ router.get('/requests', checkPermission('contract', 'manage'), contractControlle
 router.post('/requests/approve/:id', checkPermission('contract', 'manage'), contractController.approvePauseRequest);
 router.post('/requests/reject/:id', checkPermission('contract', 'manage'), contractController.rejectPauseRequest);
 
+// Đổi PT trong HĐ
+router.post('/:id/change-pt', checkPermission('contract', 'manage'), contractController.changePt);
+
 // ========== PAYMENT & PREVIEW ==========
 router.post('/:id/payments/store', checkPermission('contract', 'manage'), paymentController.storePayment);
 router.get('/:id/preview/receipt/:transactionId', checkPermission('contract', 'view'), paymentController.previewReceipt);

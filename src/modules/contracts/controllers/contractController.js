@@ -204,7 +204,30 @@ exports.storeContract = async (req, res, next) => {
         const { customPkgName, customPkgType, customPkgDuration, customPkgSessions, customPkgPrice } = req.body;
         const back = req.originalUrl.startsWith('/pt') ? '/pt/contracts/create' : '/admin/contracts/create';
 
-        if (!isValidObjectId(client) || !isValidObjectId(branch) || !isValidObjectId(sales)) {
+        // Tạo hội viên mới nếu PT chọn "Tạo hội viên mới"
+        let resolvedClient = client;
+        if (req.body.createNewClient === 'true') {
+            const { newClientName, newClientPhone, newClientEmail } = req.body;
+            if (!newClientName || !newClientPhone) {
+                req.flash('error_msg', 'Vui lòng nhập đầy đủ họ tên và số điện thoại cho hội viên mới.');
+                return res.redirect(back);
+            }
+            const crypto = require('crypto');
+            const tempPassword = crypto.randomBytes(5).toString('hex');
+            const tempEmail = newClientEmail || `client_${Date.now()}@fitcity.temp`;
+            const newUser = await User.create({
+                name: newClientName,
+                phone: newClientPhone,
+                email: tempEmail,
+                emailHash: require('../../../utils/encryption').hash(tempEmail),
+                password: tempPassword,
+                role: 'Client',
+                branch: branch || req.session.user.branch,
+            });
+            resolvedClient = newUser._id.toString();
+        }
+
+        if (!isValidObjectId(resolvedClient) || !isValidObjectId(branch) || !isValidObjectId(sales)) {
             req.flash('error_msg', 'Thông tin khách hàng/chi nhánh/sales không hợp lệ.');
             return res.redirect(back);
         }
@@ -241,19 +264,24 @@ exports.storeContract = async (req, res, next) => {
             return res.redirect(back);
         }
 
-        const clientUser = await User.findOne({ _id: client, role: 'Client' }).select('branch name').lean();
+        const clientUser = await User.findOne({ _id: resolvedClient, role: 'Client' }).select('branch name').lean();
         if (!clientUser) {
             req.flash('error_msg', 'Không tìm thấy khách hàng hợp lệ.');
             return res.redirect(back);
         }
         if (!clientUser.branch) {
-            req.flash(
-                'error_msg',
-                'Khách hàng chưa có chi nhánh trên hồ sơ. Vui lòng cập nhật ở Quản lý khách hàng trước khi tạo hợp đồng (R4).'
-            );
-            return res.redirect(back);
+            // Nếu vừa tạo mới, branch đã được gán trong create; cập nhật lại
+            if (req.body.createNewClient === 'true') {
+                await User.findByIdAndUpdate(resolvedClient, { branch });
+            } else {
+                req.flash(
+                    'error_msg',
+                    'Khách hàng chưa có chi nhánh trên hồ sơ. Vui lòng cập nhật ở Quản lý khách hàng trước khi tạo hợp đồng (R4).'
+                );
+                return res.redirect(back);
+            }
         }
-        if (branch && String(branch) !== String(clientUser.branch)) {
+        if (branch && clientUser.branch && String(branch) !== String(clientUser.branch)) {
             req.flash(
                 'error_msg',
                 `Chi nhánh hợp đồng phải trùng với chi nhánh hồ sơ khách hàng (${clientUser.name}). Vui lòng cập nhật hồ sơ khách hoặc chọn đúng chi nhánh.`
@@ -263,7 +291,7 @@ exports.storeContract = async (req, res, next) => {
 
         // Determine mode: Template or Custom
         const serviceData = {
-            clientId: client,
+            clientId: resolvedClient,
             branchId: branch,
             salesId: sales,
             ptId: pt || null,
@@ -656,7 +684,38 @@ exports.getDetail = async (req, res, next) => {
         const paymentService = require('../services/paymentService');
         const paymentHistory = await paymentService.getPaymentHistory(req.params.id);
 
-        res.render('admin/contracts/detail', { contract, paymentHistory });
+        // Danh sách PT cho form đổi PT
+        const pts = await User.find({ role: 'PT', status: 'Active' })
+            .select('name branch').populate('branch', 'name').lean();
+
+        res.render('admin/contracts/detail', { contract, paymentHistory, pts, currentUser: req.session.user });
+    } catch (err) {
+        next(err);
+    }
+};
+
+exports.changePt = async (req, res, next) => {
+    try {
+        const { newPtId } = req.body;
+        const contract = await Contract.findById(req.params.id);
+        if (!contract) {
+            req.flash('error_msg', 'Không tìm thấy hợp đồng.');
+            return res.redirect('/admin/contracts/list');
+        }
+        if (!isValidObjectId(newPtId)) {
+            req.flash('error_msg', 'PT không hợp lệ.');
+            return res.redirect(`/admin/contracts/detail/${req.params.id}`);
+        }
+        contract.pt = newPtId;
+        await contract.save();
+        // Cập nhật PT cho session chưa hoàn thành
+        const WorkoutSession = require('../../programs/models/workoutSessionModel.js');
+        await WorkoutSession.updateMany(
+            { contract: contract._id, status: { $in: ['Pending_Admin', 'Scheduled'] } },
+            { $set: { pt: newPtId } }
+        );
+        req.flash('success_msg', 'Đã đổi PT thành công.');
+        res.redirect(`/admin/contracts/detail/${req.params.id}`);
     } catch (err) {
         next(err);
     }

@@ -83,9 +83,10 @@
                         <h3 class="font-black text-xs uppercase tracking-widest text-slate-400">Thông tin cơ bản</h3>
                     </div>
 
-                    <div class="space-y-2" x-data="{ 
-                        open: false, 
+                    <div class="space-y-2" x-data="{
+                        open: false,
                         search: '',
+                        createNew: false,
                         clients: [
                             <% clients.forEach(c => { %>
                                 { id: '<%= c._id %>', name: '<%= (c.name || "").replace(/'/g, "\\'") %>', info: '<%= (c.phone || "—").replace(/'/g, "\\'") %>' },
@@ -95,35 +96,77 @@
                             return this.clients.filter(c => c.name.toLowerCase().includes(this.search.toLowerCase()) || c.info.includes(this.search))
                         }
                     }" @click.away="open = false">
-                        <label class="text-[10px] font-black text-slate-500 uppercase tracking-wider ml-1">Hội viên *</label>
-                        <div class="relative">
-                            <input type="hidden" name="client" :value="clientId" required>
-                            <button type="button" @click="open = !open" 
-                                class="w-full bg-white border border-slate-200 rounded-2xl py-4 px-6 text-slate-900 text-left flex justify-between items-center focus:border-primary outline-none transition-all">
-                                <div>
-                                    <span class="font-bold block" x-text="clientLabel"></span>
-                                    <span class="text-[10px] text-slate-400 font-medium" x-show="clientId" x-text="clientInfo"></span>
-                                </div>
-                                <span class="material-symbols-outlined text-slate-400 transition-transform duration-300" :class="open ? 'rotate-180' : ''">expand_more</span>
+                        <!-- Toggle tabs -->
+                        <div class="flex gap-2 mb-3">
+                            <button type="button" @click="createNew = false"
+                                :class="!createNew ? 'bg-primary text-white' : 'bg-slate-100 text-slate-500'"
+                                class="flex-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all">
+                                Chọn hội viên
                             </button>
+                            <button type="button" @click="createNew = true"
+                                :class="createNew ? 'bg-primary text-white' : 'bg-slate-100 text-slate-500'"
+                                class="flex-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all">
+                                + Tạo hội viên mới
+                            </button>
+                        </div>
 
-                            <div x-show="open" class="absolute left-0 w-full mt-2 bg-white border border-slate-200 rounded-3xl shadow-2xl z-50 overflow-hidden py-2 glass" style="display: none;">
-                                <div class="px-4 pb-2 pt-1">
-                                    <input type="text" x-model="search" placeholder="Tìm kiếm..." class="w-full bg-slate-50 border-none rounded-xl py-2 px-4 text-xs outline-none">
-                                </div>
-                                <div class="max-h-60 overflow-y-auto">
-                                    <template x-for="c in filteredClients" :key="c.id">
-                                        <button type="button" @click="clientId = c.id; clientLabel = c.name; clientInfo = c.info; open = false"
-                                            class="w-full text-left px-6 py-3 hover:bg-primary/5 group flex items-center justify-between">
-                                            <div>
-                                                <p class="text-sm font-bold group-hover:text-primary" x-text="c.name"></p>
-                                                <p class="text-[10px] text-slate-400" x-text="c.info"></p>
-                                            </div>
-                                            <span x-show="clientId === c.id" class="material-symbols-outlined text-primary text-sm">check_circle</span>
-                                        </button>
-                                    </template>
+                        <!-- Select existing -->
+                        <div x-show="!createNew">
+                            <label class="text-[10px] font-black text-slate-500 uppercase tracking-wider ml-1">Hội viên *</label>
+                            <div class="relative mt-1">
+                                <input type="hidden" name="client" :value="!createNew ? clientId : ''" :required="!createNew">
+                                <button type="button" @click="open = !open"
+                                    class="w-full bg-white border border-slate-200 rounded-2xl py-4 px-6 text-slate-900 text-left flex justify-between items-center focus:border-primary outline-none transition-all">
+                                    <div>
+                                        <span class="font-bold block" x-text="clientLabel || 'Chọn hội viên...'"></span>
+                                        <span class="text-[10px] text-slate-400 font-medium" x-show="clientId" x-text="clientInfo"></span>
+                                    </div>
+                                    <span class="material-symbols-outlined text-slate-400 transition-transform duration-300" :class="open ? 'rotate-180' : ''">expand_more</span>
+                                </button>
+                                <div x-show="open" class="absolute left-0 w-full mt-2 bg-white border border-slate-200 rounded-3xl shadow-2xl z-50 overflow-hidden py-2 glass" style="display: none;">
+                                    <div class="px-4 pb-2 pt-1">
+                                        <input type="text" x-model="search" placeholder="Tìm kiếm..." class="w-full bg-slate-50 border-none rounded-xl py-2 px-4 text-xs outline-none">
+                                    </div>
+                                    <div class="max-h-60 overflow-y-auto">
+                                        <template x-for="c in filteredClients" :key="c.id">
+                                            <button type="button" @click="clientId = c.id; clientLabel = c.name; clientInfo = c.info; open = false"
+                                                class="w-full text-left px-6 py-3 hover:bg-primary/5 group flex items-center justify-between">
+                                                <div>
+                                                    <p class="text-sm font-bold group-hover:text-primary" x-text="c.name"></p>
+                                                    <p class="text-[10px] text-slate-400" x-text="c.info"></p>
+                                                </div>
+                                                <span x-show="clientId === c.id" class="material-symbols-outlined text-primary text-sm">check_circle</span>
+                                            </button>
+                                        </template>
+                                    </div>
                                 </div>
                             </div>
+                        </div>
+
+                        <!-- Create new client -->
+                        <div x-show="createNew" class="space-y-3" style="display:none;">
+                            <input type="hidden" name="createNewClient" value="true" x-bind:disabled="!createNew">
+                            <div>
+                                <label class="text-[10px] font-black text-slate-500 uppercase tracking-wider ml-1">Họ tên *</label>
+                                <input type="text" name="newClientName" :required="createNew"
+                                    class="w-full bg-white border border-slate-200 rounded-2xl py-4 px-6 text-slate-900 font-bold outline-none focus:border-primary mt-1"
+                                    placeholder="Nguyễn Văn A">
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-black text-slate-500 uppercase tracking-wider ml-1">Số điện thoại *</label>
+                                <input type="tel" name="newClientPhone" :required="createNew"
+                                    class="w-full bg-white border border-slate-200 rounded-2xl py-4 px-6 text-slate-900 font-bold outline-none focus:border-primary mt-1"
+                                    placeholder="09xx xxx xxx">
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-black text-slate-500 uppercase tracking-wider ml-1">Email</label>
+                                <input type="email" name="newClientEmail"
+                                    class="w-full bg-white border border-slate-200 rounded-2xl py-4 px-6 text-slate-900 font-bold outline-none focus:border-primary mt-1"
+                                    placeholder="email@example.com">
+                            </div>
+                            <p class="text-[10px] text-slate-400 bg-slate-50 rounded-xl px-4 py-2">
+                                Hội viên mới sẽ được tạo tự động với mật khẩu tạm thời gửi qua email.
+                            </p>
                         </div>
                     </div>
 

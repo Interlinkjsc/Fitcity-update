@@ -83,7 +83,7 @@ const userSchema = new mongoose.Schema({
     }],
     avatar: {
         type: String,
-        default: '/images/default-avatar.png'
+        default: '/images/default-avatar-client.svg'
     },
     // Affiliate / Referral System
     referralCode: {
