@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <title>Khung giờ mở - FitCity PT</title>
+    <%- include('../partials/pt-head') %>
+</head>
+<body class="bg-[#F8FAF7] text-slate-900 min-h-screen pb-32">
+<%- include('../partials/flash') %>
+
+<header class="flex items-center justify-between px-6 py-4 sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-200">
+    <div class="flex flex-col">
+        <h1 class="text-primary text-xl font-black tracking-tighter uppercase italic">KHUNG GIỜ MỞ</h1>
+        <span class="text-[10px] text-slate-400 font-bold uppercase tracking-widest -mt-1">Slot khả dụng của bạn</span>
+    </div>
+    <button onclick="openAddSlotModal()"
+        class="flex items-center gap-1.5 bg-primary text-white text-xs font-black uppercase tracking-wider px-4 py-2.5 rounded-full shadow-md hover:bg-green-700 transition-all">
+        <span class="material-symbols-outlined text-[18px]">add</span>Thêm slot
+    </button>
+</header>
+
+<main class="px-5 py-5 space-y-4">
+
+    <!-- TABS -->
+    <div class="flex gap-2 bg-slate-100 rounded-2xl p-1">
+        <a href="/pt/slots?tab=upcoming"
+            class="flex-1 text-center py-2 text-xs font-black uppercase tracking-wider rounded-xl transition-all
+            <%= tab === 'upcoming' ? 'bg-white text-primary shadow-sm' : 'text-slate-400 hover:text-slate-700' %>">
+            Sắp tới
+        </a>
+        <a href="/pt/slots?tab=past"
+            class="flex-1 text-center py-2 text-xs font-black uppercase tracking-wider rounded-xl transition-all
+            <%= tab === 'past' ? 'bg-white text-slate-700 shadow-sm' : 'text-slate-400 hover:text-slate-700' %>">
+            Đã qua
+        </a>
+    </div>
+
+    <!-- SLOT LIST -->
+    <% if (!slots || slots.length === 0) { %>
+    <div class="flex flex-col items-center justify-center py-16 text-center">
+        <span class="material-symbols-outlined text-5xl text-slate-200 mb-3">calendar_add_on</span>
+        <p class="text-slate-400 font-bold text-sm">Chưa có khung giờ nào</p>
+        <% if (tab === 'upcoming') { %>
+        <p class="text-slate-400 text-xs mt-1">Nhấn <strong>+ Thêm slot</strong> để đăng ký khung giờ mở</p>
+        <% } %>
+    </div>
+    <% } else { %>
+    <div class="space-y-3">
+        <% slots.forEach(slot => { %>
+        <%
+            const start = new Date(slot.startTime);
+            const end = new Date(start.getTime() + slot.durationMinutes * 60000);
+            const dateStr = start.toLocaleDateString('vi-VN', { weekday: 'short', day: '2-digit', month: '2-digit' });
+            const timeStr = start.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false });
+            const endStr = end.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false });
+            const statusMap = {
+                Open: { label: 'Mở', bg: 'bg-green-100', text: 'text-green-700' },
+                Pending: { label: 'Chờ xác nhận', bg: 'bg-amber-100', text: 'text-amber-700' },
+                Booked: { label: 'Đã đặt', bg: 'bg-blue-100', text: 'text-blue-700' },
+                Cancelled: { label: 'Đã hủy', bg: 'bg-red-100', text: 'text-red-600' },
+            };
+            const s = statusMap[slot.status] || { label: slot.status, bg: 'bg-slate-100', text: 'text-slate-600' };
+        %>
+        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 flex items-center gap-4">
+            <!-- Date badge -->
+            <div class="shrink-0 w-14 text-center bg-slate-50 rounded-xl border border-slate-100 py-2">
+                <p class="text-[9px] font-black uppercase text-slate-400 tracking-widest leading-none"><%= start.toLocaleDateString('vi-VN', { weekday: 'short' }).toUpperCase() %></p>
+                <p class="text-2xl font-black text-slate-900 leading-tight"><%= start.getDate() %></p>
+                <p class="text-[9px] font-bold text-slate-400 leading-none">Tháng <%= start.getMonth()+1 %></p>
+            </div>
+
+            <!-- Info -->
+            <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 mb-1">
+                    <span class="material-symbols-outlined text-[16px] text-slate-400">schedule</span>
+                    <span class="text-sm font-black text-slate-900"><%= timeStr %> – <%= endStr %></span>
+                    <span class="text-[9px] font-bold text-slate-400">(<%= slot.durationMinutes %> phút)</span>
+                </div>
+                <% if (slot.branch && slot.branch.name) { %>
+                <p class="text-xs text-slate-400 font-medium flex items-center gap-1">
+                    <span class="material-symbols-outlined text-[13px]">location_on</span><%= slot.branch.name %>
+                </p>
+                <% } %>
+                <% if (slot.status === 'Pending' && slot.pending && slot.pending.client) { %>
+                <p class="text-xs text-amber-600 font-semibold mt-1 flex items-center gap-1">
+                    <span class="material-symbols-outlined text-[13px]">person</span>
+                    Yêu cầu: <%= slot.pending.client.name %>
+                </p>
+                <% } %>
+                <% if (slot.status === 'Booked' && slot.pending && slot.pending.client) { %>
+                <p class="text-xs text-blue-600 font-semibold mt-1 flex items-center gap-1">
+                    <span class="material-symbols-outlined text-[13px]">person_check</span>
+                    Khách: <%= slot.pending.client.name %>
+                </p>
+                <% } %>
+            </div>
+
+            <!-- Status + delete -->
+            <div class="shrink-0 flex flex-col items-end gap-2">
+                <span class="px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider <%= s.bg %> <%= s.text %>">
+                    <%= s.label %>
+                </span>
+                <% if (slot.status === 'Open') { %>
+                <button onclick="deleteSlot('<%= slot._id %>')"
+                    class="text-slate-300 hover:text-red-400 transition-colors" title="Xóa slot">
+                    <span class="material-symbols-outlined text-[18px]">delete</span>
+                </button>
+                <% } %>
+            </div>
+        </div>
+        <% }) %>
+    </div>
+    <% } %>
+</main>
+
+<!-- ADD SLOT MODAL -->
+<div id="addSlotModal" class="fixed inset-0 z-[100] items-center justify-center p-4"
+    style="display:none; backdrop-filter:blur(4px); background-color:rgba(0,0,0,0.4);">
+    <div class="bg-white rounded-[28px] shadow-2xl w-full max-w-sm p-6 transform transition-all scale-95 opacity-0 duration-200" id="addSlotDialog">
+        <div class="flex items-center justify-between mb-5">
+            <h3 class="text-lg font-black text-slate-900">Thêm khung giờ mở</h3>
+            <button onclick="closeAddSlotModal()" class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200 transition-all text-slate-500">
+                <span class="material-symbols-outlined text-[18px]">close</span>
+            </button>
+        </div>
+
+        <form action="/pt/slots/add" method="POST" class="space-y-4">
+            <div>
+                <label class="block text-xs font-black uppercase tracking-wider text-slate-500 mb-1.5">Thời gian bắt đầu</label>
+                <input type="datetime-local" name="startTime" required
+                    class="w-full border border-slate-200 rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-primary/40 outline-none bg-slate-50">
+            </div>
+            <div>
+                <label class="block text-xs font-black uppercase tracking-wider text-slate-500 mb-1.5">Thời lượng</label>
+                <select name="durationMinutes"
+                    class="w-full border border-slate-200 rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-primary/40 outline-none bg-slate-50">
+                    <option value="45">45 phút</option>
+                    <option value="60" selected>60 phút (1 giờ)</option>
+                    <option value="90">90 phút</option>
+                    <option value="120">120 phút (2 giờ)</option>
+                </select>
+            </div>
+            <p class="text-xs text-slate-400 bg-slate-50 rounded-xl p-3">
+                <span class="material-symbols-outlined text-[13px] align-[-2px]">info</span>
+                Khung giờ sẽ được hiển thị cho Admin và khách hàng đặt lịch.
+            </p>
+            <div class="flex gap-2 pt-1">
+                <button type="button" onclick="closeAddSlotModal()"
+                    class="flex-1 py-3 rounded-xl border border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all">
+                    Hủy
+                </button>
+                <button type="submit"
+                    class="flex-1 py-3 rounded-xl bg-primary text-white text-sm font-bold hover:bg-green-700 transition-all">
+                    Đăng ký
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function openAddSlotModal() {
+    const modal = document.getElementById('addSlotModal');
+    const dialog = document.getElementById('addSlotDialog');
+    // Set default to next hour
+    const next = new Date();
+    next.setHours(next.getHours() + 1, 0, 0, 0);
+    const local = new Date(next.getTime() - next.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+    modal.querySelector('[name=startTime]').value = local;
+    modal.style.display = 'flex';
+    setTimeout(() => {
+        dialog.classList.remove('scale-95', 'opacity-0');
+        dialog.classList.add('scale-100', 'opacity-100');
+    }, 10);
+}
+
+function closeAddSlotModal() {
+    const modal = document.getElementById('addSlotModal');
+    const dialog = document.getElementById('addSlotDialog');
+    dialog.classList.remove('scale-100', 'opacity-100');
+    dialog.classList.add('scale-95', 'opacity-0');
+    setTimeout(() => { modal.style.display = 'none'; }, 200);
+}
+
+async function deleteSlot(id) {
+    if (!confirm('Xóa khung giờ này?')) return;
+    try {
+        const res = await fetch(`/pt/slots/${id}`, { method: 'DELETE' });
+        const data = await res.json();
+        if (data.success) location.reload();
+        else alert(data.message || 'Không thể xóa.');
+    } catch (e) {
+        alert('Lỗi hệ thống.');
+    }
+}
+</script>
+
+<%- include('../partials/nav_pt', { activePage: 'pt-slots' }) %>
+</body>
+</html>

@@ -315,4 +315,72 @@ exports.createDirectSession = async (req, res, next) => {
     }
 };
 
+const PtAvailabilitySlot = require('../models/ptAvailabilitySlotModel.js');
+
+exports.getPtSlots = async (req, res, next) => {
+    try {
+        const ptId = req.session.user.id;
+        const tab = req.query.tab || 'upcoming';
+
+        const now = new Date();
+        let filter = { pt: ptId };
+        if (tab === 'upcoming') {
+            filter.startTime = { $gte: now };
+            filter.status = { $in: ['Open', 'Pending', 'Booked'] };
+        } else if (tab === 'past') {
+            filter.startTime = { $lt: now };
+        }
+
+        const slots = await PtAvailabilitySlot.find(filter)
+            .populate('pending.client', 'name avatar')
+            .populate('branch', 'name')
+            .sort({ startTime: 1 })
+            .limit(50)
+            .lean();
+
+        res.render('pt/slots', { slots, tab, activePage: 'pt-slots', user: req.session.user });
+    } catch (err) {
+        next(err);
+    }
+};
+
+exports.postAddSlot = async (req, res, next) => {
+    try {
+        const ptId = req.session.user.id;
+        const { startTime, durationMinutes } = req.body;
+        const branch = req.session.user.branch;
+
+        if (!startTime || !branch) {
+            req.flash('error_msg', 'Thiếu thông tin thời gian hoặc chi nhánh.');
+            return res.redirect('/pt/slots');
+        }
+
+        await PtAvailabilitySlot.create({
+            pt: ptId,
+            branch,
+            startTime: new Date(startTime),
+            durationMinutes: parseInt(durationMinutes) || 60,
+            status: 'Open'
+        });
+
+        req.flash('success_msg', 'Đã thêm khung giờ mở.');
+        res.redirect('/pt/slots');
+    } catch (err) {
+        next(err);
+    }
+};
+
+exports.deleteSlot = async (req, res, next) => {
+    try {
+        const ptId = req.session.user.id;
+        const slot = await PtAvailabilitySlot.findOne({ _id: req.params.id, pt: ptId });
+        if (!slot) return res.status(404).json({ success: false, message: 'Không tìm thấy slot.' });
+        if (slot.status === 'Booked') return res.status(400).json({ success: false, message: 'Slot đã được đặt, không thể xóa.' });
+        await slot.deleteOne();
+        res.json({ success: true });
+    } catch (err) {
+        next(err);
+    }
+};
+
 

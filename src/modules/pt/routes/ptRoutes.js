@@ -28,7 +28,9 @@ router.post('/contracts/store', checkPermission('contract', 'create'), require('
 
 router.get('/clients', homeController.getPtClients);
 router.get('/schedule', homeController.getPtSchedule);
-router.get('/slots', homeController.getPtSchedule);
+router.get('/slots', ptController.getPtSlots);
+router.post('/slots/add', restrictTo('PT'), ptController.postAddSlot);
+router.delete('/slots/:id', restrictTo('PT'), ptController.deleteSlot);
 
 router.get('/income', ptController.getIncome);
 
