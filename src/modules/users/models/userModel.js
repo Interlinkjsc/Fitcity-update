@@ -104,7 +104,7 @@ const userSchema = new mongoose.Schema({
     /** % hoa hồng PT trên netAmount mỗi HĐ (lưu vào contract.ptCommission) */
     ptCommissionRate: {
         type: Number,
-        default: 10,
+        default: 0,
         min: 0,
         max: 100
     },
