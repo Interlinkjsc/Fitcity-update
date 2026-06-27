@@ -370,7 +370,22 @@ exports.postAddSlot = async (req, res, next) => {
             status: 'Open'
         });
 
-        req.flash('success_msg', 'Đã thêm khung giờ mở.');
+        try {
+            const User = require('../../users/models/userModel.js');
+            const managers = await User.find({ role: { $in: ['Admin', 'Manager', 'SA'] } }).select('_id').lean();
+            for (const m of managers) {
+                await notificationService.pushNotification(
+                    m._id,
+                    'PT tạo lịch dạy mới',
+                    `${req.session.user.name} đã đăng ký lịch dạy mới vào ${new Date(startTime).toLocaleString('vi-VN')}.`,
+                    'Info',
+                    '/admin/slots/requests',
+                    ptId
+                );
+            }
+        } catch (e) { /* notification không block flow */ }
+
+        req.flash('success_msg', 'Đã thêm lịch dạy mới.');
         res.redirect('/pt/slots');
     } catch (err) {
         next(err);

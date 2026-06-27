@@ -40,7 +40,7 @@ router.post('/requests/reject/:id', checkPermission('contract', 'manage'), contr
 router.post('/:id/change-pt', checkPermission('contract', 'manage'), contractController.changePt);
 
 // ========== PAYMENT & PREVIEW ==========
-router.post('/:id/payments/store', checkPermission('contract', 'manage'), paymentController.storePayment);
+router.post('/:id/payments/store', checkPermission('contract', 'create'), paymentController.storePayment);
 router.get('/:id/preview/receipt/:transactionId', checkPermission('contract', 'view'), paymentController.previewReceipt);
 
 module.exports = router;

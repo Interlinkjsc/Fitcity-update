@@ -47,7 +47,7 @@ exports.storeReward = async (req, res) => {
             expiresAt,
             couponId: couponId || null,
             notes,
-            assignedBy: req.session.user._id
+            assignedBy: req.session.user._id || req.session.user.id
         });
 
         req.flash('success_msg', 'Đã gán Reward thành công! Khách hàng đã nhận được thông báo.');

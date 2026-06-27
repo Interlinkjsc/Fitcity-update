@@ -338,7 +338,7 @@ exports.getPtDashboard = async (req, res, next) => {
 
         const completedSessions = await WorkoutSession.countDocuments({
             pt: ptId,
-            status: 'Completed',
+            status: { $in: ['Completed', 'Confirmed'] },
             scheduledTime: { $gte: startOfMonth }
         });
 

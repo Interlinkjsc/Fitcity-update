@@ -233,8 +233,8 @@ const MENU_ITEMS = [
     {
         key: 'slots',
         moduleId: 'pt_ops',
-        label: 'Quản lí lịch tập',
-        href: '/admin/slots/calendar',
+        label: 'Lịch dạy PT',
+        href: '/admin/slots/requests',
         icon: 'calendar_month',
         permission: { resource: 'slots', action: 'view' },
         roles: ['SA', 'Admin', 'Manager', 'CEO'],
@@ -257,15 +257,7 @@ const MENU_ITEMS = [
         permission: { resource: 'session_approval', action: 'view' },
         roles: ['SA', 'Admin', 'Manager'],
     },
-    {
-        key: 'timesheets',
-        moduleId: 'pt_ops',
-        label: 'Chấm công',
-        href: '/admin/timesheets',
-        icon: 'schedule',
-        permission: { resource: 'timesheet', action: 'view' },
-        roles: ['SA', 'Admin', 'CEO', 'Manager', 'Accountant'],
-    },
+    // Chấm công đã bị bỏ khỏi sidebar
     {
         key: 'pt-leave',
         moduleId: 'pt_ops',

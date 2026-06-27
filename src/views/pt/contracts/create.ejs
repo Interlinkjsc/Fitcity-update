@@ -26,7 +26,8 @@
     paymentStatusLabel: 'Chưa thu',
 
     nextStep() {
-        if (this.step === 1 && !this.clientId) { alert('Vui lòng chọn hội viên!'); return; }
+        if (this.step === 1 && !this.createNew && !this.clientId) { alert('Vui lòng chọn hội viên!'); return; }
+        if (this.step === 1 && this.createNew && !this.newClientName) { alert('Vui lòng nhập tên hội viên mới!'); return; }
         if (this.step === 2) {
             if (this.mode === 'template' && !this.selectedPkgId) { alert('Vui lòng chọn gói tập!'); return; }
             if (this.mode === 'custom' && (!this.customPkgName || !this.selectedPkgPrice || this.customPkgSessions < 1)) { alert('Vui lòng điền đủ thông tin gói tùy chỉnh (tên, giá/buổi, số buổi)!'); return; }

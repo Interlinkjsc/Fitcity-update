@@ -1,12 +1,23 @@
 const { getPagination } = require('../../../utils/paginationHelper');
+const PtAvailabilitySlot = require('../models/ptAvailabilitySlotModel.js');
 
 exports.listRequests = async (req, res, next) => {
     try {
         const page = parseInt(req.query.page) || 1;
-        const limit = 10;
+        const limit = 20;
 
-        const totalDocs = 0;
-        const pendingSlots = [];
+        const filter = {};
+        if (req.query.status) filter.status = req.query.status;
+
+        const totalDocs = await PtAvailabilitySlot.countDocuments(filter);
+        const pendingSlots = await PtAvailabilitySlot.find(filter)
+            .populate('pt', 'name avatar')
+            .populate('pending.client', 'name')
+            .populate('branch', 'name')
+            .sort({ startTime: 1 })
+            .skip((page - 1) * limit)
+            .limit(limit)
+            .lean();
 
         const pagination = getPagination(totalDocs, page, limit);
 
