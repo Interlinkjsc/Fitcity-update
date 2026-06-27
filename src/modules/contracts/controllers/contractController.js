@@ -347,9 +347,9 @@ exports.storeContract = async (req, res, next) => {
 
         const pkgDisplayName = newContract.packageSnapshot ? newContract.packageSnapshot.name : 'N/A';
 
-        // NOTIFY CLIENT: New Contract Created
+        // NOTIFY CLIENT: dùng resolvedClient (đúng khi createNew=true, client body = '')
         await notificationService.pushNotification(
-            client,
+            resolvedClient,
             'Hợp đồng mới đã được tạo',
             `Chào bạn, một hợp đồng mới (${newContract.contractCode}) đã được thiết lập cho gói tập "${pkgDisplayName}". Vui lòng kiểm tra.`,
             'Info',
@@ -364,8 +364,28 @@ exports.storeContract = async (req, res, next) => {
             'Success'
         );
 
+        // NOTIFY ADMIN/MANAGER: PT vừa tạo HĐ mới (kể cả client mới) — để admin xem và duyệt nếu cần
+        if (req.session.user && req.session.user.role === 'PT') {
+            try {
+                const managers = await User.find({ role: { $in: ['Admin', 'Manager', 'SA'] } }).select('_id').lean();
+                const isNewClient = req.body.createNewClient === 'true';
+                const notifyMsg = isNewClient
+                    ? `PT ${req.session.user.name} vừa tạo khách hàng mới và hợp đồng ${newContract.contractCode}. Vui lòng kiểm tra.`
+                    : `PT ${req.session.user.name} vừa tạo hợp đồng ${newContract.contractCode} cho hội viên. Vui lòng kiểm tra.`;
+                for (const m of managers) {
+                    await notificationService.pushNotification(
+                        m._id,
+                        'PT tạo hợp đồng mới',
+                        notifyMsg,
+                        'Warning',
+                        '/admin/contracts/list'
+                    );
+                }
+            } catch (e) { /* notification không block flow */ }
+        }
+
         req.flash('success_msg', 'Tạo hợp đồng thành công! Dòng tiền đã được ghi nhận.');
-        
+
         // Dynamic redirect based on role
         if (req.user && req.user.role === 'PT') {
             return res.redirect('/pt');
