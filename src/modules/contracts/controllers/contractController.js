@@ -215,15 +215,24 @@ exports.storeContract = async (req, res, next) => {
             const crypto = require('crypto');
             const tempPassword = crypto.randomBytes(5).toString('hex');
             const tempEmail = newClientEmail || `client_${Date.now()}@fitcity.temp`;
-            const newUser = await User.create({
-                name: newClientName,
-                phone: newClientPhone,
-                email: tempEmail,
-                emailHash: require('../../../utils/encryption').hash(tempEmail),
-                password: tempPassword,
-                role: 'Client',
-                branch: branch || req.session.user.branch,
-            });
+            let newUser;
+            try {
+                newUser = await User.create({
+                    name: newClientName,
+                    phone: newClientPhone,
+                    email: tempEmail,
+                    password: tempPassword,
+                    role: 'Client',
+                    branch: branch || req.session.user.branch,
+                });
+            } catch (createErr) {
+                if (createErr.code === 11000) {
+                    req.flash('error_msg', 'Số điện thoại hoặc email này đã tồn tại trong hệ thống. Vui lòng chọn hội viên từ danh sách.');
+                } else {
+                    req.flash('error_msg', 'Lỗi tạo hội viên mới: ' + createErr.message);
+                }
+                return res.redirect(back);
+            }
             resolvedClient = newUser._id.toString();
         }
 
