@@ -516,7 +516,10 @@ exports.getClientDashboard = async (req, res, next) => {
 
         const sessionsCompleted = await WorkoutSession.countDocuments({
             client: clientId,
-            status: { $in: ['Completed', 'Confirmed'] }
+            $or: [
+                { status: { $in: ['Completed', 'Confirmed'] } },
+                { status: 'Scheduled', scheduledTime: { $lte: new Date() } }
+            ]
         });
 
         const pendingConfirmation = await WorkoutSession.findOne({
