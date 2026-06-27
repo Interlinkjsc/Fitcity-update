@@ -32,7 +32,7 @@ exports.listRequests = async (req, res, next) => {
     }
 };
 
-exports.showCalendar = async (req, res, next) => {
+exports.showCalendar = async (req, res, next) => { return res.redirect('/admin/slots/requests'); }; exports._showCalendarOLD = async (req, res, next) => {
     try {
         const Branch = require('../../crm/models/branchModel.js');
         const branches = await Branch.find().select('name').lean();

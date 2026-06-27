@@ -22,10 +22,10 @@ exports.storePayment = async (req, res, next) => {
 
         // Lấy contract để biết clientId
         const contract = await Contract.findById(contractId);
-        if (!contract) {
+        if (!contractDoc) {
             return denyContractAccess(req, res, null);
         }
-        if (!contractScope.canAccessContract(req.session.user, contract)) {
+        if (!contractScope.canAccessContract(req.session.user, contractDoc)) {
             return denyContractAccess(req, res, contract);
         }
 
@@ -62,13 +62,13 @@ exports.storePayment = async (req, res, next) => {
  */
 exports.previewContract = async (req, res, next) => {
     try {
-        const contract = await Contract.findById(req.params.id)
-            .populate('client', 'name email phone')
+        const contractDoc = await Contract.findById(req.params.id)
+            .populate('client', 'name email phone cccdNumber cccdIssueDate cccdIssuePlace address dob emergencyContact')
             .populate('servicePackage', 'name price durationInMonths maxSessions type')
             .populate('pt', 'name phone')
             .populate('branch', 'name address')
-            .populate('sales', 'name')
-            .lean();
+            .populate('sales', 'name');
+        const contract = contractDoc ? contractDoc.toObject({ getters: true }) : null;
 
         if (!contract) {
             return denyContractAccess(req, res, null);
