@@ -54,7 +54,7 @@ exports.getPtFeedbackList = async (req, res, next) => {
   try {
     const user = req.session.user;
     const branchId = req.query.branchId;
-    const sessionFilter = { 'feedback.rating': { $exists: true, $ne: null }, status: 'Completed' };
+    const sessionFilter = { 'feedback.rating': { $exists: true, $ne: null }, status: { $in: ['Completed', 'Confirmed'] } };
 
     if (user.role === 'Manager' && user.branch) {
       sessionFilter.branch = user.branch;

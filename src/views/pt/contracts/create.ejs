@@ -85,19 +85,8 @@
                         <h3 class="font-black text-xs uppercase tracking-widest text-slate-400">Thông tin cơ bản</h3>
                     </div>
 
-                    <div class="space-y-2" x-data="{
-                        open: false,
-                        search: '',
-                        clients: [
-                            <% clients.forEach(c => { %>
-                                { id: '<%= c._id %>', name: '<%= (c.name || "").replace(/'/g, "\\'") %>', info: '<%= (c.phone || "—").replace(/'/g, "\\'") %>' },
-                            <% }) %>
-                        ],
-                        get filteredClients() {
-                            return this.clients.filter(c => c.name.toLowerCase().includes(this.search.toLowerCase()) || c.info.includes(this.search))
-                        }
-                    }" @click.away="open = false">
-                        <!-- Toggle tabs -->
+                    <div class="space-y-2">
+                        <!-- Toggle tabs - TRONG outer x-data (body), đảm bảo createNew ghi vào đúng scope -->
                         <div class="flex gap-2 mb-3">
                             <button type="button" @click="createNew = false"
                                 :class="!createNew ? 'bg-primary text-white' : 'bg-slate-100 text-slate-500'"
@@ -111,10 +100,21 @@
                             </button>
                         </div>
 
-                        <!-- Select existing -->
+                        <!-- Select existing - inner x-data CHỈ cho dropdown search -->
                         <div x-show="!createNew">
                             <label class="text-[10px] font-black text-slate-500 uppercase tracking-wider ml-1">Hội viên *</label>
-                            <div class="relative mt-1">
+                            <div class="relative mt-1" x-data="{
+                                open: false,
+                                search: '',
+                                clients: [
+                                    <% clients.forEach(c => { %>
+                                        { id: '<%= c._id %>', name: '<%= (c.name || "").replace(/'/g, "\\'") %>', info: '<%= (c.phone || "—").replace(/'/g, "\\'") %>' },
+                                    <% }) %>
+                                ],
+                                get filteredClients() {
+                                    return this.clients.filter(c => c.name.toLowerCase().includes(this.search.toLowerCase()) || c.info.includes(this.search))
+                                }
+                            }" @click.away="open = false">
                                 <input type="hidden" name="client" :value="!createNew ? clientId : ''" :required="!createNew">
                                 <button type="button" @click="open = !open"
                                     class="w-full bg-white border border-slate-200 rounded-2xl py-4 px-6 text-slate-900 text-left flex justify-between items-center focus:border-primary outline-none transition-all">
@@ -144,7 +144,7 @@
                             </div>
                         </div>
 
-                        <!-- Create new client -->
+                        <!-- Create new client - NGOÀI inner x-data, đọc createNew từ outer scope -->
                         <div x-show="createNew" class="space-y-3" style="display:none;">
                             <input type="hidden" name="createNewClient" value="true" x-bind:disabled="!createNew">
                             <div>

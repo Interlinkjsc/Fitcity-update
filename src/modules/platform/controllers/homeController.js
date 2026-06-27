@@ -338,8 +338,8 @@ exports.getPtDashboard = async (req, res, next) => {
 
         const completedSessions = await WorkoutSession.countDocuments({
             pt: ptId,
-            status: { $in: ['Completed', 'Confirmed'] },
-            scheduledTime: { $gte: startOfMonth }
+            status: { $in: ['Completed', 'Confirmed', 'Scheduled'] },
+            scheduledTime: { $gte: startOfMonth, $lte: new Date() }
         });
 
         const paidContractsThisMonth = await Contract.find({
@@ -516,7 +516,7 @@ exports.getClientDashboard = async (req, res, next) => {
 
         const sessionsCompleted = await WorkoutSession.countDocuments({
             client: clientId,
-            status: 'Completed'
+            status: { $in: ['Completed', 'Confirmed'] }
         });
 
         const pendingConfirmation = await WorkoutSession.findOne({
