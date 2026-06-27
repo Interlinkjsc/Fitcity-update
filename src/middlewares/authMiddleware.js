@@ -25,7 +25,14 @@ exports.restrictTo = (...roles) => {
 exports.checkPermission = (resource, action, checkBranch = true) => {
     return async (req, res, next) => {
         const user = req.session.user;
-        if (!user) return res.status(401).json({ status: 'fail' });
+        if (!user) {
+            const acceptsHtml = req.accepts('html') && !req.xhr;
+            if (acceptsHtml) {
+                if (req.flash) req.flash('error_msg', 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+                return res.redirect('/auth/login');
+            }
+            return res.status(401).json({ status: 'fail' });
+        }
 
         let hasAccess = false;
         if (user.role === 'SA') {
@@ -36,10 +43,11 @@ exports.checkPermission = (resource, action, checkBranch = true) => {
         }
 
         if (!hasAccess) {
-            const wantsHtml = req.accepts('html') && !req.xhr && req.method === 'GET';
-            if (wantsHtml) {
-                req.flash('error_msg', 'Bạn không có quyền truy cập chức năng này.');
-                return res.redirect('/auth/login');
+            const isHtmlForm = req.accepts('html') && !req.xhr;
+            if (isHtmlForm) {
+                if (req.flash) req.flash('error_msg', 'Bạn không có quyền truy cập chức năng này.');
+                if (req.method === 'GET') return res.redirect('/auth/login');
+                return res.redirect('back');
             }
             return res.status(403).json({ status: 'fail', message: 'Forbidden' });
         }
