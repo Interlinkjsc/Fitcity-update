@@ -2,18 +2,26 @@ const WorkoutSession = require('../models/workoutSessionModel');
 const User = require('../../users/models/userModel');
 const Branch = require('../../crm/models/branchModel');
 const notificationService = require('../../platform/services/notificationService');
+const PtAvailabilitySlot = require('../../pt/models/ptAvailabilitySlotModel');
 
 // GET /admin/sessions/pending
 exports.getPendingList = async (req, res, next) => {
   try {
-    const sessions = await WorkoutSession.find({ status: 'Pending_Admin' })
-      .populate('client', 'name email avatar')
-      .populate('pt', 'name avatar')
-      .populate('contract', 'contractCode packageSnapshot')
-      .populate('branch', 'name')
-      .sort({ createdAt: -1 })
-      .lean();
-    res.render('admin/sessions/pending-list', { sessions, activePage: 'session-approval' });
+    const [sessions, pendingSlots] = await Promise.all([
+      WorkoutSession.find({ status: 'Pending_Admin' })
+        .populate('client', 'name email avatar')
+        .populate('pt', 'name avatar')
+        .populate('contract', 'contractCode packageSnapshot')
+        .populate('branch', 'name')
+        .sort({ createdAt: -1 })
+        .lean(),
+      PtAvailabilitySlot.find({ status: 'Open' })
+        .populate('pt', 'name avatar')
+        .populate('branch', 'name')
+        .sort({ startTime: 1 })
+        .lean()
+    ]);
+    res.render('admin/sessions/pending-list', { sessions, pendingSlots, activePage: 'session-approval' });
   } catch (err) { next(err); }
 };
 
