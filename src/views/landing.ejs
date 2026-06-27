@@ -44,10 +44,9 @@
             <a href="/blog" class="hover:text-primary transition-colors">Blog</a>
             <a href="/contact" class="hover:text-primary transition-colors">Liên hệ</a>
         </div>
-        <div class="hidden md:flex items-center gap-4">
-            <a href="/auth/login" class="text-sm font-bold text-slate-700 hover:text-black">Đăng nhập</a>
-            <a href="/auth/login?view=register" class="text-sm font-bold text-slate-700 hover:text-primary">Đăng ký hội viên</a>
-            <a href="#trial" class="px-5 py-2 bg-primary text-white text-sm font-black rounded-lg uppercase tracking-tight hover:brightness-110 shadow-md shadow-primary/20 transition-all">Tập thử 0đ</a>
+        <div class="hidden md:flex items-center gap-3">
+            <a href="/auth/login" class="px-4 py-2 border border-slate-300 text-slate-700 text-sm font-black rounded-lg hover:border-primary hover:text-primary transition-all">Đăng nhập</a>
+            <a href="#trial" class="px-5 py-2 bg-primary text-white text-sm font-black rounded-lg uppercase tracking-tight hover:brightness-110 shadow-md shadow-primary/20 transition-all">Đăng ký học thử</a>
         </div>
 
         <!-- Mobile Nav Button -->
@@ -67,9 +66,8 @@
             <a @click="open = false" href="#packages" class="text-lg font-bold text-slate-700 hover:text-primary transition-colors">Gói tập</a>
             <a @click="open = false" href="#branches" class="text-lg font-bold text-slate-700 hover:text-primary transition-colors">Chi nhánh</a>
             <hr class="border-slate-200" />
-            <a href="/auth/login" class="text-lg font-bold text-slate-700 hover:text-primary transition-colors">Đăng nhập hệ thống</a>
-            <a href="/auth/login?view=register" class="text-lg font-bold text-slate-700 hover:text-primary transition-colors">Đăng ký hội viên</a>
-            <a @click="open = false" href="#trial" class="py-4 bg-primary text-white text-lg text-center font-black rounded-xl uppercase tracking-tight shadow-xl shadow-primary/20">Để lại thông tin tư vấn (Lead)</a>
+            <a href="/auth/login" class="py-3 border border-slate-300 text-slate-700 text-base text-center font-black rounded-xl hover:border-primary hover:text-primary transition-all">Đăng nhập hệ thống</a>
+            <a @click="open = false" href="#trial" class="py-4 bg-primary text-white text-lg text-center font-black rounded-xl uppercase tracking-tight shadow-xl shadow-primary/20">Đăng ký học thử miễn phí</a>
         </div>
     </nav>
 
