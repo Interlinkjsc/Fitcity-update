@@ -3,13 +3,14 @@
 <head>
     <%- include('../../partials/pt-head', { title: 'Thiết lập Hợp đồng - FitCity PT' }) %>
 </head>
-<body class="bg-[#F8FAF7] text-slate-900 min-h-screen pb-32" x-data="{ 
+<body class="bg-[#F8FAF7] text-slate-900 min-h-screen pb-32" x-data="{
     step: 1,
     totalSteps: 4,
-    // Form Data
     clientId: '',
     clientLabel: 'Chưa chọn hội viên',
     clientInfo: '',
+    createNew: false,
+    newClientName: '',
     branchId: '<%= branches && branches.length ? branches[0]._id : "" %>',
     branchLabel: '<%= branches && branches.length ? branches[0].name : "Chưa có chi nhánh" %>',
     mode: 'template',
@@ -87,7 +88,6 @@
                     <div class="space-y-2" x-data="{
                         open: false,
                         search: '',
-                        createNew: false,
                         clients: [
                             <% clients.forEach(c => { %>
                                 { id: '<%= c._id %>', name: '<%= (c.name || "").replace(/'/g, "\\'") %>', info: '<%= (c.phone || "—").replace(/'/g, "\\'") %>' },
@@ -149,7 +149,7 @@
                             <input type="hidden" name="createNewClient" value="true" x-bind:disabled="!createNew">
                             <div>
                                 <label class="text-[10px] font-black text-slate-500 uppercase tracking-wider ml-1">Họ tên *</label>
-                                <input type="text" name="newClientName" :required="createNew"
+                                <input type="text" name="newClientName" x-model="newClientName" :required="createNew"
                                     class="w-full bg-white border border-slate-200 rounded-2xl py-4 px-6 text-slate-900 font-bold outline-none focus:border-primary mt-1"
                                     placeholder="Nguyễn Văn A">
                             </div>
