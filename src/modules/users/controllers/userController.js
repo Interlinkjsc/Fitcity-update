@@ -327,8 +327,8 @@ exports.getDetail = async (req, res, next) => {
             startOfMonth.setHours(0, 0, 0, 0);
             sessionsThisMonth = await WorkoutSession.countDocuments({
                 pt: userData._id,
-                status: 'Completed',
-                scheduledTime: { $gte: startOfMonth }
+                status: { $in: ['Completed', 'Confirmed', 'Scheduled'] },
+                scheduledTime: { $gte: startOfMonth, $lte: new Date() }
             });
         }
 

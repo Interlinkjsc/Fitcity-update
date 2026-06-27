@@ -169,14 +169,18 @@ async function getPTKPI(user, monthOverride, yearOverride) {
     const { month, year } = getPeriod(null, monthOverride, yearOverride);
     const dateFilter = monthRangeFilter(month, year);
 
-    // Completed/Confirmed sessions this month
+    // Completed/Confirmed/Scheduled(past) sessions this month
+    const now = new Date();
     const sessionResult = await WorkoutSession.aggregate([
-        { $match: { pt: user._id, status: { $in: ['Completed', 'Confirmed'] }, ...dateFilter } },
+        { $match: { pt: user._id, ...dateFilter, $or: [
+            { status: { $in: ['Completed', 'Confirmed'] } },
+            { status: 'Scheduled', scheduledTime: { $lte: now } }
+        ] } },
         {
             $group: {
                 _id: null,
                 sessionCount: { $sum: 1 },
-                workingDays: { $addToSet: { $dateToString: { format: '%Y-%m-%d', date: '$startTime' } } }
+                workingDays: { $addToSet: { $dateToString: { format: '%Y-%m-%d', date: '$scheduledTime' } } }
             }
         }
     ]);
