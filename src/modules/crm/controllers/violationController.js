@@ -55,7 +55,7 @@ exports.getViolations = async (req, res, next) => {
             { $unwind: '$staffInfo' }
         ]);
 
-        const allStaff = await User.find({ role: { $in: ['PT', 'Sales', 'Manager'] }, status: 'Active' })
+        const allStaff = await User.find({ role: { $nin: ['Client'] }, status: 'Active' })
             .select('name role')
             .sort({ name: 1 });
 
@@ -89,7 +89,7 @@ exports.getViolations = async (req, res, next) => {
 
 exports.getCreateViolation = async (req, res, next) => {
     try {
-        const staff = await User.find({ role: { $in: ['PT', 'Sales', 'Manager'] }, status: 'Active' })
+        const staff = await User.find({ role: { $nin: ['Client'] }, status: 'Active' })
             .select('name email role');
             
         res.render('admin/violations/form', {
@@ -136,7 +136,7 @@ exports.getEditViolation = async (req, res, next) => {
             return res.redirect('/admin/violations');
         }
 
-        const staff = await User.find({ role: { $in: ['PT', 'Sales', 'Manager'] }, status: 'Active' })
+        const staff = await User.find({ role: { $nin: ['Client'] }, status: 'Active' })
             .select('name email role');
 
         res.render('admin/violations/form', {

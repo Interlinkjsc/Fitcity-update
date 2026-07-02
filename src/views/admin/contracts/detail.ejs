@@ -160,8 +160,9 @@
                         <p class="text-sm text-slate-500 mt-1 italic">Không có HLV phụ trách (Tự tập)</p>
                     <% } %>
                     <% if (pts && pts.length > 0) { %>
-                    <form action="/admin/contracts/<%= contract._id %>/change-pt" method="POST" class="mt-2 flex items-center gap-2">
-                        <select name="newPtId" class="text-xs border border-slate-300 rounded-lg px-2 py-1.5 focus:ring-1 focus:ring-lime-500 outline-none flex-1">
+                    <%# Bug 1.4 (2/7): select dài đẩy nút Lưu ra ngoài màn hình mobile — cho phép xuống dòng %>
+                    <form action="/admin/contracts/<%= contract._id %>/change-pt" method="POST" class="mt-2 flex flex-col sm:flex-row sm:items-center gap-2">
+                        <select name="newPtId" class="text-xs border border-slate-300 rounded-lg px-2 py-1.5 focus:ring-1 focus:ring-lime-500 outline-none flex-1 min-w-0 w-full sm:w-auto">
                             <option value="">-- Đổi PT --</option>
                             <% pts.forEach(p => { %>
                             <option value="<%= p._id %>" <%= contract.pt && String(contract.pt._id) === String(p._id) ? 'selected' : '' %>>
@@ -169,8 +170,8 @@
                             </option>
                             <% }) %>
                         </select>
-                        <button type="submit" class="text-xs px-3 py-1.5 bg-lime-500 hover:bg-lime-600 text-slate-900 font-bold rounded-lg transition-colors">
-                            Lưu
+                        <button type="submit" class="text-xs px-3 py-1.5 bg-lime-500 hover:bg-lime-600 text-slate-900 font-bold rounded-lg transition-colors w-full sm:w-auto shrink-0">
+                            Lưu HLV
                         </button>
                     </form>
                     <% } %>

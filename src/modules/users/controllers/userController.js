@@ -38,7 +38,17 @@ exports.getUserList = async (req, res, next) => {
         const skip = (page - 1) * limit;
 
         // Lấy tất cả trừ Client (Chỉ lọc nhân sự nội bộ)
-        const filters = { role: { $ne: 'Client' } }; 
+        const filters = { role: { $ne: 'Client' } };
+
+        // Bug 1.3: ô tìm kiếm nhân sự theo tên/email/sđt
+        if (req.query.search && req.query.search.trim()) {
+            const escaped = req.query.search.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            filters.$or = [
+                { name: { $regex: escaped, $options: 'i' } },
+                { email: { $regex: escaped, $options: 'i' } },
+                { phone: { $regex: escaped, $options: 'i' } }
+            ];
+        }
 
         // [RBAC] Branch Isolation: Manager chỉ thấy nhân viên chi nhánh mình
         if (req.session.user.role === 'Manager') {
