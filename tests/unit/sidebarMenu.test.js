@@ -33,7 +33,7 @@ describe('sidebarMenu', () => {
         it('Should include rewards, platform items, and export links', () => {
             const keys = sidebarMenu.MENU_ITEMS.map((i) => i.key);
             expect(keys).toContain('rewards');
-            expect(keys).not.toContain('cms');
+            expect(keys).toContain('cms');
             expect(keys).toContain('settings');
             expect(keys).toContain('export-report');
             expect(keys).toContain('export-work-report');
@@ -94,7 +94,7 @@ describe('sidebarMenu', () => {
             const keys = sidebarMenu.getAllowedMenuItems('Marketing').map((m) => m.key);
             expect(keys).toContain('dashboard');
             expect(keys).toContain('leads');
-            expect(keys).toContain('cms');
+            expect(keys).not.toContain('cms');
             expect(keys).toContain('content_library');
         });
 
