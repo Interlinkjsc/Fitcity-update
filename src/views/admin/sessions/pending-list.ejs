@@ -89,7 +89,8 @@
                             <% } %>
                             <div>
                                 <p class="font-medium text-slate-800"><%= session.client ? session.client.name : 'N/A' %></p>
-                                <p class="text-xs text-slate-400"><%= session.client ? session.client.email : '' %></p>
+                                <%# Bug 1.10 (2/7): email lưu mã hoá (iv:cipher) — .lean() không giải mã, ẩn chuỗi hash %>
+                                <p class="text-xs text-slate-400"><%= session.client && session.client.email && !String(session.client.email).includes(':') ? session.client.email : '' %></p>
                             </div>
                         </div>
                     </td>

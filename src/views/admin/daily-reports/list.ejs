@@ -13,7 +13,7 @@
         <% for (let m = 1; m <= 12; m++) { %><option value="<%= m %>" <%= month === m ? 'selected' : '' %>>Tháng <%= m %></option><% } %>
     </select>
     <select name="year" class="border rounded-lg text-sm py-2 px-3">
-        <% for (let y = 2024; y <= 2027; y++) { %><option value="<%= y %>" <%= year === y ? 'selected' : '' %>><%= y %></option><% } %>
+        <% for (let y = 2024; y <= new Date().getFullYear()+5; y++) { %><option value="<%= y %>" <%= year === y ? 'selected' : '' %>><%= y %></option><% } %>
     </select>
     <select name="status" class="border rounded-lg text-sm py-2 px-3">
         <option value="all">Mọi trạng thái</option>

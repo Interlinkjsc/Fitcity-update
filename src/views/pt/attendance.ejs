@@ -68,7 +68,7 @@
                     <% } %>
                 </select>
                 <select name="year" class="text-xs border border-slate-200 rounded-xl py-2 px-2">
-                    <% for (let y = 2024; y <= 2027; y++) { %>
+                    <% for (let y = 2024; y <= new Date().getFullYear()+5; y++) { %>
                     <option value="<%= y %>" <%= y === year ? 'selected' : '' %>><%= y %></option>
                     <% } %>
                 </select>

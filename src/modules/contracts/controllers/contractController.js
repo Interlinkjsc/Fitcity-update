@@ -708,7 +708,7 @@ exports.rejectPauseRequest = async (req, res, next) => {
 exports.getDetail = async (req, res, next) => {
     try {
         const contract = await Contract.findById(req.params.id)
-            .populate('client', 'name email phone avatar cccdHash')
+            .populate('client', 'name email phone avatar cccdNumber gender')
             .populate('pt', 'name email phone avatar')
             .populate('sales', 'name')
             .populate('branch', 'name address')
@@ -718,6 +718,17 @@ exports.getDetail = async (req, res, next) => {
         if (!contract) {
             req.flash('error_msg', 'Không tìm thấy hợp đồng!');
             return res.redirect('/admin/contracts/list');
+        }
+
+        // Bug 1.10 (2/7): .lean() bỏ qua getter giải mã → email/phone/CCCD hiện chuỗi iv:cipher
+        const { decrypt } = require('../../../utils/encryption');
+        for (const person of [contract.client, contract.pt]) {
+            if (!person) continue;
+            for (const field of ['email', 'phone', 'cccdNumber']) {
+                if (person[field] && String(person[field]).includes(':')) {
+                    try { person[field] = decrypt(person[field]); } catch (e) { person[field] = ''; }
+                }
+            }
         }
 
         if (!contractScope.canAccessContract(req.session.user, contract)) {
