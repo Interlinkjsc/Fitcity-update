@@ -453,6 +453,7 @@ exports.previewMyReceipt = async (req, res, next) => {
             .populate('branch', 'name address')
             .populate('servicePackage', 'name')
             .lean();
+        if (contract) require('../../../utils/decryptLean').decryptPeople(contract, ['client']);
 
         if (!contract) {
             req.flash('error_msg', 'Không tìm thấy hợp đồng hoặc bạn không có quyền xem!');

@@ -21,6 +21,8 @@ exports.getPendingList = async (req, res, next) => {
         .sort({ startTime: -1 })
         .lean()
     ]);
+    // Bug 1.10: .lean() không giải mã email → giải mã client trước khi render
+    require('../../../utils/decryptLean').decryptPeople(sessions, ['client']);
     res.render('admin/sessions/pending-list', { sessions, pendingSlots, activePage: 'session-approval' });
   } catch (err) { next(err); }
 };

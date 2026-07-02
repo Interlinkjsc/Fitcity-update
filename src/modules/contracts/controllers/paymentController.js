@@ -101,6 +101,7 @@ exports.previewReceipt = async (req, res, next) => {
             .populate('branch', 'name address')
             .populate('servicePackage', 'name')
             .lean();
+        if (contract) require('../../../utils/decryptLean').decryptPeople(contract, ['client']);
 
         if (!contract) {
             return denyContractAccess(req, res, null);

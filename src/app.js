@@ -26,7 +26,30 @@ app.set('views', path.join(__dirname, 'views'));
 // 2. Middlewares
 app.use(morgan('dev'));
 app.use(cookieParser());
-app.use(cors());
+// CORS: whitelist thay vì mở toàn bộ (bảo mật). Origin ngoài whitelist vẫn gọi được
+// GET công khai (/api/web/*) nhưng không kèm credentials chéo domain.
+// ENV CORS_EXTRA_ORIGINS (phân tách bằng dấu phẩy) để thêm domain khi lên tên miền thật.
+const corsWhitelist = [
+    'https://fitcity.vn',
+    'https://www.fitcity.vn',
+    'http://fitcity.vn',
+    'http://160.25.81.177',
+    'http://160.25.81.177:3000',
+    'http://160.25.81.177:4000',
+    'http://localhost:3000',
+    'http://localhost:4000',
+    'http://localhost:4321',
+    ...(process.env.CORS_EXTRA_ORIGINS ? process.env.CORS_EXTRA_ORIGINS.split(',').map(s => s.trim()).filter(Boolean) : [])
+];
+app.use(cors({
+    origin(origin, cb) {
+        // Không có Origin (curl, server-to-server, SSR fetch cùng máy) → cho phép
+        if (!origin) return cb(null, true);
+        if (corsWhitelist.includes(origin) || /\.fitcity\.vn$/.test(origin)) return cb(null, true);
+        return cb(null, false); // từ chối CORS nhưng không ném lỗi (request thường vẫn chạy)
+    },
+    credentials: true
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, '../public')));
