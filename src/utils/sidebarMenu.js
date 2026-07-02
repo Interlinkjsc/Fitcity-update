@@ -183,7 +183,7 @@ const MENU_ITEMS = [
         href: '/admin/clients/list',
         icon: 'people',
         permission: { resource: 'staff_management', action: 'view' },
-        roles: ['Admin', 'Manager', 'SA'],
+        roles: ['Admin', 'Manager', 'SA', 'Sales'],
     },
     {
         key: 'contracts',

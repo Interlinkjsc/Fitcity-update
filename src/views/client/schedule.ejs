@@ -39,6 +39,17 @@
             flex-wrap: wrap;
         }
 
+        /* Bug 3.4/4.1 (2/7): event tràn ra ngoài ô ngày trên mobile — ép nằm gọn trong ô */
+        .fc-daygrid-day-events { overflow: hidden; }
+        .fc-daygrid-event, .fc-daygrid-event .fc-event-title, .fc-daygrid-event .fc-event-time {
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; max-width: 100%;
+        }
+        .fc-daygrid-event-harness { max-width: 100%; }
+        .fc .fc-daygrid-more-link { font-size: 10px; font-weight: 700; }
+        @media (max-width: 640px) {
+            .fc-daygrid-event .fc-event-time, .fc-daygrid-event .fc-event-title { font-size: 9px; }
+            .fc-daygrid-event { padding: 0 1px; }
+        }
         .fc-toolbar-title {
             font-size: 1.25rem !important;
             font-weight: 800 !important;
@@ -371,6 +382,8 @@
                 slotMaxTime: '22:00:00',
                 allDaySlot: false,
                 height: 'auto',
+                dayMaxEvents: 3, // Bug 3.4/4.1: quá 3 event gộp thành '+n xem thêm' — không tràn ô
+                moreLinkContent: (args) => '+' + args.num + ' xem thêm',
                 events: '/api/calendar/sessions', // Fetch events from API
                 eventClick: function(info) {
                     showEventModal(info.event);

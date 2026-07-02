@@ -245,12 +245,25 @@
                         </div>
                     </div>
 
+                    <%# Bug 3.1 (2/7): ô số tháng / số buổi chỉ hiện số trần — thêm label rõ nghĩa %>
                     <div x-show="mode === 'custom'" class="space-y-4" style="display: none;">
-                        <input type="text" name="customPkgName" x-model="customPkgName" placeholder="Tên gói tùy chỉnh..." class="w-full bg-white border border-slate-200 rounded-2xl py-4 px-6 text-sm font-bold outline-none focus:border-primary">
+                        <div>
+                            <label class="text-[10px] font-black text-slate-500 uppercase tracking-wider ml-1">Tên gói tùy chỉnh *</label>
+                            <input type="text" name="customPkgName" x-model="customPkgName" placeholder="Tên gói tùy chỉnh..." class="w-full bg-white border border-slate-200 rounded-2xl py-4 px-6 text-sm font-bold outline-none focus:border-primary mt-1">
+                        </div>
                         <div class="grid grid-cols-2 gap-4">
-                            <input type="number" name="customPkgDuration" x-model="customPkgDuration" min="1" placeholder="Tháng..." class="w-full bg-white border border-slate-200 rounded-2xl py-4 px-6 text-sm font-bold outline-none focus:border-primary">
-                            <input type="number" name="customPkgSessions" x-model="customPkgSessions" min="1" placeholder="Số buổi..." class="w-full bg-white border border-slate-200 rounded-2xl py-4 px-6 text-sm font-bold outline-none focus:border-primary">
-                            <input type="number" name="customPkgPrice" x-model="selectedPkgPrice" placeholder="Giá / buổi..." class="w-full bg-white border border-slate-200 rounded-2xl py-4 px-6 text-sm font-black text-primary outline-none focus:border-primary col-span-2">
+                            <div>
+                                <label class="text-[10px] font-black text-slate-500 uppercase tracking-wider ml-1">Số tháng *</label>
+                                <input type="number" name="customPkgDuration" x-model="customPkgDuration" min="1" placeholder="VD: 3" class="w-full bg-white border border-slate-200 rounded-2xl py-4 px-6 text-sm font-bold outline-none focus:border-primary mt-1">
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-black text-slate-500 uppercase tracking-wider ml-1">Số buổi tập *</label>
+                                <input type="number" name="customPkgSessions" x-model="customPkgSessions" min="1" placeholder="VD: 10" class="w-full bg-white border border-slate-200 rounded-2xl py-4 px-6 text-sm font-bold outline-none focus:border-primary mt-1">
+                            </div>
+                            <div class="col-span-2">
+                                <label class="text-[10px] font-black text-slate-500 uppercase tracking-wider ml-1">Giá / buổi (VNĐ) *</label>
+                                <input type="number" name="customPkgPrice" x-model="selectedPkgPrice" placeholder="VD: 500000" class="w-full bg-white border border-slate-200 rounded-2xl py-4 px-6 text-sm font-black text-primary outline-none focus:border-primary mt-1">
+                            </div>
                         </div>
                     </div>
                 </section>

@@ -24,12 +24,15 @@ exports.getMyClientsMealPlans = async (req, res, next) => {
 
 exports.getCreateForm = async (req, res, next) => {
     try {
-        const contracts = await Contract.find({ 
-            pt: req.session.user.id, 
-            contractStatus: 'Active' 
-        }).populate('client');
+        // Bug 3.2 (2/7): thiếu populate servicePackage → view crash 'reading name';
+        // đồng thời loại HĐ mà client đã bị xóa
+        const contracts = (await Contract.find({
+            pt: req.session.user.id,
+            contractStatus: 'Active'
+        }).populate('client', 'name').populate('servicePackage', 'name'))
+            .filter(c => c.client);
 
-        res.render('pt/meal-plans/form', { 
+        res.render('pt/meal-plans/form', {
             contracts,
             activePage: 'meal-plans'
         });

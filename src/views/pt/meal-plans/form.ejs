@@ -21,10 +21,10 @@
                 <div class="space-y-2" x-data="{ 
                     open: false, 
                     selectedId: '<%= contracts.length > 0 ? contracts[0]._id : '' %>',
-                    selectedLabel: '<%= contracts.length > 0 ? (contracts[0].client.name + ' • ' + contracts[0].servicePackage.name) : 'Chọn hội viên' %>',
+                    selectedLabel: '<%= contracts.length > 0 ? ((contracts[0].client && contracts[0].client.name || 'Hội viên') + ' • ' + (contracts[0].servicePackage && contracts[0].servicePackage.name || (contracts[0].packageSnapshot && contracts[0].packageSnapshot.name) || 'Gói tập')) : 'Chọn hội viên' %>',
                     contracts: [
                         <% contracts.forEach(c => { %>
-                            { id: '<%= c._id %>', label: '<%= c.client.name %> • <%= c.servicePackage.name %>' },
+                            { id: '<%= c._id %>', label: '<%= (c.client && c.client.name) || 'Hội viên' %> • <%= (c.servicePackage && c.servicePackage.name) || (c.packageSnapshot && c.packageSnapshot.name) || 'Gói tập' %>' },
                         <% }) %>
                     ]
                 }" @click.away="open = false">
