@@ -58,8 +58,8 @@ const PERMISSIONS = [
     // CRM
     { id: 'leads.view', resource: 'leads', action: 'view', label: 'Xem leads', group: 'CRM & Marketing', suggestedRoles: ['Admin', 'Manager', 'Marketing'], menuKey: 'leads' },
     { id: 'leads.manage', resource: 'leads', action: 'manage', label: 'Quản lý leads', group: 'CRM & Marketing', suggestedRoles: ['Admin', 'Manager', 'Marketing'] },
-    { id: 'cms.view', resource: 'cms', action: 'view', label: 'Xem CMS website', group: 'CRM & Marketing', suggestedRoles: ['Admin', 'Manager', 'Marketing'], menuKey: 'cms' },
-    { id: 'cms.manage', resource: 'cms', action: 'manage', label: 'Quản lý CMS', group: 'CRM & Marketing', suggestedRoles: ['Admin', 'Marketing'] },
+    { id: 'cms.view', resource: 'cms', action: 'view', label: 'Xem CMS website', group: 'CRM & Marketing', suggestedRoles: ['Admin'], menuKey: 'cms' },
+    { id: 'cms.manage', resource: 'cms', action: 'manage', label: 'Quản lý CMS', group: 'CRM & Marketing', suggestedRoles: ['Admin'] },
     { id: 'content_library.view', resource: 'content_library', action: 'view', label: 'Xem kho nội dung', group: 'CRM & Marketing', suggestedRoles: ['Admin', 'Marketing'], menuKey: 'content_library' },
     { id: 'content_library.manage', resource: 'content_library', action: 'manage', label: 'Quản lý kho nội dung', group: 'CRM & Marketing', suggestedRoles: ['Admin', 'Marketing'] },
     { id: 'violations.view', resource: 'violations', action: 'view', label: 'Xem kỷ luật', group: 'CRM & Marketing', suggestedRoles: ['Admin', 'Manager', 'CEO'], menuKey: 'violations' },

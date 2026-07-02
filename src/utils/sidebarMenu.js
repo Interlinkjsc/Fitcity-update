@@ -156,7 +156,7 @@ const MENU_ITEMS = [
         href: '/admin/cms',
         icon: 'article',
         permission: { resource: 'cms', action: 'view' },
-        roles: ['Admin', 'Manager', 'SA', 'Marketing'],
+        roles: ['Admin', 'SA'],
     },
     {
         key: 'website-settings',

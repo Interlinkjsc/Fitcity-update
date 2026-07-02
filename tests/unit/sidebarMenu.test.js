@@ -33,7 +33,7 @@ describe('sidebarMenu', () => {
         it('Should include rewards, platform items, and export links', () => {
             const keys = sidebarMenu.MENU_ITEMS.map((i) => i.key);
             expect(keys).toContain('rewards');
-            expect(keys).toContain('cms');
+            expect(keys).not.toContain('cms');
             expect(keys).toContain('settings');
             expect(keys).toContain('export-report');
             expect(keys).toContain('export-work-report');
@@ -90,7 +90,7 @@ describe('sidebarMenu', () => {
     });
 
     describe('getAllowedMenuItems', () => {
-        it('Marketing should see leads, cms, and content_library', () => {
+        it('Marketing should see leads and content_library (CMS chỉ dành cho admin — 2/7/2026)', () => {
             const keys = sidebarMenu.getAllowedMenuItems('Marketing').map((m) => m.key);
             expect(keys).toContain('dashboard');
             expect(keys).toContain('leads');
