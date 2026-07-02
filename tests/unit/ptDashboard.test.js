@@ -46,11 +46,6 @@ describe('PT Dashboard Controller - KPI Calculations', () => {
         // 3. Mock completed sessions count
         WorkoutSession.countDocuments.mockResolvedValue(15);
 
-        // 3b. Mock paid contracts this month — estimatedCommission is computed by summing
-        // each contract's ptCommission field (payrollService.calculatePTCommissionFromContracts),
-        // not sessions * rate, so the mock must return contracts totaling the expected commission.
-        Contract.find.mockReturnValue({ select: jest.fn().mockResolvedValue([{ ptCommission: 3000000 }]) });
-
         // 4. Mock new contract revenue aggregation
         Contract.aggregate.mockResolvedValue([{ _id: null, totalRevenue: 15000000 }]);
 
@@ -74,7 +69,6 @@ describe('PT Dashboard Controller - KPI Calculations', () => {
         WorkoutSession.find.mockReturnValue({ populate: jest.fn().mockResolvedValue([]) });
         User.findById.mockResolvedValue({ _id: mockReq.session.user.id, ptCommissionPerSession: 150000 });
         WorkoutSession.countDocuments.mockResolvedValue(0);
-        Contract.find.mockReturnValue({ select: jest.fn().mockResolvedValue([]) });
         Contract.aggregate.mockResolvedValue([]); // No revenue this month
 
         // Mock KPIConfig.findOne and Violation.find (prevent real DB call)

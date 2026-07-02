@@ -1,9 +1,5 @@
 const Lead = require('../models/leadModel.js');
 const Branch = require('../models/branchModel.js');
-const WebBranch = require('../../website/models/webBranchModel');
-const WebProgram = require('../../website/models/webProgramModel');
-const WebPost = require('../../website/models/webPostModel');
-const WebSetting = require('../../website/models/webSettingModel');
 const User = require('../../users/models/userModel.js');
 const Contract = require('../../contracts/models/contractModel.js');
 const clientManagementService = require('../../clients/services/clientManagementService.js');
@@ -41,17 +37,12 @@ async function notifyLeadCreated(lead, branchId, name, interestedPackage) {
  */
 exports.getLandingPage = async (req, res, next) => {
     try {
-        const [branches, banners, homeSeo, webBranches, webPrograms, webSettingRows] = await Promise.all([
+        const [branches, banners, homeSeo] = await Promise.all([
             Branch.find({ status: 'Open' }),
             cmsService.getPublishedBanners(),
-            cmsService.getHomeSeo(),
-            WebBranch.find({ published: true }).sort({ sort: 1 }),
-            WebProgram.find({ published: true }).sort({ sort: 1 }),
-            WebSetting.find(),
+            cmsService.getHomeSeo()
         ]);
-        const webSettings = {};
-        webSettingRows.forEach(r => { webSettings[r.key] = r.value; });
-        res.render('landing', { branches, banners, homeSeo, webBranches, webPrograms, webSettings });
+        res.render('landing', { branches, banners, homeSeo });
     } catch (err) {
         next(err);
     }
@@ -68,7 +59,7 @@ exports.getContactPage = async (req, res, next) => {
 
 exports.getBlogList = async (req, res, next) => {
     try {
-        const posts = await WebPost.find({ status: 'published' }).sort({ publishedAt: -1 }).limit(24).populate('author', 'name');
+        const posts = await cmsService.getPublishedPosts(24);
         res.render('blog/list', { posts });
     } catch (err) {
         next(err);
@@ -77,7 +68,7 @@ exports.getBlogList = async (req, res, next) => {
 
 exports.getBlogPost = async (req, res, next) => {
     try {
-        const post = await WebPost.findOne({ slug: req.params.slug, status: 'published' }).populate('author', 'name');
+        const post = await cmsService.getPostBySlug(req.params.slug);
         if (!post) {
             req.flash('error_msg', 'Bài viết không tồn tại hoặc chưa xuất bản.');
             return res.redirect('/blog');
@@ -88,67 +79,31 @@ exports.getBlogPost = async (req, res, next) => {
     }
 };
 
-exports.getChiNhanh = async (req, res, next) => {
-    try {
-        const branches = await WebBranch.find({ published: true }).sort({ sort: 1 });
-        res.render('chi-nhanh', { branches });
-    } catch (err) {
-        next(err);
-    }
-};
-
-exports.getChuongTrinh = async (req, res, next) => {
-    try {
-        const programs = await WebProgram.find({ published: true }).sort({ sort: 1 });
-        res.render('chuong-trinh', { programs });
-    } catch (err) {
-        next(err);
-    }
-};
-
 /**
  * Xử lý đăng ký tập thử từ Landing Page (Leads generation)
  */
 exports.registerLead = async (req, res, next) => {
     try {
-        const name = req.body.name;
-        const phone = req.body.phone;
-        const email = (req.body.email || '').trim();
-        const branchInput = req.body.branchId || req.body.branch || '';
-        const interestedPackage = req.body.interestedPackage || req.body.program || 'Gym';
-        const notes_raw = req.body.notes || req.body.note || '';
-        const age = req.body.age || '';
-        const notes = age
-            ? ('Độ tuổi: ' + age + (notes_raw ? ' | ' + notes_raw : ''))
-            : notes_raw;
-        const source = req.body.source || 'Website';
-        const redirectTo = req.body.redirectTo;
+        const {
+            name,
+            phone,
+            email,
+            branchId,
+            interestedPackage,
+            notes,
+            weight,
+            height,
+            bodyFat,
+            muscleMass,
+            targetGoal,
+            source,
+            redirectTo
+        } = req.body;
 
         const leadSource = LEAD_SOURCES.includes(source) ? source : 'Website';
-
-        // Resolve branch slug or ObjectId → ObjectId
-        const mongoose = require('mongoose');
-        let branchObjectId = null;
-        if (branchInput) {
-            if (mongoose.Types.ObjectId.isValid(branchInput)) {
-                branchObjectId = branchInput;
-            } else {
-                const branchDoc = await Branch.findOne({ slug: branchInput });
-                if (branchDoc) branchObjectId = branchDoc._id;
-            }
-        }
-        if (!branchObjectId) {
-            const firstBranch = await Branch.findOne({ status: 'Open' });
-            branchObjectId = firstBranch?._id || null;
-        }
-
-        // Map program name → valid enum value
-        const pkgMap = {
-            'GymKid': 'Gym', 'BoxingKid': 'PT', 'PilatesKid': 'Pilates',
-            'Kickfit': 'Kickfit', 'Yoga': 'Yoga', 'PT': 'PT', 'Gym': 'Gym'
-        };
-        const pkg = pkgMap[interestedPackage] ||
-            (['Gym', 'Yoga', 'PT', 'Kickfit', 'Pilates'].includes(interestedPackage) ? interestedPackage : 'Gym');
+        const pkg = ['Gym', 'Yoga', 'PT', 'Kickfit', 'Pilates'].includes(interestedPackage)
+            ? interestedPackage
+            : 'Gym';
 
         /** R1 (act-11): không tạo Lead nếu email đã là tài khoản hội viên (Client). */
         const emailTrim = typeof email === 'string' ? email.trim() : '';
@@ -160,10 +115,6 @@ exports.registerLead = async (req, res, next) => {
                 .select('_id')
                 .lean();
             if (existingClient) {
-                const isJson = (req.headers['content-type'] || '').includes('application/json') || req.xhr;
-                if (isJson) {
-                    return res.status(409).json({ success: false, message: 'Email này đã đăng ký tài khoản hội viên.' });
-                }
                 req.flash(
                     'error_msg',
                     'Email này đã đăng ký tài khoản hội viên. Vui lòng đăng nhập để xem lịch tập và hợp đồng.'
@@ -177,23 +128,18 @@ exports.registerLead = async (req, res, next) => {
             name,
             phone,
             email,
-            branch: branchObjectId,
+            branch: branchId,
             interestedPackage: pkg,
             notes,
-            weight: Number(req.body.weight) || undefined,
-            height: Number(req.body.height) || undefined,
-            bodyFat: Number(req.body.bodyFat) || undefined,
-            muscleMass: Number(req.body.muscleMass) || undefined,
-            targetGoal: req.body.targetGoal || undefined,
+            weight: Number(weight) || undefined,
+            height: Number(height) || undefined,
+            bodyFat: Number(bodyFat) || undefined,
+            muscleMass: Number(muscleMass) || undefined,
+            targetGoal: targetGoal || undefined,
             source: leadSource
         });
 
-        await notifyLeadCreated(lead, branchObjectId, name, pkg);
-
-        const isJson = (req.headers['content-type'] || '').includes('application/json') || req.xhr;
-        if (isJson) {
-            return res.json({ success: true, message: 'Đăng ký thành công!' });
-        }
+        await notifyLeadCreated(lead, branchId, name, pkg);
 
         req.flash(
             'success_msg',
@@ -207,10 +153,6 @@ exports.registerLead = async (req, res, next) => {
                   : '/#trial';
         res.redirect(safeRedirect);
     } catch (err) {
-        const isJson = (req.headers['content-type'] || '').includes('application/json') || req.xhr;
-        if (isJson) {
-            return res.status(500).json({ success: false, message: 'Có lỗi xảy ra. Vui lòng thử lại.' });
-        }
         req.flash('error_msg', 'Vui lòng kiểm tra lại thông tin. Đảm bảo số điện thoại chính xác.');
         const failRedirect =
             req.body && req.body.source === 'Contact' ? '/contact' : '/';

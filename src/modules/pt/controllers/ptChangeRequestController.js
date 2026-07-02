@@ -44,10 +44,15 @@ exports.updatePTChangeRequest = async (req, res, next) => {
                 return res.redirect('/admin/pt-change-requests');
             }
 
-            await Contract.updateMany(
-                { client: request.client, contractStatus: 'Active' },
-                { $set: { pt: newPTId } }
-            );
+            const activeContract = await Contract.findOne({ 
+                client: request.client, 
+                contractStatus: 'Active' 
+            });
+
+            if (activeContract) {
+                activeContract.pt = newPTId;
+                await activeContract.save();
+            }
         }
 
         request.status = status;

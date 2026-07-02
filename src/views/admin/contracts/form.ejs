@@ -115,7 +115,7 @@
                     <select id="sales" name="sales" required class="w-full border border-slate-300 rounded-lg text-sm py-2.5 px-3 focus:ring-2 focus:ring-green-500 outline-none transition-all">
                         <% if(typeof salesStaff !== 'undefined') { %>
                             <% salesStaff.forEach(s => { %>
-                                <option value="<%= s._id %>" <%= (typeof contract !== 'undefined' && contract.sales && contract.sales.toString() === s._id.toString()) || (typeof currentUserId !== 'undefined' && currentUserId && currentUserId === s._id.toString()) ? 'selected' : '' %>>
+                                <option value="<%= s._id %>" <%= (typeof contract !== 'undefined' && contract.sales && contract.sales.toString() === s._id.toString()) || (typeof user !== 'undefined' && user && user.id && user.id.toString() === s._id.toString()) ? 'selected' : '' %>>
                                     <%= s.name %>
                                 </option>
                             <% }) %>

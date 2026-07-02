@@ -13,9 +13,7 @@ const Violation = require('../../src/modules/crm/models/violationModel.js');
 const Payroll = require('../../src/modules/finance/models/payrollModel.js');
 const Reward = require('../../src/modules/programs/models/rewardModel.js');
 const Lead = require('../../src/modules/crm/models/leadModel.js');
-const DailyReport = require('../../src/modules/platform/models/dailyReportModel.js');
 const kpiService = require('../../src/modules/platform/services/kpiService.js');
-const mealLogService = require('../../src/modules/programs/services/mealLogService.js');
 
 jest.mock('../../src/modules/programs/models/rewardModel.js');
 
@@ -41,7 +39,7 @@ describe('Home Controller', () => {
             jest.spyOn(WorkoutSession, 'countDocuments').mockResolvedValue(45);
             jest.spyOn(Contract, 'countDocuments').mockResolvedValue(50);
             jest.spyOn(Contract, 'distinct').mockResolvedValue(['c1', 'c2', 'c3']);
-            const mockBranches = [{ _id: '507f1f77bcf86cd799439021', name: 'Branch 1' }];
+            const mockBranches = [{ _id: 'b1', name: 'Branch 1' }];
             const mockBranchQuery = {
                 select: jest.fn().mockReturnThis(),
                 sort: jest.fn().mockReturnThis(),
@@ -63,7 +61,6 @@ describe('Home Controller', () => {
 
             // Mock Lead.aggregate for the direct call in homeController (lead counts per sales)
             jest.spyOn(Lead, 'aggregate').mockResolvedValue([]);
-            jest.spyOn(DailyReport, 'countDocuments').mockResolvedValue(10);
             // Mock kpiService.getBranchKPI to prevent real DB calls (Lead.countDocuments inside kpiService)
             jest.spyOn(kpiService, 'getBranchKPI').mockResolvedValue({
                 revenueTarget: 0,
@@ -99,6 +96,9 @@ describe('Home Controller', () => {
             await homeController.getAdminDashboard(req, res, next);
 
             // Debug: check if an error was thrown
+            if (next.mock.calls.length > 0) {
+                console.log('ERROR CALLED NEXT:', next.mock.calls[0][0]?.message);
+            }
 
             expect(res.render).toHaveBeenCalledWith('admin/dashboard', expect.objectContaining({
                 totalRevenueAfterTax: 50000000,
@@ -186,7 +186,6 @@ describe('Home Controller', () => {
             });
             jest.spyOn(WorkoutSession, 'countDocuments').mockResolvedValue(5);
             jest.spyOn(User, 'findById').mockResolvedValue({ ptCommissionPerSession: 100000, baseSalary: 5000000 });
-            jest.spyOn(Contract, 'find').mockReturnValue({ select: jest.fn().mockResolvedValue([{ ptCommission: 500000 }]) });
             jest.spyOn(Contract, 'aggregate').mockResolvedValue([]);
             jest.spyOn(KPIConfig, 'findOne').mockResolvedValue(null);
             jest.spyOn(Violation, 'find').mockResolvedValue([]);
@@ -210,8 +209,6 @@ describe('Home Controller', () => {
                     sort: jest.fn().mockResolvedValue(null)
                 })
             });
-            jest.spyOn(mealLogService, 'getLogsForDate').mockResolvedValue([]);
-            jest.spyOn(mealLogService, 'getRecentLogs').mockResolvedValue([]);
             await homeController.getClientNutrition(req, res, next);
             expect(res.render).toHaveBeenCalledWith('client/nutrition', expect.any(Object));
         });

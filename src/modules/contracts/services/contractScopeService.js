@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const GLOBAL_VIEW_ROLES = ['SA', 'Admin', 'CEO', 'Accountant', 'Marketing'];
+const GLOBAL_VIEW_ROLES = ['SA', 'Admin', 'CEO', 'Accountant'];
 
 function toObjectId(id) {
     if (!id) return null;
@@ -47,11 +47,6 @@ function buildContractListFilter(user, query = {}) {
         } else if (role === 'Manager' && user.branch?.toString() === query.branchId) {
             conditions.push({ branch: branchOid });
         }
-    }
-
-    if (query.search && query.search.trim()) {
-        const re = new RegExp(query.search.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
-        conditions.push({ contractCode: re });
     }
 
     if (query.status && query.status !== 'all') {

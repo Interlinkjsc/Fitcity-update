@@ -5,13 +5,7 @@ const notificationService = require('../../platform/services/notificationService
 exports.getMyClientsForMetrics = async (req, res, next) => {
     try {
         const ptId = req.session.user.id;
-        const contracts = await Contract.find({
-            pt: ptId,
-            $or: [
-                { contractStatus: 'Active' },
-                { contractStatus: 'Draft', paymentStatus: 'Deposit' }
-            ]
-        })
+        const contracts = await Contract.find({ pt: ptId, contractStatus: 'Active' })
             .populate('client', 'name avatar email phone')
             .populate('servicePackage', 'name');
         
@@ -142,8 +136,7 @@ exports.getClientAddMetricForm = async (req, res, next) => {
   try {
     const clientId = req.session.user.id;
     const contract = await Contract.findOne({
-      client: clientId,
-      $or: [{ contractStatus: 'Active' }, { contractStatus: 'Draft', paymentStatus: 'Deposit' }]
+      client: clientId, contractStatus: 'Active'
     }).populate('pt', 'name').lean();
     res.render('client/metrics/form', {
       contract,
@@ -156,8 +149,7 @@ exports.clientSaveBodyMetric = async (req, res, next) => {
   try {
     const clientId = req.session.user.id;
     const contract = await Contract.findOne({
-      client: clientId,
-      $or: [{ contractStatus: 'Active' }, { contractStatus: 'Draft', paymentStatus: 'Deposit' }]
+      client: clientId, contractStatus: 'Active'
     }).lean();
     const ptId = contract ? contract.pt : null;
 

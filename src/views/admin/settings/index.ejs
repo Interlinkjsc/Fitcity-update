@@ -21,9 +21,20 @@
                 class="w-full border border-slate-300 rounded-lg py-2 px-3 text-sm">
             <p class="text-xs text-slate-500 mt-1">Fallback nếu PT chưa cấu hình % riêng trên hồ sơ.</p>
         </div>
-        <input type="hidden" name="ptPayrollMode" value="contract">
-        <div class="bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 text-sm text-slate-600">
-            <span class="font-semibold">Chế độ hoa hồng PT:</span> Theo giá trị hợp đồng đã thanh toán (đơn giá ca dạy được tính trong gói tập khi tạo hợp đồng).
+        <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">Chế độ hoa hồng PT (payroll)</label>
+            <select name="ptPayrollMode" class="w-full border border-slate-300 rounded-lg py-2 px-3 text-sm">
+                <option value="contract" <%= (settings.ptPayrollMode || 'contract') === 'contract' ? 'selected' : '' %>>Theo hợp đồng đã thanh toán</option>
+                <option value="timesheet" <%= settings.ptPayrollMode === 'timesheet' ? 'selected' : '' %>>Theo ca chấm công đã duyệt</option>
+                <option value="hybrid" <%= settings.ptPayrollMode === 'hybrid' ? 'selected' : '' %>>Kết hợp (trung bình HĐ + chấm công)</option>
+            </select>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">Đơn giá / ca dạy đã duyệt (VNĐ)</label>
+            <input type="number" name="timesheetRatePerShift" min="0" step="1000"
+                value="<%= settings.timesheetRatePerShift != null ? settings.timesheetRatePerShift : 120000 %>"
+                class="w-full border border-slate-300 rounded-lg py-2 px-3 text-sm">
+            <p class="text-xs text-slate-500 mt-1">Dùng khi chế độ timesheet hoặc hybrid.</p>
         </div>
         <button type="submit" class="px-6 py-2.5 bg-green-600 text-white font-bold rounded-lg text-sm hover:bg-green-700">Lưu cài đặt</button>
     </form>

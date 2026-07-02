@@ -3,14 +3,6 @@ const workoutService = require('../../programs/services/workoutService.js');
 const notificationService = require('../../platform/services/notificationService');
 const Contract = require('../../contracts/models/contractModel.js');
 
-// datetime-local input ("2024-06-18T17:00") comes without timezone.
-// The Docker container runs UTC, so we must treat it as Vietnam time (UTC+7).
-function parseVNDateTime(str) {
-    if (!str) return null;
-    const s = str.length === 16 ? str + ':00' : str.substring(0, 19);
-    return new Date(s + '+07:00');
-}
-
 exports.checkOutSession = async (req, res, next) => {
     try {
         const sessionId = req.params.id;
@@ -266,15 +258,12 @@ exports.createDirectSession = async (req, res, next) => {
         const ptId = req.session.user.id;
         const { contractId, clientId, scheduledTime, durationMinutes, notes } = req.body;
 
-        // 1. Xác thực hợp đồng được gán cho PT này (Active hoặc Draft+Deposit)
+        // 1. Xác thực hợp đồng active và được gán cho PT này
         const contract = await Contract.findOne({
             _id: contractId,
             client: clientId,
             pt: ptId,
-            $or: [
-                { contractStatus: 'Active' },
-                { contractStatus: 'Draft', paymentStatus: 'Deposit' }
-            ]
+            contractStatus: 'Active'
         });
 
         if (!contract) {
@@ -291,7 +280,7 @@ exports.createDirectSession = async (req, res, next) => {
             pt: ptId,
             contract: contractId,
             branch: contract.branch || req.session.user.branch,
-            scheduledTime: parseVNDateTime(scheduledTime),
+            scheduledTime: new Date(scheduledTime),
             status: 'Pending_Admin',
             notes: notes || ''
         });
@@ -323,6 +312,96 @@ exports.createDirectSession = async (req, res, next) => {
         return res.status(200).json({ success: true, message: 'Đã lên lịch tập trực tiếp thành công!', session });
     } catch (err) {
         return res.status(500).json({ success: false, message: err.message });
+    }
+};
+
+const PtAvailabilitySlot = require('../models/ptAvailabilitySlotModel.js');
+
+exports.getPtSlots = async (req, res, next) => {
+    try {
+        const ptId = req.session.user.id;
+        const tab = req.query.tab || 'upcoming';
+
+        const now = new Date();
+        let filter = { pt: ptId };
+        if (tab === 'upcoming') {
+            filter.startTime = { $gte: now };
+            filter.status = { $in: ['Open', 'Pending', 'Booked'] };
+        } else if (tab === 'past') {
+            filter.startTime = { $lt: now };
+        }
+
+        const slots = await PtAvailabilitySlot.find(filter)
+            .populate('pending.client', 'name avatar')
+            .populate('branch', 'name')
+            .sort({ startTime: 1 })
+            .limit(50)
+            .lean();
+
+        const activeContracts = await Contract.find({ pt: ptId, contractStatus: 'Active' })
+            .populate('client', 'name _id')
+            .lean();
+        const clientList = activeContracts
+            .filter(c => c.client)
+            .map(c => ({ _id: c.client._id, name: c.client.name }));
+
+        res.render('pt/slots', { slots, tab, clientList, activePage: 'pt-slots', user: req.session.user });
+    } catch (err) {
+        next(err);
+    }
+};
+
+exports.postAddSlot = async (req, res, next) => {
+    try {
+        const ptId = req.session.user.id;
+        const { startTime, durationMinutes } = req.body;
+        const branch = req.session.user.branch;
+
+        if (!startTime || !branch) {
+            req.flash('error_msg', 'Thiếu thông tin thời gian hoặc chi nhánh.');
+            return res.redirect('/pt/slots');
+        }
+
+        await PtAvailabilitySlot.create({
+            pt: ptId,
+            branch,
+            startTime: new Date(startTime),
+            durationMinutes: parseInt(durationMinutes) || 60,
+            status: 'Open'
+        });
+
+        try {
+            const User = require('../../users/models/userModel.js');
+            const managers = await User.find({ role: { $in: ['Admin', 'Manager', 'SA'] } }).select('_id').lean();
+            for (const m of managers) {
+                await notificationService.pushNotification(
+                    m._id,
+                    'PT tạo lịch dạy mới',
+                    `${req.session.user.name} đã đăng ký lịch dạy mới vào ${new Date(startTime).toLocaleString('vi-VN')}.`,
+                    'Info',
+                    '/admin/slots/requests',
+                    ptId
+                );
+            }
+        } catch (e) { /* notification không block flow */ }
+
+        req.flash('success_msg', 'Đã thêm lịch dạy mới.');
+        res.redirect('/pt/slots');
+    } catch (err) {
+        next(err);
+    }
+};
+
+exports.deleteSlot = async (req, res, next) => {
+    try {
+        const ptId = req.session.user.id;
+        const slot = await PtAvailabilitySlot.findOne({ _id: req.params.id, pt: ptId });
+        if (!slot) return res.status(404).json({ success: false, message: 'Không tìm thấy slot.' });
+        if (slot.status === 'Booked') return res.status(400).json({ success: false, message: 'Slot đã được đặt, không thể xóa.' });
+        await slot.deleteOne();
+        res.json({ success: true });
+    } catch (err) {
+        next(err);
     }
 };
 

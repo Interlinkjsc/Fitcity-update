@@ -22,7 +22,6 @@ const MODULE_LABELS = {
     finance: 'Tài chính & KPI',
     pt_ops: 'Vận hành PT',
     programs: 'Chương trình & Gói tập',
-    website: 'Website & CMS',
 };
 
 /** @type {Record<string, { icon: string, collapsible: boolean }>} */
@@ -35,7 +34,6 @@ const MODULE_META = {
     finance: { icon: 'account_balance', collapsible: true },
     pt_ops: { icon: 'fitness_center', collapsible: true },
     programs: { icon: 'category', collapsible: true },
-    website: { icon: 'language', collapsible: true },
 };
 
 const STORAGE_KEY_MODULES = 'fitcity_sidebar_modules';
@@ -161,6 +159,15 @@ const MENU_ITEMS = [
         roles: ['Admin', 'Manager', 'SA', 'Marketing'],
     },
     {
+        key: 'website-settings',
+        moduleId: 'crm',
+        label: 'Cài đặt Website',
+        href: '/admin/website/settings',
+        icon: 'palette',
+        permission: { resource: 'cms', action: 'view' },
+        roles: ['Admin', 'SA'],
+    },
+    {
         key: 'content_library',
         moduleId: 'crm',
         label: 'Kho nội dung',
@@ -226,8 +233,8 @@ const MENU_ITEMS = [
     {
         key: 'slots',
         moduleId: 'pt_ops',
-        label: 'Quản lí lịch tập',
-        href: '/admin/slots/calendar',
+        label: 'Lịch dạy PT',
+        href: '/admin/slots/requests',
         icon: 'calendar_month',
         permission: { resource: 'slots', action: 'view' },
         roles: ['SA', 'Admin', 'Manager', 'CEO'],
@@ -242,14 +249,15 @@ const MENU_ITEMS = [
         roles: ['SA', 'Admin', 'Manager'],
     },
     {
-        key: 'timesheets',
+        key: 'pt-feedback',
         moduleId: 'pt_ops',
-        label: 'Chấm công',
-        href: '/admin/timesheets',
-        icon: 'schedule',
-        permission: { resource: 'timesheet', action: 'view' },
-        roles: ['SA', 'Admin', 'CEO', 'Manager', 'Accountant'],
+        label: 'Vận hành PT',
+        href: '/admin/pt-feedback',
+        icon: 'star_rate',
+        permission: { resource: 'session_approval', action: 'view' },
+        roles: ['SA', 'Admin', 'Manager'],
     },
+    // Chấm công đã bị bỏ khỏi sidebar
     {
         key: 'pt-leave',
         moduleId: 'pt_ops',
@@ -294,46 +302,6 @@ const MENU_ITEMS = [
         icon: 'restaurant_menu',
         permission: { resource: 'meal_plan_approval', action: 'view' },
         roles: ['SA', 'Admin', 'Manager'],
-    },
-    {
-        key: 'website',
-        moduleId: 'website',
-        label: 'Tổng quan Website',
-        href: '/admin/website',
-        icon: 'language',
-        roles: ['SA', 'Admin'],
-    },
-    {
-        key: 'website-branches',
-        moduleId: 'website',
-        label: 'Chi nhánh Website',
-        href: '/admin/website/branches',
-        icon: 'add_location_alt',
-        roles: ['SA', 'Admin'],
-    },
-    {
-        key: 'website-programs',
-        moduleId: 'website',
-        label: 'Chương trình Website',
-        href: '/admin/website/programs',
-        icon: 'fitness_center',
-        roles: ['SA', 'Admin'],
-    },
-    {
-        key: 'website-posts',
-        moduleId: 'website',
-        label: 'Bài viết Website',
-        href: '/admin/website/posts',
-        icon: 'article',
-        roles: ['SA', 'Admin'],
-    },
-    {
-        key: 'website-settings',
-        moduleId: 'website',
-        label: 'Cài đặt Website',
-        href: '/admin/website/settings',
-        icon: 'tune',
-        roles: ['SA', 'Admin'],
     },
 ];
 

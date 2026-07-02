@@ -1,0 +1,57 @@
+<%- include('../../partials/header', { title: 'Vận hành PT — Feedback khách hàng', activePage: 'pt-feedback' }) %>
+
+<div class="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div>
+        <h2 class="text-2xl font-bold text-slate-800">Vận hành PT — Feedback khách hàng</h2>
+        <p class="text-slate-500 text-sm mt-1">Đánh giá của khách hàng sau mỗi buổi tập</p>
+    </div>
+</div>
+
+<% if (branches && branches.length > 0) { %>
+<form method="GET" class="mb-4 flex items-center gap-3">
+    <select name="branchId" onchange="this.form.submit()" class="border border-slate-300 rounded-lg text-sm py-2 px-3 bg-white">
+        <option value="all">Tất cả chi nhánh</option>
+        <% branches.forEach(b => { %>
+        <option value="<%= b._id %>" <%= branchId === b._id.toString() ? 'selected' : '' %>><%= b.name %></option>
+        <% }); %>
+    </select>
+</form>
+<% } %>
+
+<div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+    <table class="w-full text-sm">
+        <thead class="bg-slate-50 text-slate-500 uppercase text-[10px] tracking-widest">
+            <tr>
+                <th class="px-4 py-3 text-left">Khách hàng</th>
+                <th class="px-4 py-3 text-left">PT</th>
+                <th class="px-4 py-3 text-left">Chi nhánh</th>
+                <th class="px-4 py-3 text-left">Ngày tập</th>
+                <th class="px-4 py-3 text-left">Rating</th>
+                <th class="px-4 py-3 text-left">Comment</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+            <% if (!sessions.length) { %>
+            <tr><td colspan="6" class="px-4 py-8 text-center text-slate-400">Chưa có feedback nào.</td></tr>
+            <% } %>
+            <% sessions.forEach(s => { %>
+            <tr class="hover:bg-slate-50">
+                <td class="px-4 py-3 font-medium"><%= s.client ? s.client.name : '—' %></td>
+                <td class="px-4 py-3"><%= s.pt ? s.pt.name : '—' %></td>
+                <td class="px-4 py-3 text-slate-500"><%= s.branch ? s.branch.name : '—' %></td>
+                <td class="px-4 py-3 text-slate-500"><%= s.scheduledTime ? new Date(s.scheduledTime).toLocaleDateString('vi-VN') : '—' %></td>
+                <td class="px-4 py-3">
+                    <% if (s.feedback && s.feedback.rating) { %>
+                    <span class="inline-flex items-center gap-1 font-bold text-amber-600">
+                        ⭐ <%= s.feedback.rating %>/5
+                    </span>
+                    <% } else { %>—<% } %>
+                </td>
+                <td class="px-4 py-3 text-slate-600 max-w-xs truncate"><%= (s.feedback && s.feedback.comment) ? s.feedback.comment : '—' %></td>
+            </tr>
+            <% }); %>
+        </tbody>
+    </table>
+</div>
+
+<%- include('../../partials/footer') %>

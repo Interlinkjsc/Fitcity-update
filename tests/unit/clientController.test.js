@@ -1,7 +1,6 @@
 const clientController = require('../../src/modules/clients/controllers/clientController.js');
 const WorkoutSession = require('../../src/modules/programs/models/workoutSessionModel.js');
 const WorkoutProgram = require('../../src/modules/programs/models/workoutProgramModel.js');
-const workoutAssignmentService = require('../../src/modules/programs/services/workoutAssignmentService.js');
 const mongoose = require('mongoose');
 
 // Mock WorkoutSession
@@ -43,7 +42,6 @@ describe('Client Controller', () => {
             WorkoutProgram.find.mockReturnValue({
                 sort: jest.fn().mockResolvedValue([])
             });
-            jest.spyOn(workoutAssignmentService, 'getActiveAssignment').mockResolvedValue(null);
 
             await clientController.getWorkouts(req, res, next);
             

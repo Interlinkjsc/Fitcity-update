@@ -142,19 +142,10 @@ describe('Full PT-Client Interaction Suite', () => {
         });
 
         test('TC-12: Hội viên truy cập Dashboard thấy báo cáo dinh dưỡng', async () => {
-            // New meal plans start as status='pending_admin', active=false and are
-            // only shown to the client once an Admin approves them. Simulate that
-            // approval here (bypassing the HTTP approval flow, which needs a
-            // separate Admin login) to test the actual current visibility rule.
-            await MealPlan.updateOne(
-                { contract: contract._id },
-                { $set: { status: 'approved', active: true } }
-            );
-
             const res = await request(app)
                 .get('/client/nutrition')
                 .set('Cookie', clientCookie);
-
+            
             expect(res.statusCode).toBe(200);
             expect(res.text).toContain('Muscle Gain');
         });

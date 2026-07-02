@@ -16,21 +16,6 @@ function contentUploadMiddleware(req, res, next) {
     req.body = {};
     req.contentUpload = null;
 
-    // Tracks pending file writes so `finish` only calls next() after every
-    // file's WriteStream has actually closed (avoids race condition where
-    // the controller reads req.contentUpload before the write completes).
-    const pendingWrites = [];
-    let busboyFinished = false;
-    let settled = false;
-
-    function maybeNext() {
-        if (settled) return;
-        if (busboyFinished && pendingWrites.every((p) => p.done)) {
-            settled = true;
-            next();
-        }
-    }
-
     busboy.on('file', (fieldname, file, info) => {
         if (fieldname !== 'mediaFile') {
             file.resume();
@@ -39,41 +24,21 @@ function contentUploadMiddleware(req, res, next) {
         ensureDir();
         const safeName = `${Date.now()}_${(info.filename || 'file').replace(/[^\w.\-]/g, '_')}`;
         const dest = path.join(uploadDir, safeName);
-        const writeStream = fs.createWriteStream(dest);
-        const pending = { done: false };
-        pendingWrites.push(pending);
-
-        file.pipe(writeStream);
-
-        writeStream.on('close', () => {
+        file.pipe(fs.createWriteStream(dest));
+        file.on('end', () => {
             req.contentUpload = {
                 path: dest,
                 fileName: info.filename || safeName,
                 publicUrl: `/uploads/content/${safeName}`
             };
-            pending.done = true;
-            maybeNext();
-        });
-
-        writeStream.on('error', (err) => {
-            if (settled) return;
-            settled = true;
-            next(err);
         });
     });
 
     busboy.on('field', (name, value) => {
         req.body[name] = value;
     });
-    busboy.on('finish', () => {
-        busboyFinished = true;
-        maybeNext();
-    });
-    busboy.on('error', (err) => {
-        if (settled) return;
-        settled = true;
-        next(err);
-    });
+    busboy.on('finish', () => next());
+    busboy.on('error', (err) => next(err));
     req.pipe(busboy);
 }
 

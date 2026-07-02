@@ -9,9 +9,6 @@ const Contract = require('../../src/modules/contracts/models/contractModel.js');
 const Payroll = require('../../src/modules/finance/models/payrollModel.js');
 const Violation = require('../../src/modules/crm/models/violationModel.js');
 const payrollController = require('../../src/modules/finance/controllers/payrollController.js');
-const systemSettingsService = require('../../src/modules/platform/services/systemSettingsService.js');
-const Branch = require('../../src/modules/crm/models/branchModel.js');
-const permissionService = require('../../src/core/permissionService.js');
 
 describe('More Controller Error Coverage', () => {
     jest.setTimeout(30000);
@@ -63,20 +60,9 @@ describe('More Controller Error Coverage', () => {
     });
 
     it('saveExpense error', async () => {
-        // branchId/category/amount must be present, otherwise saveExpense's own
-        // validation (and buildExpenseFields) intercepts before ever reaching
-        // Expense.create.
-        req.body.branchId = 'b1';
-        req.body.category = 'Other';
-        req.body.amount = 100000;
-        jest.spyOn(systemSettingsService, 'getGlobalSettings').mockResolvedValue({ defaultVat: 10 });
         jest.spyOn(Expense, 'create').mockRejectedValue(new Error('fail'));
         await expenseController.saveExpense(req, res, next);
-        // saveExpense now always flashes a friendly message + redirects back to
-        // the expense list on failure (instead of calling next/raw 500 page),
-        // since this is a form POST handler, not a JSON API.
-        expect(req.flash).toHaveBeenCalledWith('error_msg', 'fail');
-        expect(res.redirect).toHaveBeenCalledWith('/admin/expenses');
+        expect(next).toHaveBeenCalled();
     });
 
     it('getPackageList error', async () => {
@@ -93,19 +79,15 @@ describe('More Controller Error Coverage', () => {
 
     it('getPayrollSummary for Sales/Manager', async () => {
         jest.spyOn(User, 'countDocuments').mockResolvedValue(1);
-        // getPayrollSummary only chains .sort() on User.find() (no .skip()/.limit()),
-        // so the mock must resolve the staff array directly off .sort().
         jest.spyOn(User, 'find').mockReturnValue({
-            sort: jest.fn().mockResolvedValue([{ _id: 'u2', role: 'Sales', baseSalary: 6000000, status: 'Active' }])
+            sort: jest.fn().mockReturnThis(),
+            skip: jest.fn().mockReturnThis(),
+            limit: jest.fn().mockResolvedValue([{ _id: 'u2', role: 'Sales', baseSalary: 6000000, status: 'Active' }])
         });
         jest.spyOn(Contract, 'find').mockResolvedValue([{ totalAmount: 1000000 }]);
         jest.spyOn(Payroll, 'findOne').mockResolvedValue(null);
         jest.spyOn(Contract, 'countDocuments').mockResolvedValue(0);
-        jest.spyOn(Branch, 'find').mockResolvedValue([]);
-        jest.spyOn(systemSettingsService, 'getGlobalSettings').mockResolvedValue({ ptPayrollMode: 'contract' });
         jest.spyOn(Violation, 'find').mockResolvedValue([]);
-        jest.spyOn(permissionService, 'ensureCache').mockResolvedValue();
-        jest.spyOn(permissionService, 'userHasPermissionSync').mockReturnValue(false);
         await payrollController.getPayrollSummary(req, res, next);
         expect(res.render).toHaveBeenCalledWith('admin/payroll/summary', expect.any(Object));
     });

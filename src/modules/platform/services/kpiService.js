@@ -132,7 +132,7 @@ async function getSalesKPI(user, monthOverride, yearOverride) {
     const leadActual = await Lead.countDocuments({
         ...(user.branch ? { branch: user.branch } : {}),
         ...dateFilter,
-        ...(['Sales', 'Marketing'].includes(user.role) ? { assignedTo: user._id } : {})
+        ...(user.role === 'Sales' ? { assignedTo: user._id } : {})
     });
 
     const revenueActual = Math.round(revenueResult[0]?.totalNet || 0);
@@ -169,14 +169,18 @@ async function getPTKPI(user, monthOverride, yearOverride) {
     const { month, year } = getPeriod(null, monthOverride, yearOverride);
     const dateFilter = monthRangeFilter(month, year);
 
-    // Completed sessions this month
+    // Completed/Confirmed/Scheduled(past) sessions this month
+    const now = new Date();
     const sessionResult = await WorkoutSession.aggregate([
-        { $match: { pt: user._id, status: 'Completed', ...dateFilter } },
+        { $match: { pt: user._id, ...dateFilter, $or: [
+            { status: { $in: ['Completed', 'Confirmed'] } },
+            { status: 'Scheduled', scheduledTime: { $lte: now } }
+        ] } },
         {
             $group: {
                 _id: null,
                 sessionCount: { $sum: 1 },
-                workingDays: { $addToSet: { $dateToString: { format: '%Y-%m-%d', date: '$startTime' } } }
+                workingDays: { $addToSet: { $dateToString: { format: '%Y-%m-%d', date: '$scheduledTime' } } }
             }
         }
     ]);
@@ -204,12 +208,22 @@ async function getPTKPI(user, monthOverride, yearOverride) {
     const commission = payrollService.calculatePTCommissionFromContracts(paidContracts);
     const newContractRevenue = Math.round(revenueResult[0]?.totalNet || 0);
 
+    // Hoa hồng chốt HĐ (salesCommission) = salesCommissionRate % * netAmount của HĐ Paid
+    const salesCommissionRate = user.salesCommissionRate || 0;
+    const salesCommissionBase = paidContracts.reduce((sum, c) => {
+        const net = (c.netAmount != null) ? c.netAmount : Math.max(0, (c.basePrice || 0) - (c.discount || 0));
+        return sum + net;
+    }, 0);
+    const salesCommission = Math.round((salesCommissionBase * salesCommissionRate) / 100);
+
     return {
         userId: user._id,
         name: user.name,
         sessionCount,
         workingDays,
         commission,
+        salesCommission,
+        salesCommissionRate,
         paidContractCount: paidContracts.length,
         newContractRevenue,
         revenueTarget: targets.revenueTarget,

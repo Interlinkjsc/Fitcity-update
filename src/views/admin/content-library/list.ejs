@@ -58,18 +58,8 @@
                 <td class="px-4 py-3 font-medium"><%= a.title %></td>
                 <td class="px-4 py-3"><%= a.mediaType %></td>
                 <td class="px-4 py-3 text-xs">
-                    <% if (a.fileUrl) { %>
-                        <a href="<%= a.fileUrl %>" target="_blank"
-                           class="text-blue-600 hover:underline"
-                           onerror="this.outerHTML='<span class=\'text-slate-400 text-xs italic\'>File không tìm thấy trên server</span>'"
-                           onclick="checkLocalFile(event, this)">Local</a>
-                    <% } %>
-                    <% if (a.googleDriveFileId) { %>
-                        &nbsp;·&nbsp;<a href="https://drive.google.com/file/d/<%= a.googleDriveFileId %>/view" target="_blank" class="text-green-600 hover:underline">Drive</a>
-                    <% } %>
-                    <% if (!a.fileUrl && !a.googleDriveFileId) { %>
-                        <span class="text-slate-400 text-xs italic">Chưa có file</span>
-                    <% } %>
+                    <% if (a.fileUrl) { %><a href="<%= a.fileUrl %>" target="_blank" class="text-blue-600">Local</a><% } %>
+                    <% if (a.googleDriveFileId) { %> · <span class="text-slate-500">Drive</span><% } %>
                 </td>
                 <td class="px-4 py-3 text-slate-600"><%= a.uploadedBy ? a.uploadedBy.name : '—' %></td>
                 <td class="px-4 py-3 text-right">
@@ -83,28 +73,5 @@
         </tbody>
     </table>
 </div>
-
-<script>
-async function checkLocalFile(e, el) {
-    e.preventDefault();
-    const url = el.href;
-    // External URLs (Drive, etc.) — open directly, no HEAD check
-    if (url.startsWith('http://') || url.startsWith('https://')) {
-        window.open(url, '_blank');
-        return;
-    }
-    // Local server file — verify it exists first
-    try {
-        const res = await fetch(url, { method: 'HEAD' });
-        if (res.ok) {
-            window.open(url, '_blank');
-        } else {
-            el.outerHTML = '<span class="text-slate-400 text-xs italic" title="File đã bị xóa hoặc chưa upload lên server này">File không tìm thấy trên server</span>';
-        }
-    } catch {
-        window.open(url, '_blank');
-    }
-}
-</script>
 
 <%- include('../../partials/footer') %>

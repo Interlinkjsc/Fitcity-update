@@ -61,11 +61,13 @@ exports.getAdminDashboard = async (req, res, next) => {
                 end.setHours(23, 59, 59, 999);
                 dateFilter.createdAt.$lte = end;
             }
+        } else {
+            // Default to this month
+            const startOfMonth = new Date();
+            startOfMonth.setDate(1);
+            startOfMonth.setHours(0,0,0,0);
+            dateFilter.createdAt = { $gte: startOfMonth };
         }
-        // No filter selected -> default to all-time, to match the contract list page
-        // (/admin/contracts/list), which has no date-range filter and always shows
-        // all-time totals. This keeps the dashboard KPI cards consistent with the
-        // contract list's revenue summary when no explicit date filter is applied.
 
         if (branchId && branchId !== 'all') {
             dateFilter.branch = branchId;
@@ -84,7 +86,6 @@ exports.getAdminDashboard = async (req, res, next) => {
 
         const totalRevenueAfterTax = revenueStats[0] ? revenueStats[0].totalAfterTax : 0;
         const totalRevenueBeforeTax = revenueStats[0] ? revenueStats[0].totalNet : 0;
-        const totalPaidAmount = revenueStats[0] ? revenueStats[0].totalPaid : 0;
 
         
         // 3. Expenses (vận hành + lương đã thanh toán) — dùng field `date` / `paymentDate`, không dùng createdAt HĐ
@@ -287,12 +288,11 @@ exports.getAdminDashboard = async (req, res, next) => {
         res.render('admin/dashboard', {
             totalRevenueAfterTax,
             totalRevenueBeforeTax,
-            totalPaidAmount,
-            pendingReceivables,
             totalExpenses,
             totalOperatingExpenses,
             totalPayrollPaid,
             netProfit,
+            pendingReceivables,
             activeMembers,
             onlineMembers,
             membersWithActiveContract,
@@ -338,8 +338,8 @@ exports.getPtDashboard = async (req, res, next) => {
 
         const completedSessions = await WorkoutSession.countDocuments({
             pt: ptId,
-            status: 'Completed',
-            scheduledTime: { $gte: startOfMonth }
+            status: { $in: ['Completed', 'Confirmed', 'Scheduled'] },
+            scheduledTime: { $gte: startOfMonth, $lte: new Date() }
         });
 
         const paidContractsThisMonth = await Contract.find({
@@ -376,10 +376,34 @@ exports.getPtDashboard = async (req, res, next) => {
         const totalDeductions = violations.reduce((sum, v) => sum + v.penaltyAmount, 0);
 
         const estimatedCommission = payrollService.calculatePTCommissionFromContracts(paidContractsThisMonth);
-        const totalEstimatedIncome = baseSalary + estimatedCommission - totalDeductions;
+
+        // Hoa hồng chốt HĐ trong tháng (salesCommissionRate * netAmount)
+        const ptUserFull = ptUser || await User.findById(ptId).lean();
+        const salesCommissionRate = ptUserFull ? (ptUserFull.salesCommissionRate || 0) : 0;
+        const salesCommissionResult = await Contract.aggregate([
+            { $match: {
+                pt: new mongoose.Types.ObjectId(ptId),
+                paymentStatus: 'Paid',
+                createdAt: { $gte: startOfMonth }
+            }},
+            { $group: { _id: null, total: { $sum: contractScope.NET_AMOUNT_EXPR } } }
+        ]);
+        const salesCommission = ((salesCommissionResult[0]?.total || 0) * salesCommissionRate) / 100;
+
+        const totalEstimatedIncome = baseSalary + estimatedCommission + salesCommission - totalDeductions;
+
+        const recentFeedbacks = await WorkoutSession.find({
+            pt: ptId,
+            'feedback.rating': { $exists: true, $ne: null }
+        })
+        .populate('client', 'name')
+        .sort({ updatedAt: -1 })
+        .limit(5)
+        .lean();
 
         res.render('pt/dashboard', {
             estimatedCommission,
+            salesCommission,
             totalEstimatedIncome,
             baseSalary,
             totalDeductions,
@@ -388,7 +412,8 @@ exports.getPtDashboard = async (req, res, next) => {
             completedSessions,
             rosterCount: roster.length,
             roster,
-            violations: violations.slice(0, 3) // Lấy 3 vi phạm gần nhất để hiển thị cảnh báo
+            recentFeedbacks,
+            violations: violations.slice(0, 3)
         });
     } catch (error) {
         next(error);
@@ -402,7 +427,7 @@ exports.getPtClients = async (req, res, next) => {
     try {
         const ptId = req.session.user.id;
 
-        const contracts = await Contract.find({ pt: ptId, $or: [{ contractStatus: 'Active' }, { contractStatus: 'Draft', paymentStatus: 'Deposit' }] })
+        const contracts = await Contract.find({ pt: ptId, contractStatus: 'Active' })
             .populate('client', 'name email phone avatar')
             .populate('servicePackage', 'name type sessionType duration sessions')
             .sort({ createdAt: -1 });
@@ -460,17 +485,10 @@ exports.getPtSchedule = async (req, res, next) => {
             };
         });
 
-        // Lấy tất cả hợp đồng có thể lên lịch: Active hoặc Deposit (đã đặt cọc)
-        const activeContracts = await Contract.find({
-            pt: ptId,
-            $or: [
-                { contractStatus: 'Active' },
-                { contractStatus: 'Draft', paymentStatus: 'Deposit' }
-            ],
-            remainingSessions: { $gt: 0 }
-        })
+        // Lấy danh sách hợp đồng active để PT lên lịch trực tiếp
+        const activeContracts = await Contract.find({ pt: ptId, contractStatus: 'Active' })
             .populate('client', 'name avatar')
-            .select('_id client remainingSessions paymentStatus')
+            .select('_id client remainingSessions')
             .sort({ createdAt: -1 })
             .lean();
 
@@ -480,7 +498,7 @@ exports.getPtSchedule = async (req, res, next) => {
             monday,
             sunday,
             activeContracts,
-            activePage: 'pt-slots'
+            activePage: 'dashboard'
         });
     } catch (error) {
         next(error);
@@ -491,14 +509,17 @@ exports.getClientDashboard = async (req, res, next) => {
     try {
         const clientId = req.session.user.id;
         
-        const contract = await Contract.findOne({ client: clientId, $or: [{ contractStatus: 'Active' }, { contractStatus: 'Draft', paymentStatus: 'Deposit' }] })
+        const contract = await Contract.findOne({ client: clientId, contractStatus: 'Active' })
             .populate('servicePackage')
             .populate('pt', 'name avatar')
             .sort({ createdAt: -1 });
 
         const sessionsCompleted = await WorkoutSession.countDocuments({
             client: clientId,
-            status: 'Completed'
+            $or: [
+                { status: { $in: ['Completed', 'Confirmed'] } },
+                { status: 'Scheduled', scheduledTime: { $lte: new Date() } }
+            ]
         });
 
         const pendingConfirmation = await WorkoutSession.findOne({
@@ -566,9 +587,12 @@ exports.getClientDashboard = async (req, res, next) => {
         const { computeMealNutrition } = require('../../../utils/mealNutritionHelper');
         const mealNutritionByMeal = mealPlan ? computeMealNutrition(mealPlan) : [];
 
+        const remainingSessions = contract ? (contract.remainingSessions ?? (contract.totalSessions - sessionsCompleted)) : 0;
+
         res.render('client/dashboard', {
             sessionsCompleted,
             totalSessions: contract ? contract.totalSessions : 0,
+            remainingSessions: Math.max(0, remainingSessions),
             packageName: contract && contract.servicePackage ? contract.servicePackage.name : "Chưa có gói tập",
             contract,
             pendingConfirmation,

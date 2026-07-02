@@ -7,49 +7,35 @@ const payrollService = require('../services/payrollService');
 const systemSettingsService = require('../../platform/services/systemSettingsService');
 
 const { getPagination } = require('../../../utils/paginationHelper');
-const permissionService = require('../../../core/permissionService');
 
 async function computeStaffCommission(staff, startOfMonth, endOfMonth) {
-    // PT: commission from PT training work (ptCommission on contracts where pt=staff)
-    let ptCommission = 0, ptDetailCount = 0, ptCommissionSource, contractCommission, timesheetCommission;
     if (staff.role === 'PT') {
         const resolved = await payrollService.resolvePTPayrollCommission(
             staff._id,
             startOfMonth,
             endOfMonth
         );
-        ptCommission = resolved.commission;
-        ptDetailCount = resolved.detailCount;
-        ptCommissionSource = resolved.commissionSource;
-        contractCommission = resolved.contractCommission;
-        timesheetCommission = resolved.timesheetCommission;
+        return {
+            commission: resolved.commission,
+            detailCount: resolved.detailCount,
+            commissionSource: resolved.commissionSource,
+            contractCommission: resolved.contractCommission,
+            timesheetCommission: resolved.timesheetCommission
+        };
     }
-
-    // ALL roles: sales commission for contracts where they are the sales person.
-    // Use paidAt (month contract was paid) for commission period attribution.
-    const salesContracts = await Contract.find({
-        sales: staff._id,
-        paymentStatus: 'Paid',
-        $or: [
-            { paidAt: { $gte: startOfMonth, $lte: endOfMonth } },
-            { paidAt: { $exists: false }, updatedAt: { $gte: startOfMonth, $lte: endOfMonth } }
-        ]
-    });
-    const rate = staff.salesCommissionRate || 5;
-    const salesCommission = payrollService.calculateSalesCommission(salesContracts, rate);
-
-    const totalCommission = ptCommission + salesCommission;
-    const totalDetailCount = ptDetailCount + salesContracts.length;
-
-    return {
-        commission: totalCommission,
-        detailCount: totalDetailCount,
-        commissionSource: ptCommissionSource || 'contract',
-        contractCommission: contractCommission || salesCommission,
-        timesheetCommission: timesheetCommission || 0,
-        salesCommission,
-        salesContractCount: salesContracts.length
-    };
+    if (staff.role === 'Sales' || staff.role === 'Manager') {
+        const contracts = await Contract.find({
+            sales: staff._id,
+            paymentStatus: 'Paid',
+            createdAt: { $gte: startOfMonth, $lte: endOfMonth }
+        });
+        const rate = staff.salesCommissionRate || 5;
+        return {
+            commission: payrollService.calculateSalesCommission(contracts, rate),
+            detailCount: contracts.length
+        };
+    }
+    return { commission: 0, detailCount: 0 };
 }
 
 async function buildPayrollRow(staff, month, year) {
@@ -127,20 +113,16 @@ exports.getPayrollSummary = async (req, res, next) => {
         const roleFilter = req.query.role || 'All';
         const payStatus = req.query.payStatus || 'all';
         const branchFilter = req.query.branchId || 'all';
-        const staffName = (req.query.staffName || '').trim();
         const page = parseInt(req.query.page, 10) || 1;
         const limit = 10;
         const skip = (page - 1) * limit;
 
         let staffQuery = {
-            role: { $in: ['Sales', 'PT', 'Manager', 'Marketing', 'CEO', 'Admin', 'Accountant'] },
+            role: { $in: ['Sales', 'PT', 'Manager'] },
             status: 'Active'
         };
         if (roleFilter !== 'All') {
             staffQuery.role = roleFilter;
-        }
-        if (staffName) {
-            staffQuery.name = { $regex: staffName, $options: 'i' };
         }
         if (req.session.user.role === 'Manager' && req.session.user.branch) {
             staffQuery.branch = req.session.user.branch;
@@ -171,8 +153,6 @@ exports.getPayrollSummary = async (req, res, next) => {
         const pagination = getPagination(totalDocs, page, limit);
         const branches = await Branch.find({ status: 'Open' });
         const settings = await systemSettingsService.getGlobalSettings();
-        await permissionService.ensureCache();
-        const canManagePayroll = permissionService.userHasPermissionSync(req.session.user, 'payroll', 'manage');
 
         res.render('admin/payroll/summary', {
             payrollData,
@@ -183,10 +163,8 @@ exports.getPayrollSummary = async (req, res, next) => {
             role: roleFilter,
             payStatus,
             branchId: branchFilter,
-            staffName,
             branches,
             isManager: req.session.user.role === 'Manager',
-            canManagePayroll,
             activePage: 'payroll',
             query: req.query,
             ptPayrollMode: settings.ptPayrollMode || 'contract',
@@ -223,8 +201,8 @@ exports.autoSuggestPayroll = async (req, res, next) => {
         const year = parseInt(req.body.year) || now.getFullYear();
 
         const staffList = await User.find({ 
-            role: { $in: ['Sales', 'PT', 'Manager', 'Marketing', 'CEO', 'Admin', 'Accountant'] },
-            status: 'Active'
+            role: { $in: ['Sales', 'PT', 'Manager'] }, 
+            status: 'Active' 
         });
 
         let createdCount = 0;
@@ -288,63 +266,19 @@ exports.markAsPaid = async (req, res, next) => {
     }
 };
 
-/**
- * Tính lại hoa hồng cho các bản ghi lương đang Pending (chưa thanh toán).
- * Dùng khi Sale/PT có hợp đồng mới sau khi đã tạo bản ghi lương.
- */
-exports.recalculateCommission = async (req, res, next) => {
-    try {
-        const { staffId, month, year } = req.body;
-        const m = Number(month);
-        const y = Number(year);
-
-        const staff = await User.findById(staffId);
-        if (!staff) throw new Error('Nhân viên không tồn tại');
-
-        const startOfMonth = new Date(y, m - 1, 1);
-        const endOfMonth = new Date(y, m, 0, 23, 59, 59);
-
-        const computed = await computeStaffCommission(staff, startOfMonth, endOfMonth);
-        const commission = computed.commission;
-        const halfCommission = Math.round(commission / 2);
-
-        const updated = await Payroll.updateMany(
-            { staff: staffId, month: m, year: y, status: 'Pending' },
-            { $set: { commission: halfCommission } }
-        );
-
-        // Recalculate totalSalary for each updated record
-        const records = await Payroll.find({ staff: staffId, month: m, year: y, status: 'Pending' });
-        for (const rec of records) {
-            rec.totalSalary = (rec.baseSalary || 0) + (rec.commission || 0) + (rec.bonus || 0) - (rec.deductions || 0);
-            await rec.save();
-        }
-
-        req.flash('success_msg', `Đã tính lại hoa hồng cho ${staff.name}: ${new Intl.NumberFormat('vi-VN').format(commission)}đ (${updated.modifiedCount} kỳ cập nhật).`);
-        res.redirect(`/admin/payroll?month=${m}&year=${y}`);
-    } catch (err) {
-        req.flash('error_msg', err.message);
-        res.redirect('/admin/payroll');
-    }
-};
-
 exports.exportPayrollCSV = async (req, res, next) => {
     try {
         const now = new Date();
         const month = parseInt(req.query.month) || (now.getMonth() + 1);
         const year = parseInt(req.query.year) || now.getFullYear();
         const roleFilter = req.query.role || 'All';
-        const staffNameFilter = (req.query.staffName || '').trim();
 
-        let query = {
-            role: { $in: ['Sales', 'PT', 'Manager', 'Marketing', 'CEO', 'Admin', 'Accountant'] },
-            status: 'Active'
+        let query = { 
+            role: { $in: ['Sales', 'PT', 'Manager'] }, 
+            status: 'Active' 
         };
         if (roleFilter !== 'All') {
             query.role = roleFilter;
-        }
-        if (staffNameFilter) {
-            query.name = { $regex: staffNameFilter, $options: 'i' };
         }
 
         const staffList = await User.find(query);
@@ -374,7 +308,7 @@ exports.exportPayrollCSV = async (req, res, next) => {
                         status: 'Pending',
                         date: { $gte: startOfMonth, $lte: endOfMonth }
                     });
-                    const totalPenalty = violations.reduce((sum, v) => sum + (v.penaltyAmount || 0), 0);
+                    const totalPenalty = violations.reduce((sum, v) => sum + (v.fineAmount || 0), 0);
                     penalty = Math.round(totalPenalty / 2);
                 }
 

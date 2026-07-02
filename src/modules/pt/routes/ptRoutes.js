@@ -28,12 +28,17 @@ router.post('/contracts/store', checkPermission('contract', 'create'), require('
 
 router.get('/clients', homeController.getPtClients);
 router.get('/schedule', homeController.getPtSchedule);
+router.get('/slots', ptController.getPtSlots);
+router.post('/slots/add', restrictTo('PT'), ptController.postAddSlot);
+router.delete('/slots/:id', restrictTo('PT'), ptController.deleteSlot);
 
 router.get('/income', ptController.getIncome);
 
-router.get('/attendance', restrictTo('PT'), timesheetController.getPtAttendancePage);
-router.post('/attendance/check-in', restrictTo('PT'), timesheetController.ptCheckIn);
-router.post('/attendance/check-out', restrictTo('PT'), timesheetController.ptCheckOut);
+// BỎ CHẤM CÔNG PT — bug report 26/6
+// router.get('/attendance', restrictTo('PT'), timesheetController.getPtAttendancePage);
+// router.post('/attendance/check-in', restrictTo('PT'), timesheetController.ptCheckIn);
+// router.post('/attendance/check-out', restrictTo('PT'), timesheetController.ptCheckOut);
+router.get('/attendance', (req, res) => res.redirect('/pt'));
 
 router.get('/daily-report', restrictTo('PT'), dailyReportController.getSubmitPage);
 router.post('/daily-report', restrictTo('PT'), dailyReportController.submit);

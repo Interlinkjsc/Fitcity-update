@@ -104,7 +104,7 @@ const userSchema = new mongoose.Schema({
     /** % hoa hồng PT trên netAmount mỗi HĐ (lưu vào contract.ptCommission) */
     ptCommissionRate: {
         type: Number,
-        default: 10,
+        default: 0,
         min: 0,
         max: 100
     },
@@ -209,7 +209,7 @@ userSchema.pre('save', async function() {
     }
     // 2. Hash Password
     if (this.isModified('password')) {
-        this.password = await bcrypt.hash(this.password, 10);
+        this.password = await bcrypt.hash(this.password, 12);
     }
 });
 

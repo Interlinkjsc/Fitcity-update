@@ -1,24 +1,27 @@
 const WorkoutSession = require('../models/workoutSessionModel');
 const User = require('../../users/models/userModel');
+const Branch = require('../../crm/models/branchModel');
 const notificationService = require('../../platform/services/notificationService');
-
-function parseVNDateTime(str) {
-    if (!str) return null;
-    const s = str.length === 16 ? str + ':00' : str.substring(0, 19);
-    return new Date(s + '+07:00');
-}
+const PtAvailabilitySlot = require('../../pt/models/ptAvailabilitySlotModel');
 
 // GET /admin/sessions/pending
 exports.getPendingList = async (req, res, next) => {
   try {
-    const sessions = await WorkoutSession.find({ status: 'Pending_Admin' })
-      .populate('client', 'name email avatar')
-      .populate('pt', 'name avatar')
-      .populate('contract', 'contractCode packageSnapshot')
-      .populate('branch', 'name')
-      .sort({ createdAt: -1 })
-      .lean();
-    res.render('admin/sessions/pending-list', { sessions, activePage: 'session-approval' });
+    const [sessions, pendingSlots] = await Promise.all([
+      WorkoutSession.find({ status: 'Pending_Admin' })
+        .populate('client', 'name email avatar')
+        .populate('pt', 'name avatar')
+        .populate('contract', 'contractCode packageSnapshot')
+        .populate('branch', 'name')
+        .sort({ createdAt: -1 })
+        .lean(),
+      PtAvailabilitySlot.find({ status: 'Open' })
+        .populate('pt', 'name avatar')
+        .populate('branch', 'name')
+        .sort({ startTime: 1 })
+        .lean()
+    ]);
+    res.render('admin/sessions/pending-list', { sessions, pendingSlots, activePage: 'session-approval' });
   } catch (err) { next(err); }
 };
 
@@ -54,6 +57,36 @@ exports.rejectSession = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
+// GET /admin/pt-feedback — Vận hành PT: feedback khách hàng theo chi nhánh
+exports.getPtFeedbackList = async (req, res, next) => {
+  try {
+    const user = req.session.user;
+    const branchId = req.query.branchId;
+    const sessionFilter = { 'feedback.rating': { $exists: true, $ne: null }, status: { $in: ['Completed', 'Confirmed'] } };
+
+    if (user.role === 'Manager' && user.branch) {
+      sessionFilter.branch = user.branch;
+    } else if (branchId && branchId !== 'all') {
+      sessionFilter.branch = branchId;
+    }
+
+    const sessions = await WorkoutSession.find(sessionFilter)
+      .populate('client', 'name avatar')
+      .populate('pt', 'name')
+      .populate('branch', 'name')
+      .sort({ updatedAt: -1 })
+      .limit(100)
+      .lean();
+
+    let branches = [];
+    if (['SA', 'Admin', 'CEO'].includes(user.role)) {
+      branches = await Branch.find().select('name').sort({ name: 1 }).lean();
+    }
+
+    res.render('admin/sessions/pt-feedback', { sessions, branches, branchId: branchId || 'all', activePage: 'pt-feedback' });
+  } catch (err) { next(err); }
+};
+
 // POST /admin/sessions/:id/edit-approve  (sửa giờ rồi duyệt)
 exports.editAndApprove = async (req, res, next) => {
   try {
@@ -61,7 +94,7 @@ exports.editAndApprove = async (req, res, next) => {
     const session = await WorkoutSession.findById(req.params.id);
     if (!session) { req.flash('error_msg', 'Không tìm thấy buổi tập.'); return res.redirect('/admin/sessions/pending'); }
     if (session.status !== 'Pending_Admin') { req.flash('error_msg', 'Buổi tập không ở trạng thái chờ duyệt.'); return res.redirect('/admin/sessions/pending'); }
-    if (scheduledTime) session.scheduledTime = parseVNDateTime(scheduledTime);
+    if (scheduledTime) session.scheduledTime = new Date(scheduledTime);
     if (notes) session.notes = notes;
     session.status = 'Scheduled';
     await session.save();

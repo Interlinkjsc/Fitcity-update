@@ -20,11 +20,7 @@ jest.mock('../../src/modules/platform/services/notificationService.js');
 describe('Contract Controller Error Handling', () => {
     let req, res, next;
     beforeEach(() => {
-        // field names match the real form (form.ejs submits client/branch/sales,
-        // not clientId/branchId/salesId), as valid 24-char ObjectId hex strings
-        // so the isValidObjectId() guard in storeContract doesn't short-circuit
-        // before reaching contractService.createContract.
-        req = { params: {}, body: { servicePackage: 'p1', client: '507f1f77bcf86cd799439011', branch: '507f1f77bcf86cd799439012', sales: '507f1f77bcf86cd799439013', discount: 0, startDate: new Date().toISOString() }, originalUrl: '/admin/contracts/create', flash: jest.fn(), session: { user: { id: 'u1', role: 'Admin' } } };
+        req = { params: {}, body: { servicePackage: 'p1', clientId: 'c1', branchId: 'b1', salesId: 's1', startDate: new Date().toISOString() }, originalUrl: '/admin/contracts/create', flash: jest.fn(), session: { user: { id: 'u1', role: 'Admin' } } };
         res = { render: jest.fn(), redirect: jest.fn(), download: jest.fn() };
         next = jest.fn();
         jest.spyOn(console, 'error').mockImplementation(() => {});
@@ -56,11 +52,6 @@ describe('Contract Controller Error Handling', () => {
     });
 
     it('storeContract should handle general error', async () => {
-        User.findOne.mockReturnValue({
-            select: jest.fn().mockReturnValue({
-                lean: jest.fn().mockResolvedValue({ branch: '507f1f77bcf86cd799439012', name: 'Client Test' })
-            })
-        });
         contractService.createContract.mockRejectedValue(new Error('general_err'));
         await contractController.storeContract(req, res, next);
         expect(req.flash).toHaveBeenCalledWith('error_msg', 'general_err');
@@ -68,10 +59,6 @@ describe('Contract Controller Error Handling', () => {
 
     it('updateContract should handle validation error', async () => {
         req.params.id = 'c1';
-        // updateContract first loads the existing contract via findById to check
-        // access scope before calling findByIdAndUpdate — without this mock it
-        // short-circuits to "not found" before ever reaching the catch block.
-        Contract.findById.mockResolvedValue({ _id: 'c1', branch: 'b1', sales: 's1' });
         Contract.findByIdAndUpdate.mockRejectedValue({ name: 'ValidationError', errors: { x: { message: 'msg' } } });
         await contractController.updateContract(req, res, next);
         expect(res.redirect).toHaveBeenCalledWith('/admin/contracts/edit/c1');

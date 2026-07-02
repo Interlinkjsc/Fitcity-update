@@ -97,8 +97,7 @@ exports.storeClient = async (req, res, next) => {
         const client = await clientManagementService.createClient(req.body);
         await sendClientWelcomeEmail(client, 'admin_store');
         req.flash('success_msg', 'Tạo khách hàng thành công!');
-        const redirectAfterCreate = req.session.user?.role === 'PT' ? '/pt/clients' : '/admin/clients/list';
-        res.redirect(redirectAfterCreate);
+        res.redirect('/admin/clients/list');
     } catch (err) {
         if (err instanceof ClientServiceError && err.code === 'DUPLICATE_EMAIL') {
             req.flash('error_msg', err.message);

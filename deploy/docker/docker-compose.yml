@@ -63,11 +63,6 @@ services:
       MONGODB_URI: mongodb://mongo:27017/Fitcity
     volumes:
       - /opt/fitcity/secrets:/opt/fitcity/secrets:ro
-    # The base image bakes in a HEALTHCHECK that curls 127.0.0.1:3000/health,
-    # but this service runs the cron runner (no HTTP server on port 3000) —
-    # disable it so the container doesn't permanently report "unhealthy".
-    healthcheck:
-      disable: true
     depends_on:
       mongo:
         condition: service_healthy

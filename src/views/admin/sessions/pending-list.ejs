@@ -7,9 +7,41 @@
     </div>
     <span class="inline-flex items-center gap-2 px-3 py-1.5 bg-amber-100 text-amber-800 text-sm font-semibold rounded-full border border-amber-200">
         <span class="w-2 h-2 bg-amber-500 rounded-full"></span>
-        <%= sessions.length %> chờ duyệt
+        <%= sessions.length %> buổi tập + <%= (pendingSlots||[]).length %> slot chờ duyệt
     </span>
 </div>
+
+<% if ((pendingSlots||[]).length > 0) { %>
+<div class="mb-6 bg-white rounded-xl border border-blue-200 shadow-sm overflow-hidden">
+    <div class="px-5 py-3 bg-blue-50 border-b border-blue-200 flex items-center gap-2">
+        <span class="w-2 h-2 bg-blue-500 rounded-full"></span>
+        <span class="text-sm font-semibold text-blue-800">Lịch dạy PT đang mở (<%= pendingSlots.length %> slot)</span>
+        <a href="/admin/slots/requests" class="ml-auto text-xs text-blue-600 hover:underline">Xem tất cả →</a>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead class="bg-slate-50 border-b border-slate-200">
+                <tr>
+                    <th class="px-4 py-2 text-left text-xs font-semibold text-slate-500 uppercase">PT</th>
+                    <th class="px-4 py-2 text-left text-xs font-semibold text-slate-500 uppercase">Chi nhánh</th>
+                    <th class="px-4 py-2 text-left text-xs font-semibold text-slate-500 uppercase">Thời gian</th>
+                    <th class="px-4 py-2 text-left text-xs font-semibold text-slate-500 uppercase">Ghi chú</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+                <% (pendingSlots||[]).slice(0,5).forEach(slot => { %>
+                <tr class="hover:bg-slate-50">
+                    <td class="px-4 py-2.5 font-medium text-slate-800"><%= slot.pt ? slot.pt.name : '—' %></td>
+                    <td class="px-4 py-2.5 text-slate-600"><%= slot.branch ? slot.branch.name : '—' %></td>
+                    <td class="px-4 py-2.5 text-slate-600"><%= slot.startTime ? new Date(slot.startTime).toLocaleString('vi-VN') : '—' %></td>
+                    <td class="px-4 py-2.5 text-slate-400 max-w-[200px] truncate"><%= slot.note || '—' %></td>
+                </tr>
+                <% }) %>
+            </tbody>
+        </table>
+    </div>
+</div>
+<% } %>
 
 <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
     <% if (sessions.length === 0) { %>
@@ -87,7 +119,7 @@
                             <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                             </svg>
-                            <%= session.scheduledTime ? new Date(session.scheduledTime).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—' %>
+                            <%= session.scheduledTime ? new Date(session.scheduledTime).toLocaleString('vi-VN') : '—' %>
                         </span>
                     </td>
 

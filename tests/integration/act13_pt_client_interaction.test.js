@@ -426,16 +426,14 @@ describe('ACT-13 PT-Client interaction end-to-end', () => {
         const body = res.body;
         expect(body.success).toBe(true);
         expect(body.session).toBeDefined();
-        // PT-created direct sessions now go through admin approval first
-        // (Pending_Admin), not straight to Scheduled.
-        expect(body.session.status).toBe('Pending_Admin');
+        expect(body.session.status).toBe('Scheduled');
         expect(body.session.client.toString()).toBe(client._id.toString());
         expect(body.session.pt.toString()).toBe(pt._id.toString());
 
         // Verify in DB
         const dbSession = await WorkoutSession.findById(body.session._id);
         expect(dbSession).not.toBeNull();
-        expect(dbSession.status).toBe('Pending_Admin');
+        expect(dbSession.status).toBe('Scheduled');
         expect(dbSession.notes).toBe('Leg day + Cardio');
     });
 

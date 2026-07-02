@@ -147,15 +147,13 @@ describe('FITCITY DEEP RBAC & SECURITY ANALYSIS - ZERO TRUST POLICY', () => {
      */
     describe('Security: CEO vs Accountant vs SA', () => {
         test('Accountant cannot change System VAT rate (CEO only)', async () => {
-            // Real route is /admin/settings (system_settings.update — suggestedRoles: Admin, CEO)
-            const res = await agents['acc@fitcity.com'].post('/admin/settings').send({ rate: 15 });
+            const res = await agents['acc@fitcity.com'].post('/admin/users/settings/vat').send({ rate: 15 });
             expect(res.status).toBe(403);
         });
 
         test('SA/Admin can manage JD (Job Description), CEO cannot', async () => {
-            // Real route is /admin/job-descriptions (job_description.view — suggestedRoles: Admin only)
             const res = await agents['ceo@fitcity.com']
-                .get('/admin/job-descriptions')
+                .get('/admin/users/settings/jd')
                 .set('Accept', 'application/json');
             expect(res.status).toBe(403);
         });

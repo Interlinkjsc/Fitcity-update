@@ -1,49 +1,12 @@
 <%# Expects: activePage = 'dashboard' | 'pt-slots' | 'pt-requests' | 'scan' | 'metrics' | 'meal-plans' | 'contracts' %>
-
-<!-- Desktop top nav (lg and up) — bottom nav below is mobile-only -->
-<nav class="hidden lg:flex fixed top-0 left-0 right-0 z-50 h-16 items-center justify-between px-6 bg-white/95 backdrop-blur-xl border-b border-slate-200 shadow-sm">
-    <a href="/pt" class="flex items-center gap-2 font-black italic tracking-tighter uppercase text-slate-900 text-lg shrink-0">
-        FIT<span class="text-primary tracking-normal">CITY</span> <span class="text-slate-400 text-xs font-bold not-italic uppercase tracking-widest ml-1">PT</span>
-    </a>
-    <div class="flex items-center gap-1">
-        <a href="/pt" class="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold transition-all <%= activePage === 'dashboard' ? 'text-primary bg-primary/10' : 'text-slate-500 hover:text-primary hover:bg-slate-50' %>">
-            <span class="material-symbols-outlined text-[18px]">home</span> Trang chủ
-        </a>
-        <a href="/pt/schedule" class="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold transition-all <%= activePage === 'pt-slots' ? 'text-primary bg-primary/10' : 'text-slate-500 hover:text-primary hover:bg-slate-50' %>">
-            <span class="material-symbols-outlined text-[18px]">calendar_add_on</span> Lịch dạy
-        </a>
-        <a href="/pt/requests" class="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold transition-all <%= activePage === 'pt-requests' ? 'text-primary bg-primary/10' : 'text-slate-500 hover:text-primary hover:bg-slate-50' %>">
-            <span class="material-symbols-outlined text-[18px]">rule</span> Yêu cầu
-        </a>
-        <button type="button" onclick="openScanModal()" class="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold transition-all <%= activePage === 'scan' ? 'text-primary bg-primary/10' : 'text-slate-500 hover:text-primary hover:bg-slate-50' %>">
-            <span class="material-symbols-outlined text-[18px]">qr_code_scanner</span> Quét
-        </button>
-        <a href="/pt/metrics" class="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold transition-all <%= activePage === 'metrics' ? 'text-primary bg-primary/10' : 'text-slate-500 hover:text-primary hover:bg-slate-50' %>">
-            <span class="material-symbols-outlined text-[18px]">monitoring</span> Chỉ số
-        </a>
-        <a href="/pt/meal-plans" class="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold transition-all <%= activePage === 'meal-plans' ? 'text-primary bg-primary/10' : 'text-slate-500 hover:text-primary hover:bg-slate-50' %>">
-            <span class="material-symbols-outlined text-[18px]">restaurant</span> Dinh dưỡng
-        </a>
-        <a href="/pt/contracts/create" class="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold transition-all <%= activePage === 'contracts' ? 'text-primary bg-primary/10' : 'text-slate-500 hover:text-primary hover:bg-slate-50' %>">
-            <span class="material-symbols-outlined text-[18px]">history_edu</span> Hợp đồng
-        </a>
-        <form action="/auth/logout" method="POST" class="m-0 ml-2 pl-2 border-l border-slate-200" onsubmit="return confirm('Bạn muốn thoát?');">
-            <button type="submit" class="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold text-slate-500 hover:text-red-500 hover:bg-red-50 transition-all">
-                <span class="material-symbols-outlined text-[18px]">logout</span> Thoát
-            </button>
-        </form>
-    </div>
-</nav>
-
-<!-- Mobile bottom nav (hidden on lg and up — desktop uses the top nav above) -->
-<nav class="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[95%] max-w-lg z-50">
+<nav class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[95%] max-w-lg z-50">
     <div class="bg-white/95 backdrop-blur-xl border border-slate-200 rounded-full px-2 py-3 grid grid-cols-8 items-center shadow-xl">
         <a class="flex flex-col items-center gap-1 <%= activePage === 'dashboard' ? 'text-primary' : 'text-slate-500 hover:text-primary' %> transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 rounded-xl" href="/pt" aria-label="Trang chủ">
             <span class="material-symbols-outlined text-[20px] <%= activePage === 'dashboard' ? 'fill-[1]' : '' %>">home</span>
             <span class="text-[7px] font-black uppercase tracking-tighter leading-none">Trang chủ</span>
         </a>
         <a class="flex flex-col items-center gap-1 <%= activePage === 'pt-slots' ? 'text-primary' : 'text-slate-500 hover:text-primary' %> transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 rounded-xl" href="/pt/schedule" aria-label="Lịch dạy">
-            <span class="material-symbols-outlined text-[20px] <%= activePage === 'pt-slots' ? 'fill-[1]' : '' %>">calendar_add_on</span>
+            <span class="material-symbols-outlined text-[20px] <%= activePage === 'pt-slots' ? 'fill-[1]' : '' %>">calendar_month</span>
             <span class="text-[7px] font-black uppercase tracking-tighter leading-none">Lịch dạy</span>
         </a>
         <a class="flex flex-col items-center gap-1 <%= activePage === 'pt-requests' ? 'text-primary' : 'text-slate-500 hover:text-primary' %> transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 rounded-xl" href="/pt/requests" aria-label="Yêu cầu">
@@ -75,12 +38,6 @@
     </div>
 </nav>
 
-<style>
-    @media (min-width: 1024px) {
-        body { padding-top: 4rem; }
-    }
-</style>
-
 <!-- Slide-up Modal for PT Scan -->
 <div id="scanModalOverlay" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] opacity-0 pointer-events-none transition-opacity duration-300" onclick="closeScanModal()"></div>
 
@@ -100,11 +57,6 @@
         <div id="scanReader" class="w-full rounded-3xl overflow-hidden border-2 border-slate-100 shadow-inner bg-slate-50 min-h-[260px] flex items-center justify-center relative">
             <!-- Camera UI will be rendered here -->
         </div>
-        <div id="cameraBlockedMsg" class="hidden w-full rounded-3xl border-2 border-amber-200 bg-amber-50 p-6 text-center mt-3">
-            <span class="material-symbols-outlined text-amber-500 text-4xl mb-2 block">videocam_off</span>
-            <p class="text-sm font-black text-amber-800 mb-1">Camera không khả dụng</p>
-            <p class="text-xs text-amber-700 leading-relaxed">Trình duyệt chặn camera do kết nối chưa bảo mật (HTTP).<br>Vui lòng dùng <strong>nhập tay token</strong> bên dưới.</p>
-        </div>
     </div>
     
     <div class="w-full mt-6 space-y-4">
@@ -115,7 +67,7 @@
         </div>
         
         <form action="/pt/sessions/scan-qr" method="POST" class="flex gap-2" id="manualScanForm">
-            <input type="text" name="token" class="flex-1 rounded-2xl bg-slate-50 border border-slate-200 text-slate-900 focus:border-primary/40 focus:ring-primary/20 text-base px-4" placeholder="Nhập token..." required>
+            <input type="text" name="token" class="flex-1 rounded-2xl bg-slate-50 border border-slate-200 text-slate-900 focus:border-primary/40 focus:ring-primary/20 text-sm px-4" placeholder="Nhập token..." required>
             <button type="submit" class="px-5 py-3 bg-slate-800 text-white font-black uppercase rounded-2xl hover:bg-slate-900 transition-all text-xs tracking-wider shrink-0">
                 Gửi
             </button>
@@ -150,44 +102,31 @@
         stopScanner();
     }
 
-    function showCameraBlocked() {
-        document.getElementById('scanReader').classList.add('hidden');
-        document.getElementById('cameraBlockedMsg').classList.remove('hidden');
-        const tokenInput = document.querySelector('#manualScanForm input[name="token"]');
-        if (tokenInput) tokenInput.focus();
-    }
-
     async function startScanner() {
         if (isScanning) return;
-
-        // Camera requires HTTPS (secure context) — skip silently on HTTP
-        if (!window.isSecureContext) {
-            showCameraBlocked();
-            return;
-        }
-
+        
         try {
             if (!html5QrcodeScanner) {
                 html5QrcodeScanner = new Html5Qrcode('scanReader');
             }
-
+            
             const cams = await Html5Qrcode.getCameras();
             if (!cams || cams.length === 0) {
-                showCameraBlocked();
+                console.warn('Không tìm thấy camera.');
                 return;
             }
-
+            
+            const camId = cams[0].id;
             isScanning = true;
-
+            
             await html5QrcodeScanner.start(
-                { facingMode: "environment" },
+                { facingMode: "environment" }, // Prefer back camera
                 { fps: 10, qrbox: { width: 220, height: 220 } },
                 onScanSuccess
             );
         } catch (e) {
             console.error('Lỗi khởi động camera:', e);
             isScanning = false;
-            showCameraBlocked();
         }
     }
 

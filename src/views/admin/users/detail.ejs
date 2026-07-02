@@ -180,7 +180,12 @@
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
             <div><span class="text-slate-500 block">Lương cứng</span><span class="font-bold"><%= userData.baseSalary ? new Intl.NumberFormat('vi-VN').format(userData.baseSalary) + ' đ/tháng' : '—' %></span></div>
             <% if (userData.role === 'PT') { %>
-            <div><span class="text-slate-500 block">HH PT</span><span class="font-bold"><%= userData.ptCommissionRate != null ? userData.ptCommissionRate + '% netAmount' : '10% (mặc định)' %></span></div>
+            <div><span class="text-slate-500 block">Hoa hồng PT</span><span class="font-bold"><%= userData.ptCommissionRate != null ? userData.ptCommissionRate + '% netAmount' : '10% (mặc định)' %></span></div>
+            <div><span class="text-slate-500 block">Hoa hồng chốt hợp đồng (comm)</span><span class="font-bold"><%= userData.salesCommissionRate != null ? userData.salesCommissionRate + '% netAmount (HĐ Paid)' : '5% (mặc định)' %></span></div>
+            <div class="bg-lime-50 border border-lime-200 rounded-lg px-3 py-2">
+                <span class="text-slate-500 block text-xs">SỐ BUỔI ĐÃ DẠY TRONG THÁNG</span>
+                <span class="font-extrabold text-2xl text-lime-700"><%= typeof sessionsThisMonth !== 'undefined' ? sessionsThisMonth : 0 %></span>
+            </div>
             <% } %>
             <% if (['Sales', 'Manager'].includes(userData.role)) { %>
             <div><span class="text-slate-500 block">HH Sales/QL</span><span class="font-bold"><%= userData.salesCommissionRate != null ? userData.salesCommissionRate + '% netAmount (HĐ Paid)' : '5% (mặc định)' %></span></div>
@@ -290,16 +295,21 @@
         <% } %>
         <div class="p-6 pt-2">
             <% if (userData.role === 'PT' && employeeKPI.sessionCount !== undefined) { %>
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div class="bg-indigo-50 rounded-lg p-4 text-center">
                         <p class="text-xs text-indigo-600 font-semibold uppercase tracking-wider">Buổi đã dạy</p>
                         <p class="text-2xl font-extrabold text-indigo-700 mt-1"><%= employeeKPI.sessionCount %></p>
                         <p class="text-[10px] text-indigo-400 mt-1"><%= employeeKPI.workingDays %> ngày làm<% if (employeeKPI.sessionTarget) { %> · MT <%= employeeKPI.sessionTarget %> buổi<% } %></p>
                     </div>
                     <div class="bg-emerald-50 rounded-lg p-4 text-center">
-                        <p class="text-xs text-emerald-600 font-semibold uppercase tracking-wider">Hoa hồng (HĐ Paid)</p>
+                        <p class="text-xs text-emerald-600 font-semibold uppercase tracking-wider">Hoa hồng PT</p>
                         <p class="text-lg font-extrabold text-emerald-700 mt-1"><%= new Intl.NumberFormat('vi-VN').format(employeeKPI.commission) %>đ</p>
                         <p class="text-[10px] text-emerald-400 mt-1"><%= employeeKPI.paidContractCount || 0 %> hợp đồng</p>
+                    </div>
+                    <div class="bg-orange-50 rounded-lg p-4 text-center">
+                        <p class="text-xs text-orange-600 font-semibold uppercase tracking-wider">Hoa hồng chốt HĐ</p>
+                        <p class="text-lg font-extrabold text-orange-700 mt-1"><%= new Intl.NumberFormat('vi-VN').format(employeeKPI.salesCommission || 0) %>đ</p>
+                        <p class="text-[10px] text-orange-400 mt-1">Rate: <%= employeeKPI.salesCommissionRate || 0 %>%</p>
                     </div>
                     <div class="bg-amber-50 rounded-lg p-4 text-center">
                         <p class="text-xs text-amber-600 font-semibold uppercase tracking-wider">DT HĐ mới</p>

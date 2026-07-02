@@ -26,18 +26,7 @@ app.set('views', path.join(__dirname, 'views'));
 // 2. Middlewares
 app.use(morgan('dev'));
 app.use(cookieParser());
-app.use(cors({
-    origin: [
-        'https://fitcity.vn',
-        'https://www.fitcity.vn',
-        /\.fitcity\.vn$/,
-        'http://localhost:4321',
-        'http://localhost:3000'
-    ],
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Admin-Key'],
-    credentials: true
-}));
+app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, '../public')));

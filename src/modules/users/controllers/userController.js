@@ -318,6 +318,20 @@ exports.getDetail = async (req, res, next) => {
 
         // Fetch contracts managed by this user if PT
         const Contract = require('../../contracts/models/contractModel.js');
+        const WorkoutSession = require('../../programs/models/workoutSessionModel.js');
+
+        let sessionsThisMonth = 0;
+        if (userData.role === 'PT') {
+            const startOfMonth = new Date();
+            startOfMonth.setDate(1);
+            startOfMonth.setHours(0, 0, 0, 0);
+            sessionsThisMonth = await WorkoutSession.countDocuments({
+                pt: userData._id,
+                status: { $in: ['Completed', 'Confirmed', 'Scheduled'] },
+                scheduledTime: { $gte: startOfMonth, $lte: new Date() }
+            });
+        }
+
         const managedContracts = await Contract.find({ pt: userData._id })
             .populate('client', 'name email')
             .select('contractCode contractStatus paymentStatus netAmount totalAmount createdAt')
@@ -351,7 +365,8 @@ exports.getDetail = async (req, res, next) => {
             employeeKPITarget,
             canSetEmployeeKPI,
             kpiMonth,
-            kpiYear
+            kpiYear,
+            sessionsThisMonth
         });
     } catch (err) {
         next(err);
@@ -395,44 +410,47 @@ exports.saveEmployeeKPITarget = async (req, res, next) => {
  * 8. PASSWORD SELF-SERVICE (Mọi User tự đổi được)
  */
 exports.updateMyPassword = async (req, res, next) => {
-    const isJson = req.xhr || (req.headers['content-type'] || '').includes('application/json');
     try {
         const { currentPassword, newPassword, confirmPassword } = req.body;
         const user = await User.findById(req.session.user.id).select('+password');
 
         if (!user) {
-            if (isJson) return res.status(404).json({ status: 'error', message: 'Không tìm thấy người dùng' });
+            if (req.xhr) return res.status(404).json({ status: 'error', message: 'Không tìm thấy người dùng' });
             req.flash('error_msg', 'Không tìm thấy người dùng');
             return res.redirect('back');
         }
 
+        // Kiểm tra mật khẩu hiện tại
         const isMatch = await user.correctPassword(currentPassword, user.password);
         if (!isMatch) {
-            if (isJson) return res.status(400).json({ status: 'error', message: 'Đổi mật khẩu không thành công' });
+            if (req.xhr) return res.status(400).json({ status: 'error', message: 'Mật khẩu hiện tại không chính xác!' });
             req.flash('error_msg', 'Mật khẩu hiện tại không chính xác!');
             return res.redirect('back');
         }
 
+        // Kiểm tra khớp mật khẩu mới
         if (newPassword !== confirmPassword) {
-            if (isJson) return res.status(400).json({ status: 'error', message: 'Đổi mật khẩu không thành công' });
+            if (req.xhr) return res.status(400).json({ status: 'error', message: 'Xác nhận mật khẩu mới không khớp!' });
             req.flash('error_msg', 'Xác nhận mật khẩu mới không khớp!');
             return res.redirect('back');
         }
 
         if (newPassword.length < 6) {
-            if (isJson) return res.status(400).json({ status: 'error', message: 'Đổi mật khẩu không thành công' });
+            if (req.xhr) return res.status(400).json({ status: 'error', message: 'Mật khẩu phải có ít nhất 6 ký tự!' });
             req.flash('error_msg', 'Mật khẩu phải có ít nhất 6 ký tự!');
             return res.redirect('back');
         }
 
+        // Cập nhật
         user.password = newPassword;
         await user.save();
 
-        if (isJson) return res.json({ status: 'success', message: 'Đổi mật khẩu thành công' });
+        if (req.xhr) return res.json({ status: 'success', message: 'Đổi mật khẩu thành công!' });
+        
         req.flash('success_msg', 'Đổi mật khẩu thành công!');
         res.redirect('back');
     } catch (err) {
-        if (isJson) return res.status(500).json({ status: 'error', message: 'Đổi mật khẩu không thành công' });
+        if (req.xhr) return res.status(500).json({ status: 'error', message: 'Lỗi hệ thống: ' + err.message });
         next(err);
     }
 };

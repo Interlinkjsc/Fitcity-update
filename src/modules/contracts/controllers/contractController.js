@@ -10,8 +10,6 @@ const fs = require('fs');
 const path = require('path');
 const notificationService = require('../../platform/services/notificationService');
 const mongoose = require('mongoose');
-const permissionService = require('../../../core/permissionService');
-const { decrypt } = require('../../../utils/encryption');
 
 const PAYMENT_STATUS_ALLOWED = new Set(['Paid', 'Deposit', 'Unpaid', 'Pending_Paid']);
 const PAYMENT_METHODS_ALLOWED = new Set(['Cash', 'Transfer', 'Card', 'Installment']);
@@ -86,62 +84,38 @@ exports.getContractList = async (req, res, next) => {
         const skip = (page - 1) * limit;
         const user = req.session.user;
 
-        const listFilter = contractScope.buildContractListFilter(user, req.query);
+        let listFilter = contractScope.buildContractListFilter(user, req.query);
 
-        // If searching by client name, use aggregate with $lookup
-        let contracts, totalDocs;
-        const searchTerm = req.query.search && req.query.search.trim();
-        const isNameSearch = searchTerm && !searchTerm.match(/^[A-Z0-9-]+$/i); // likely name not code
-
-        if (searchTerm && isNameSearch) {
-            const nameRe = new RegExp(searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
-            const pipeline = [
-                { $match: listFilter },
-                { $lookup: { from: 'users', localField: 'client', foreignField: '_id', as: 'clientDoc' } },
-                { $unwind: { path: '$clientDoc', preserveNullAndEmpty: true } },
-                { $match: { $or: [{ 'clientDoc.name': nameRe }, { contractCode: nameRe }] } },
-                { $sort: { createdAt: -1 } }
-            ];
-            const countPipeline = [...pipeline, { $count: 'total' }];
-            const countRes = await Contract.aggregate(countPipeline);
-            totalDocs = countRes[0] ? countRes[0].total : 0;
-            const rawContracts = await Contract.aggregate([...pipeline, { $skip: skip }, { $limit: limit }]);
-            contracts = await Contract.populate(rawContracts, [
-                { path: 'client', select: 'name email phone' },
-                { path: 'servicePackage', select: 'name type price duration' },
-                { path: 'pt', select: 'name' },
-                { path: 'sales', select: 'name' },
-                { path: 'branch', select: 'name' }
-            ]);
-        } else {
-            totalDocs = await Contract.countDocuments(listFilter);
-            contracts = await Contract.find(listFilter)
-                .populate('client', 'name email phone')
-                .populate('servicePackage', 'name type price duration')
-                .populate('pt', 'name')
-                .populate('sales', 'name')
-                .populate('branch', 'name')
-                .sort({ createdAt: -1 })
-                .skip(skip)
-                .limit(limit);
+        if (req.query.search && req.query.search.trim()) {
+            const searchRe = { $regex: req.query.search.trim(), $options: 'i' };
+            const matchingClients = await User.find({ name: searchRe }).select('_id').lean();
+            const clientIds = matchingClients.map(u => u._id);
+            const searchCond = { $or: [{ contractCode: searchRe }, { client: { $in: clientIds } }] };
+            listFilter = listFilter.$and
+                ? { $and: [...listFilter.$and, searchCond] }
+                : Object.keys(listFilter).length
+                    ? { $and: [listFilter, searchCond] }
+                    : searchCond;
         }
+
+        const totalDocs = await Contract.countDocuments(listFilter);
+        const contracts = await Contract.find(listFilter)
+            .populate('client', 'name email phone')
+            .populate('servicePackage', 'name type price duration')
+            .populate('pt', 'name')
+            .populate('sales', 'name')
+            .populate('branch', 'name')
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit);
 
         const pagination = getPagination(totalDocs, page, limit);
 
-        const contractBaseMatch = { ...listFilter, contractStatus: { $ne: 'Cancelled' } };
-
         const revenueStats = await Contract.aggregate([
-            { $match: contractBaseMatch },
+            { $match: { ...listFilter, contractStatus: { $ne: 'Cancelled' } } },
             { $group: contractScope.revenueAggregateGroup() }
         ]);
         const revSummary = revenueStats[0] || { totalNet: 0, totalAfterTax: 0, totalPaid: 0, count: 0 };
-
-        const pendingResult = await Contract.aggregate([
-            { $match: contractBaseMatch },
-            { $project: { pending: { $subtract: ['$totalAmount', '$paidAmount'] } } },
-            { $group: { _id: null, totalPending: { $sum: '$pending' } } }
-        ]);
-        const pendingReceivables = pendingResult[0] ? pendingResult[0].totalPending : 0;
 
         let branches = [];
         if (contractScope.GLOBAL_VIEW_ROLES.includes(user.role)) {
@@ -150,21 +124,14 @@ exports.getContractList = async (req, res, next) => {
             branches = await Branch.find({ _id: user.branch }).select('name').lean();
         }
 
-        await permissionService.ensureCache();
-        const canManageContract = permissionService.userHasPermissionSync(user, 'contract', 'manage');
-        const canDeleteContract = permissionService.userHasPermissionSync(user, 'contract', 'delete');
-
-        res.render('admin/contracts/list', {
+        res.render('admin/contracts/list', { 
             contracts,
             pagination,
             query: req.query,
             branches,
             totalAfterTax: revSummary.totalAfterTax,
             totalBeforeTax: Math.round(revSummary.totalNet || 0),
-            totalPaid: revSummary.totalPaid,
-            pendingReceivables,
-            canManageContract,
-            canDeleteContract
+            totalPaid: revSummary.totalPaid
         });
     } catch (err) {
         next(err);
@@ -175,10 +142,9 @@ exports.getContractList = async (req, res, next) => {
 exports.getCreateForm = async (req, res, next) => {
     try {
         // Cần truyền list options cho dropdowns
-        const _decryptF = (v) => { try { return v ? decrypt(v) : v; } catch { return v; } };
-        const clients = (await User.find({ role: 'Client', status: 'Active' })
+        const clients = await User.find({ role: 'Client', status: 'Active' })
             .select('name phone email branch _id')
-            .lean()).map(c => ({ ...c, phone: _decryptF(c.phone), email: _decryptF(c.email) }));
+            .lean();
         const packages = await ServicePackage.find({ status: 'Active' }).lean();
         const branches = await Branch.find({ status: { $ne: 'Closed' } }).lean();
         if (branches.length === 0) {
@@ -192,7 +158,7 @@ exports.getCreateForm = async (req, res, next) => {
             .lean();
 
         let salesStaff = await User.find({
-            role: { $in: ['Sales', 'Manager', 'Admin', 'SA', 'PT', 'Marketing', 'CEO', 'Accountant'] },
+            role: { $in: ['Sales', 'Manager', 'Admin', 'SA', 'PT'] },
             status: 'Active'
         })
             .select('name _id role')
@@ -202,10 +168,9 @@ exports.getCreateForm = async (req, res, next) => {
         const backUrl = req.originalUrl.startsWith('/pt') ? '/pt' : '/admin/contracts/list';
 
         const viewPath = req.user && req.user.role === 'PT' ? 'pt/contracts/create' : 'admin/contracts/form';
-        const currentUserId = req.session.user ? String(req.session.user.id) : null;
 
-        res.render(viewPath, {
-            isEdit: false,
+        res.render(viewPath, { 
+            isEdit: false, 
             contract: new Contract(),
             clients,
             packages,
@@ -213,8 +178,7 @@ exports.getCreateForm = async (req, res, next) => {
             salesStaff,
             pts,
             formAction,
-            backUrl,
-            currentUserId
+            backUrl
         });
     } catch (err) {
         next(err);
@@ -240,10 +204,39 @@ exports.storeContract = async (req, res, next) => {
         const { customPkgName, customPkgType, customPkgDuration, customPkgSessions, customPkgPrice } = req.body;
         const back = req.originalUrl.startsWith('/pt') ? '/pt/contracts/create' : '/admin/contracts/create';
 
-        // Default sales to current logged-in user if not provided
-        const salesId = (sales && isValidObjectId(sales)) ? sales : String(req.session.user.id);
+        // Tạo hội viên mới nếu PT chọn "Tạo hội viên mới"
+        let resolvedClient = client;
+        if (req.body.createNewClient === 'true') {
+            const { newClientName, newClientPhone, newClientEmail } = req.body;
+            if (!newClientName || !newClientPhone) {
+                req.flash('error_msg', 'Vui lòng nhập đầy đủ họ tên và số điện thoại cho hội viên mới.');
+                return res.redirect(back);
+            }
+            const crypto = require('crypto');
+            const tempPassword = crypto.randomBytes(5).toString('hex');
+            const tempEmail = newClientEmail || `client_${Date.now()}@fitcity.temp`;
+            let newUser;
+            try {
+                newUser = await User.create({
+                    name: newClientName,
+                    phone: newClientPhone,
+                    email: tempEmail,
+                    password: tempPassword,
+                    role: 'Client',
+                    branch: branch || req.session.user.branch,
+                });
+            } catch (createErr) {
+                if (createErr.code === 11000) {
+                    req.flash('error_msg', 'Số điện thoại hoặc email này đã tồn tại trong hệ thống. Vui lòng chọn hội viên từ danh sách.');
+                } else {
+                    req.flash('error_msg', 'Lỗi tạo hội viên mới: ' + createErr.message);
+                }
+                return res.redirect(back);
+            }
+            resolvedClient = newUser._id.toString();
+        }
 
-        if (!isValidObjectId(client) || !isValidObjectId(branch) || !isValidObjectId(salesId)) {
+        if (!isValidObjectId(resolvedClient) || !isValidObjectId(branch) || !isValidObjectId(sales)) {
             req.flash('error_msg', 'Thông tin khách hàng/chi nhánh/sales không hợp lệ.');
             return res.redirect(back);
         }
@@ -280,19 +273,24 @@ exports.storeContract = async (req, res, next) => {
             return res.redirect(back);
         }
 
-        const clientUser = await User.findOne({ _id: client, role: 'Client' }).select('branch name').lean();
+        const clientUser = await User.findOne({ _id: resolvedClient, role: 'Client' }).select('branch name').lean();
         if (!clientUser) {
             req.flash('error_msg', 'Không tìm thấy khách hàng hợp lệ.');
             return res.redirect(back);
         }
         if (!clientUser.branch) {
-            req.flash(
-                'error_msg',
-                'Khách hàng chưa có chi nhánh trên hồ sơ. Vui lòng cập nhật ở Quản lý khách hàng trước khi tạo hợp đồng (R4).'
-            );
-            return res.redirect(back);
+            // Nếu vừa tạo mới, branch đã được gán trong create; cập nhật lại
+            if (req.body.createNewClient === 'true') {
+                await User.findByIdAndUpdate(resolvedClient, { branch });
+            } else {
+                req.flash(
+                    'error_msg',
+                    'Khách hàng chưa có chi nhánh trên hồ sơ. Vui lòng cập nhật ở Quản lý khách hàng trước khi tạo hợp đồng (R4).'
+                );
+                return res.redirect(back);
+            }
         }
-        if (branch && String(branch) !== String(clientUser.branch)) {
+        if (branch && clientUser.branch && String(branch) !== String(clientUser.branch)) {
             req.flash(
                 'error_msg',
                 `Chi nhánh hợp đồng phải trùng với chi nhánh hồ sơ khách hàng (${clientUser.name}). Vui lòng cập nhật hồ sơ khách hoặc chọn đúng chi nhánh.`
@@ -302,9 +300,9 @@ exports.storeContract = async (req, res, next) => {
 
         // Determine mode: Template or Custom
         const serviceData = {
-            clientId: client,
+            clientId: resolvedClient,
             branchId: branch,
-            salesId: salesId,
+            salesId: sales,
             ptId: pt || null,
             discount: discountNum,
             couponCode: couponCode,
@@ -343,19 +341,15 @@ exports.storeContract = async (req, res, next) => {
         if (paymentStatus === 'Paid') {
             newContract.paidAmount = newContract.totalAmount;
             newContract.contractStatus = 'Active';
-            newContract.paidAt = new Date();
-        } else if (paymentStatus === 'Deposit') {
-            // Deposit = đã đặt cọc → cho phép bắt đầu lịch tập
-            newContract.contractStatus = 'Active';
         }
-
+        
         await newContract.save();
 
         const pkgDisplayName = newContract.packageSnapshot ? newContract.packageSnapshot.name : 'N/A';
 
-        // NOTIFY CLIENT: New Contract Created
+        // NOTIFY CLIENT: dùng resolvedClient (đúng khi createNew=true, client body = '')
         await notificationService.pushNotification(
-            client,
+            resolvedClient,
             'Hợp đồng mới đã được tạo',
             `Chào bạn, một hợp đồng mới (${newContract.contractCode}) đã được thiết lập cho gói tập "${pkgDisplayName}". Vui lòng kiểm tra.`,
             'Info',
@@ -364,14 +358,34 @@ exports.storeContract = async (req, res, next) => {
 
         // NOTIFY SALES: Sale contribution recognized
         await notificationService.pushNotification(
-            salesId,
+            sales,
             'Ghi nhận doanh thu',
             `Bạn vừa chốt thành công 01 hợp đồng (${newContract.contractCode}). Chúc mừng!`,
             'Success'
         );
 
+        // NOTIFY ADMIN/MANAGER: PT vừa tạo HĐ mới (kể cả client mới) — để admin xem và duyệt nếu cần
+        if (req.session.user && req.session.user.role === 'PT') {
+            try {
+                const managers = await User.find({ role: { $in: ['Admin', 'Manager', 'SA'] } }).select('_id').lean();
+                const isNewClient = req.body.createNewClient === 'true';
+                const notifyMsg = isNewClient
+                    ? `PT ${req.session.user.name} vừa tạo khách hàng mới và hợp đồng ${newContract.contractCode}. Vui lòng kiểm tra.`
+                    : `PT ${req.session.user.name} vừa tạo hợp đồng ${newContract.contractCode} cho hội viên. Vui lòng kiểm tra.`;
+                for (const m of managers) {
+                    await notificationService.pushNotification(
+                        m._id,
+                        'PT tạo hợp đồng mới',
+                        notifyMsg,
+                        'Warning',
+                        '/admin/contracts/list'
+                    );
+                }
+            } catch (e) { /* notification không block flow */ }
+        }
+
         req.flash('success_msg', 'Tạo hợp đồng thành công! Dòng tiền đã được ghi nhận.');
-        
+
         // Dynamic redirect based on role
         if (req.user && req.user.role === 'PT') {
             return res.redirect('/pt');
@@ -404,22 +418,21 @@ exports.getEditForm = async (req, res, next) => {
         const packages = await ServicePackage.find({ status: 'Active' });
         const branches = await Branch.find();
         const salesStaff = await User.find({
-            role: { $in: ['Sales', 'Manager', 'Admin', 'SA', 'PT', 'Marketing', 'CEO', 'Accountant'] },
+            role: { $in: ['Sales', 'Manager', 'Admin', 'SA', 'PT'] },
             status: 'Active'
         })
             .select('name _id role')
             .lean();
         const pts = await User.find({ role: 'PT', status: 'Active' });
 
-        res.render('admin/contracts/form', {
-            isEdit: true,
+        res.render('admin/contracts/form', { 
+            isEdit: true, 
             contract,
             clients,
             packages,
             branches,
             salesStaff,
-            pts,
-            currentUserId: req.session.user ? String(req.session.user.id) : null
+            pts
         });
     } catch (err) {
         next(err);
@@ -440,15 +453,6 @@ exports.updateContract = async (req, res, next) => {
 
         // ONLY update explicitly permitted fields for payment status changes
         const updateData = {};
-
-        // Allow Admin/SA/Manager to change PT
-        const actorRole = req.session.user.role;
-        if (['SA', 'Admin', 'CEO', 'Manager'].includes(actorRole) && req.body.pt !== undefined) {
-            const mongoose = require('mongoose');
-            updateData.pt = req.body.pt && mongoose.Types.ObjectId.isValid(req.body.pt)
-                ? req.body.pt : null;
-        }
-
         if (req.body.paymentStatus) {
             if (!PAYMENT_STATUS_ALLOWED.has(req.body.paymentStatus)) {
                 req.flash('error_msg', 'Trạng thái bill không hợp lệ.');
@@ -475,13 +479,10 @@ exports.updateContract = async (req, res, next) => {
             updateData.notes = req.body.notes;
         }
         
-        // Handle payment status changes → activate contract
+        // Handle logic for checking Paid status
         if (updateData.paymentStatus === 'Paid') {
             const tempContract = await Contract.findById(contractId);
             updateData.paidAmount = tempContract.totalAmount;
-            updateData.contractStatus = 'Active';
-            updateData.paidAt = new Date();
-        } else if (updateData.paymentStatus === 'Deposit') {
             updateData.contractStatus = 'Active';
         }
 
@@ -708,22 +709,42 @@ exports.getDetail = async (req, res, next) => {
             return denyContractAccess(req, res, contract);
         }
 
-        // .lean() bypasses Mongoose getters so encrypted fields come back raw — decrypt manually
-        const decryptField = (val) => { try { return val ? decrypt(val) : val; } catch { return val; } };
-        if (contract.client) {
-            contract.client.phone = decryptField(contract.client.phone);
-            contract.client.email = decryptField(contract.client.email);
-        }
-        if (contract.pt) {
-            contract.pt.phone = decryptField(contract.pt.phone);
-            contract.pt.email = decryptField(contract.pt.email);
-        }
-
         // Lấy lịch sử thanh toán
         const paymentService = require('../services/paymentService');
         const paymentHistory = await paymentService.getPaymentHistory(req.params.id);
 
-        res.render('admin/contracts/detail', { contract, paymentHistory });
+        // Danh sách PT cho form đổi PT
+        const pts = await User.find({ role: 'PT', status: 'Active' })
+            .select('name branch').populate('branch', 'name').lean();
+
+        res.render('admin/contracts/detail', { contract, paymentHistory, pts, currentUser: req.session.user });
+    } catch (err) {
+        next(err);
+    }
+};
+
+exports.changePt = async (req, res, next) => {
+    try {
+        const { newPtId } = req.body;
+        const contract = await Contract.findById(req.params.id);
+        if (!contract) {
+            req.flash('error_msg', 'Không tìm thấy hợp đồng.');
+            return res.redirect('/admin/contracts/list');
+        }
+        if (!isValidObjectId(newPtId)) {
+            req.flash('error_msg', 'PT không hợp lệ.');
+            return res.redirect(`/admin/contracts/detail/${req.params.id}`);
+        }
+        contract.pt = newPtId;
+        await contract.save();
+        // Cập nhật PT cho session chưa hoàn thành
+        const WorkoutSession = require('../../programs/models/workoutSessionModel.js');
+        await WorkoutSession.updateMany(
+            { contract: contract._id, status: { $in: ['Pending_Admin', 'Scheduled'] } },
+            { $set: { pt: newPtId } }
+        );
+        req.flash('success_msg', 'Đã đổi PT thành công.');
+        res.redirect(`/admin/contracts/detail/${req.params.id}`);
     } catch (err) {
         next(err);
     }

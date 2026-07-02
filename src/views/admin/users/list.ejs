@@ -47,8 +47,8 @@
                             <td class="p-4">
                                 <div class="flex items-center">
                                     <div class="h-10 w-10 flex-shrink-0">
-                                        <img class="h-10 w-10 rounded-full border border-slate-200 object-cover" src="<%= userData.avatar || ('/images/default-avatar-' + (userData.role === 'PT' ? 'pt' : userData.role === 'Manager' ? 'manager' : 'client') + '.svg') %>" alt=""
-                                            onerror="this.src='/images/default-avatar-client.svg'">
+                                        <img class="h-10 w-10 rounded-full border border-slate-200 object-cover" src="<%= userData.avatar || '/images/default-avatar-client.svg' %>" alt=""
+                                            onerror="this.src='https://ui-avatars.com/api/?name=<%= encodeURIComponent(userData.name) %>&background=e2e8f0&color=475569'">
                                     </div>
                                     <div class="ml-4">
                                         <div class="font-bold text-slate-800"><%= userData.name %></div>
@@ -146,17 +146,4 @@
 </div>
 <%- include('../../partials/pagination') %>
 
-<script>
-(function() {
-    const input = document.querySelector('input[placeholder="Tìm kiếm nhân viên..."]');
-    if (!input) return;
-    input.addEventListener('input', function() {
-        const q = this.value.toLowerCase();
-        document.querySelectorAll('tbody tr').forEach(function(row) {
-            const text = row.textContent.toLowerCase();
-            row.style.display = text.includes(q) ? '' : 'none';
-        });
-    });
-})();
-</script>
 <%- include('../../partials/footer') %>

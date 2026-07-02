@@ -44,6 +44,16 @@ function createSidebarNav() {
                 const first = this.groups.find((g) => g.collapsible);
                 if (first) this.openModules[first.moduleId] = true;
             }
+
+            this.$nextTick(() => {
+                const nav = document.getElementById('sidebar-nav-scroll');
+                if (!nav) return;
+                const savedScroll = sessionStorage.getItem('fitcity_sidebar_scroll');
+                if (savedScroll) nav.scrollTop = parseInt(savedScroll, 10);
+                nav.addEventListener('scroll', () => {
+                    sessionStorage.setItem('fitcity_sidebar_scroll', nav.scrollTop);
+                });
+            });
         },
 
         toggleModule(moduleId) {

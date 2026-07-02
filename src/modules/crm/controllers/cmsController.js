@@ -1,6 +1,5 @@
 const SiteContent = require('../models/siteContentModel');
 const { slugify, ensureUniqueSlug } = require('../services/cmsService');
-const permissionService = require('../../../core/permissionService');
 
 exports.getList = async (req, res, next) => {
     try {
@@ -8,13 +7,10 @@ exports.getList = async (req, res, next) => {
         const filter = {};
         if (type && type !== 'all') filter.type = type;
         const items = await SiteContent.find(filter).sort({ updatedAt: -1 }).limit(100);
-        await permissionService.ensureCache();
-        const canManageCms = permissionService.userHasPermissionSync(req.session.user, 'cms', 'manage');
         res.render('admin/cms/list', {
             items,
             activePage: 'cms',
-            currentType: type || 'all',
-            canManageCms
+            currentType: type || 'all'
         });
     } catch (err) {
         next(err);

@@ -24,20 +24,20 @@
             <form action="/client/meal-log" method="POST" class="space-y-3">
                 <input type="hidden" name="logDate" value="<%= typeof todayStr !== 'undefined' ? todayStr : '' %>">
                 <div class="grid grid-cols-2 gap-2">
-                    <select name="mealType" required class="border border-slate-200 rounded-xl px-3 py-2 text-base">
+                    <select name="mealType" required class="border border-slate-200 rounded-xl px-3 py-2 text-sm">
                         <option value="Breakfast">Sáng</option>
                         <option value="Lunch">Trưa</option>
                         <option value="Dinner">Tối</option>
                         <option value="Snack">Phụ</option>
                     </select>
-                    <select name="compliance" class="border border-slate-200 rounded-xl px-3 py-2 text-base">
+                    <select name="compliance" class="border border-slate-200 rounded-xl px-3 py-2 text-sm">
                         <option value="Followed">Đúng thực đơn</option>
                         <option value="Partial">Một phần</option>
                         <option value="Skipped">Bỏ qua</option>
                     </select>
                 </div>
-                <input type="text" name="description" placeholder="Mô tả bữa ăn..." class="w-full border border-slate-200 rounded-xl px-3 py-2 text-base">
-                <input type="number" name="calories" min="0" placeholder="Kcal ước tính" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-base">
+                <input type="text" name="description" placeholder="Mô tả bữa ăn..." class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm">
+                <input type="number" name="calories" min="0" placeholder="Kcal ước tính" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm">
                 <button type="submit" class="w-full py-3 bg-primary text-white font-black rounded-xl text-xs uppercase tracking-widest">Ghi nhật ký</button>
             </form>
             <% if (typeof todayLogs !== 'undefined' && todayLogs.length) { %>
@@ -67,22 +67,22 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-2 gap-3 mt-10">
-                    <div class="bg-slate-50 p-4 rounded-3xl border border-slate-200 text-center">
+                <div class="grid grid-cols-4 gap-3 mt-10">
+                    <div class="bg-slate-50 p-5 rounded-3xl border border-slate-200 text-center">
                         <p class="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-2">Đạm</p>
-                        <div class="text-3xl font-black text-slate-900"><%= mealPlan.macros.protein %>%</div>
+                        <div class="text-2xl font-black text-slate-900"><%= mealPlan.macros.protein %>%</div>
                     </div>
-                    <div class="bg-slate-50 p-4 rounded-3xl border border-slate-200 text-center">
+                    <div class="bg-slate-50 p-5 rounded-3xl border border-slate-200 text-center">
                         <p class="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-2">Tinh bột</p>
-                        <div class="text-3xl font-black text-slate-900"><%= mealPlan.macros.carbs %>%</div>
+                        <div class="text-2xl font-black text-slate-900"><%= mealPlan.macros.carbs %>%</div>
                     </div>
-                    <div class="bg-slate-50 p-4 rounded-3xl border border-slate-200 text-center">
+                    <div class="bg-slate-50 p-5 rounded-3xl border border-slate-200 text-center">
                         <p class="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-2">Chất béo</p>
-                        <div class="text-3xl font-black text-slate-900"><%= mealPlan.macros.fat %>%</div>
+                        <div class="text-2xl font-black text-slate-900"><%= mealPlan.macros.fat %>%</div>
                     </div>
-                    <div class="bg-slate-50 p-4 rounded-3xl border border-slate-200 text-center">
+                    <div class="bg-slate-50 p-5 rounded-3xl border border-slate-200 text-center">
                         <p class="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-2">Chất xơ</p>
-                        <div class="text-3xl font-black text-slate-900"><%= mealPlan.macros.fiber || 0 %>%</div>
+                        <div class="text-2xl font-black text-slate-900"><%= mealPlan.macros.fiber || 0 %>%</div>
                     </div>
                 </div>
             </div>
@@ -124,10 +124,10 @@
                                 </div>
                                 <% if (mn) { %>
                                 <div class="grid grid-cols-4 gap-2 mb-3">
-                                    <div class="bg-slate-50 rounded-xl py-2 px-1 text-center border border-slate-100"><p class="text-[11px] font-bold text-slate-400 uppercase">Đạm</p><p class="text-base font-black"><%= mn.proteinG %>g</p></div>
-                                    <div class="bg-slate-50 rounded-xl py-2 px-1 text-center border border-slate-100"><p class="text-[11px] font-bold text-slate-400 uppercase">Tinh bột</p><p class="text-base font-black"><%= mn.carbsG %>g</p></div>
-                                    <div class="bg-slate-50 rounded-xl py-2 px-1 text-center border border-slate-100"><p class="text-[11px] font-bold text-slate-400 uppercase">Béo</p><p class="text-base font-black"><%= mn.fatG %>g</p></div>
-                                    <div class="bg-slate-50 rounded-xl py-2 px-1 text-center border border-slate-100"><p class="text-[11px] font-bold text-slate-400 uppercase">Xơ</p><p class="text-base font-black"><%= mn.fiberG %>g</p></div>
+                                    <div class="bg-slate-50 rounded-xl py-2 px-1 text-center border border-slate-100"><p class="text-[8px] font-black text-slate-400 uppercase">Đạm</p><p class="text-xs font-black"><%= mn.proteinG %>g</p></div>
+                                    <div class="bg-slate-50 rounded-xl py-2 px-1 text-center border border-slate-100"><p class="text-[8px] font-black text-slate-400 uppercase">Tinh bột</p><p class="text-xs font-black"><%= mn.carbsG %>g</p></div>
+                                    <div class="bg-slate-50 rounded-xl py-2 px-1 text-center border border-slate-100"><p class="text-[8px] font-black text-slate-400 uppercase">Béo</p><p class="text-xs font-black"><%= mn.fatG %>g</p></div>
+                                    <div class="bg-slate-50 rounded-xl py-2 px-1 text-center border border-slate-100"><p class="text-[8px] font-black text-slate-400 uppercase">Xơ</p><p class="text-xs font-black"><%= mn.fiberG %>g</p></div>
                                 </div>
                                 <% } %>
 

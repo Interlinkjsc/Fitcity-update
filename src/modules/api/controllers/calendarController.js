@@ -74,16 +74,24 @@ exports.getSessions = async (req, res) => {
                 const ptName = (session.pt && typeof session.pt === 'object') ? (session.pt.name || 'Unknown') : 'Unknown PT';
                 const branchName = (session.branch && typeof session.branch === 'object') ? (session.branch.name || 'Cơ sở') : 'Cơ sở';
                 
+                const startTime = session.startTime || session.scheduledTime;
+                const timeStr = new Date(startTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
                 const workoutTitle = session.workoutPlan || session.title || 'Buổi tập';
-
+                
                 const title = user.role === 'Client'
-                    ? ptName
-                    : clientName;
+                    ? `${timeStr} · ${ptName}`
+                    : `${timeStr} - ${clientName}`;
 
-                // Always anchor to scheduledTime so the event stays in the booked slot
-                // across all calendar views (startTime/endTime are actual check-in/out times)
-                const start = session.scheduledTime;
-                const end = new Date(new Date(start).getTime() + 60 * 60 * 1000);
+                const start = session.startTime || session.scheduledTime;
+                let end = session.endTime;
+                if (!end && start) {
+                    const startMs = new Date(start).getTime();
+                    const defaultMins =
+                        session.status === 'Completed' && session.startTime
+                            ? 60
+                            : 60;
+                    end = new Date(startMs + defaultMins * 60 * 1000);
+                }
 
                 return {
                     id: session._id,

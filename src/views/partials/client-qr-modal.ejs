@@ -14,32 +14,16 @@
         </div>
         <div id="qrcode" class="w-full h-full flex items-center justify-center"></div>
     </div>
-    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-6">Hết hạn sau ~5 phút</p>
-
-    <!-- Mã thủ công luôn hiển thị -->
-    <div id="qrTokenBox" class="hidden w-full mt-4 bg-slate-50 rounded-2xl border border-slate-200 p-3">
-        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Mã thủ công (khi PT không quét được QR)</p>
-        <div class="flex gap-2 items-center">
-            <input id="qrTokenText" type="text" readonly
-                   class="flex-1 rounded-xl bg-white border border-slate-200 text-slate-700 text-xs px-3 py-2 font-mono"
-                   onclick="this.select()" />
-            <button type="button" onclick="copyQrToken()" class="px-3 py-2 bg-slate-800 text-white text-xs font-bold rounded-xl hover:bg-slate-900 shrink-0">Copy</button>
-        </div>
-        <p class="text-[9px] text-slate-400 mt-1">Nhấn vào ô trên → chọn tất cả → copy rồi gửi cho PT nhập tay.</p>
-    </div>
+    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-6">Hết hạn sau ~60 giây</p>
 </div>
 
 <script>
-    let _qrCurrentToken = '';
-
     async function openQrModal(sessionId, action) {
         const overlay = document.getElementById('qrModalOverlay');
         const modal = document.getElementById('qrModal');
         const qrContainer = document.getElementById('qrcode');
         const loading = document.getElementById('qrLoading');
         const title = document.getElementById('qrModalTitle');
-        const tokenBox = document.getElementById('qrTokenBox');
-        const tokenInput = document.getElementById('qrTokenText');
         if (!overlay || !modal) return;
 
         overlay.classList.remove('opacity-0', 'pointer-events-none');
@@ -49,7 +33,6 @@
             : '<span class="text-primary tracking-normal">QR</span> CHECK-OUT';
         loading.style.opacity = '1';
         qrContainer.innerHTML = '';
-        if (tokenBox) tokenBox.classList.add('hidden');
 
         try {
             const res = await fetch(`/client/sessions/${sessionId}/qr?action=${action}`, {
@@ -57,7 +40,6 @@
             });
             const data = await res.json();
             if (data.success && data.token) {
-                _qrCurrentToken = data.token;
                 if (typeof QRCode !== 'undefined') {
                     new QRCode(qrContainer, {
                         text: data.token,
@@ -71,10 +53,6 @@
                     qrContainer.textContent = data.token;
                 }
                 loading.style.opacity = '0';
-                if (tokenBox && tokenInput) {
-                    tokenInput.value = data.token;
-                    tokenBox.classList.remove('hidden');
-                }
             } else {
                 alert(data.message || 'Lỗi tạo mã QR');
                 closeQrModal();
@@ -83,18 +61,6 @@
             console.error(e);
             alert('Lỗi kết nối');
             closeQrModal();
-        }
-    }
-
-    async function copyQrToken() {
-        if (!_qrCurrentToken) return;
-        const btn = document.querySelector('[onclick="copyQrToken()"]');
-        try {
-            await navigator.clipboard.writeText(_qrCurrentToken);
-            if (btn) { btn.textContent = '✓ Copied'; setTimeout(() => { btn.textContent = 'Copy'; }, 2000); }
-        } catch (e) {
-            const input = document.getElementById('qrTokenText');
-            if (input) { input.select(); }
         }
     }
     function closeQrModal() {

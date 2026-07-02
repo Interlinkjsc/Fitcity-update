@@ -32,16 +32,14 @@ const servicePackageSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
-    /**
-     * Mục tiêu tập luyện. Form cho phép chọn 1 trong các giá trị chuẩn HOẶC
-     * nhập tự do qua tùy chọn "Khác" (xem views/admin/packages/form.ejs),
-     * nên field này không dùng enum cứng để tránh ValidationError khi
-     * người dùng nhập mục tiêu tùy chỉnh.
-     */
     target: {
         type: String,
         trim: true,
-        default: 'Giảm cân'
+        default: 'Giảm cân',
+        enum: {
+            values: ['Giảm cân', 'Tăng cơ', 'Gym', 'Gym Kids', 'Pilates', 'Yoga', 'CrossFit', 'Boxing'],
+            message: '{VALUE} không phải là mục tiêu tập luyện hợp lệ'
+        }
     },
     sessionType: {
         type: String,

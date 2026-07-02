@@ -20,7 +20,7 @@
             <% } %>
         </button>
         <a href="/auth/profile" class="h-10 w-10 rounded-full border-2 border-primary/30 overflow-hidden shadow-sm hover:scale-105 transition-transform">
-            <img alt="PT Avatar" class="h-full w-full object-cover" src="<%= user && user.avatar ? user.avatar : '/images/default-avatar-pt.svg' %>" onerror="this.src='/images/default-avatar-pt.svg'"/>
+            <img alt="PT Avatar" class="h-full w-full object-cover" src="<%= user && user.avatar ? user.avatar : 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.name) + '&background=ccff00&color=121212' %>"/>
         </a>
     </div>
 </header>
@@ -62,35 +62,31 @@
         </div>
     </section>
 
-    <div class="flex gap-3">
-        <a href="/pt/clients" class="flex-1 block glass p-5 rounded-[28px] border border-blue-200/60 bg-blue-50/50 hover:bg-blue-50 transition-colors">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-[10px] font-black uppercase tracking-widest text-blue-600 mb-1">Khách hàng</p>
-                    <p class="text-sm font-bold text-slate-700">Danh sách của tôi</p>
+    <!-- BỎ CHẤM CÔNG - thay bằng feedback khách hàng gần nhất -->
+    <% if (typeof recentFeedbacks !== 'undefined' && recentFeedbacks && recentFeedbacks.length > 0) { %>
+    <section class="glass p-6 rounded-[32px] border border-slate-200/60 shadow-sm">
+        <p class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Feedback khách hàng gần nhất</p>
+        <div class="space-y-3">
+            <% recentFeedbacks.slice(0,5).forEach(fb => { %>
+            <div class="flex items-start justify-between bg-white/60 p-3 rounded-2xl border border-slate-100">
+                <div class="flex-1 min-w-0">
+                    <p class="text-xs font-black text-slate-900 truncate"><%= fb.client ? fb.client.name : '—' %></p>
+                    <% if (fb.feedback && fb.feedback.comment) { %>
+                    <p class="text-[10px] text-slate-500 mt-0.5 truncate"><%= fb.feedback.comment %></p>
+                    <% } %>
                 </div>
-                <span class="material-symbols-outlined text-3xl text-blue-500">group</span>
+                <% if (fb.feedback && fb.feedback.rating) { %>
+                <span class="ml-3 flex-shrink-0 text-xs font-black text-amber-600">⭐ <%= fb.feedback.rating %>/5</span>
+                <% } %>
             </div>
-        </a>
-        <a href="/admin/clients/create" class="flex-1 block glass p-5 rounded-[28px] border border-green-200/60 bg-green-50/50 hover:bg-green-50 transition-colors">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-[10px] font-black uppercase tracking-widest text-green-600 mb-1">Tạo mới</p>
-                    <p class="text-sm font-bold text-slate-700">Thêm khách hàng</p>
-                </div>
-                <span class="material-symbols-outlined text-3xl text-green-500">person_add</span>
-            </div>
-        </a>
-    </div>
-    <a href="/pt/attendance" class="block glass p-5 rounded-[28px] border border-primary/30 bg-primary/5 hover:bg-primary/10 transition-colors">
-        <div class="flex items-center justify-between">
-            <div>
-                <p class="text-[10px] font-black uppercase tracking-widest text-primary mb-1">Chấm công ca dạy</p>
-                <p class="text-sm font-bold text-slate-700">Check-in / Check-out & theo dõi ca</p>
-            </div>
-            <span class="material-symbols-outlined text-3xl text-primary">schedule</span>
+            <% }); %>
         </div>
-    </a>
+    </section>
+    <% } else { %>
+    <div class="glass p-5 rounded-[28px] border border-slate-100 text-center">
+        <p class="text-[10px] font-black uppercase tracking-widest text-slate-300">Chưa có feedback từ khách hàng</p>
+    </div>
+    <% } %>
     <a href="/pt/daily-report" class="block glass p-5 rounded-[28px] border border-slate-200">
         <div class="flex items-center justify-between">
             <div>
@@ -110,19 +106,26 @@
         </div>
     </a>
 
-    <!-- 2. DETAILED KPI CARDS (PUSHED UP) -->
+    <!-- 2. DETAILED KPI CARDS -->
     <section class="grid grid-cols-2 gap-4">
         <div class="glass p-6 rounded-[32px] border border-slate-200/60 shadow-sm relative overflow-hidden group">
             <div class="absolute -right-4 -top-4 size-16 bg-primary/5 rounded-full blur-xl group-hover:bg-primary/10 transition-colors"></div>
-            <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-2">Số buổi dạy</p>
+            <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-2">Số buổi đã dạy</p>
             <div class="text-3xl font-black text-slate-900 italic"><%= completedSessions %></div>
-            <p class="text-[9px] text-slate-500 mt-1 font-bold uppercase tracking-tighter">Hoàn thành tháng này</p>
+            <p class="text-[9px] text-slate-500 mt-1 font-bold uppercase tracking-tighter">Trong tháng này</p>
         </div>
         <div class="glass p-6 rounded-[32px] border-2 border-primary/20 shadow-sm relative overflow-hidden group">
             <div class="absolute -right-4 -top-4 size-16 bg-primary/10 rounded-full blur-xl"></div>
             <p class="text-[10px] text-primary font-black uppercase tracking-widest mb-2">Hợp đồng mới</p>
             <div class="text-3xl font-black text-slate-900 italic"><%= Math.floor(newContractRevenue / 1000000) %>M</div>
             <p class="text-[9px] text-slate-500 mt-1 font-bold uppercase tracking-tighter">Doanh số thực tế</p>
+        </div>
+        <div class="glass col-span-2 p-5 rounded-[28px] border border-amber-200/60 bg-amber-50/30 flex items-center justify-between">
+            <div>
+                <p class="text-[10px] font-black uppercase tracking-widest text-amber-700 mb-1">Hoa hồng chốt HĐ tháng này</p>
+                <p class="text-xl font-black text-slate-900"><%= new Intl.NumberFormat('vi-VN').format(Math.round(salesCommission || 0)) %> <span class="text-xs font-normal text-slate-400">VNĐ</span></p>
+            </div>
+            <span class="material-symbols-outlined text-3xl text-amber-500">handshake</span>
         </div>
     </section>
 
@@ -153,6 +156,13 @@
                 </div>
                 <span class="font-black text-green-600">+<%= (estimatedCommission/1000).toLocaleString() %>K</span>
             </div>
+            <div class="flex justify-between items-center text-sm py-3 border-b border-slate-100">
+                <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-amber-500 text-lg">handshake</span>
+                    <span class="text-slate-500 font-bold">Hoa hồng chốt HĐ</span>
+                </div>
+                <span class="font-black text-amber-600">+<%= (Math.round(salesCommission || 0)/1000).toLocaleString() %>K</span>
+            </div>
             
             <!-- TIỀN VI PHẠM (ADDED AS REQUESTED) -->
             <div class="flex justify-between items-center text-sm py-3 border-b border-slate-100">
@@ -182,7 +192,7 @@
 
         <div class="mt-8 p-4 bg-slate-100/50 rounded-2xl flex items-center gap-4">
             <span class="material-symbols-outlined text-slate-400 text-xl">info</span>
-            <p class="text-[10px] text-slate-500 font-medium leading-relaxed italic">Thu nhập dự kiến dựa trên số buổi đã dạy và doanh số hiện tại. Quyết toán chính thức vào cuối tháng.</p>
+            <p class="text-[10px] text-slate-500 font-medium leading-relaxed italic">THU NHẬP DỰ KIẾN MỖI THÁNG GỒM CÓ LƯƠNG CỨNG VÀ HOA HỒNG CHỐT ĐƯỢC HỢP ĐỒNG VỚI KHÁCH HÀNG VÀ KHÔNG CÒN CÔNG NỢ</p>
         </div>
     </section>
 
@@ -210,7 +220,7 @@
                             <div>
                                 <h4 class="text-base font-black text-slate-900 tracking-tight"><%= session.client.name %></h4>
                                 <div class="flex items-center gap-3 text-[10px] text-slate-400 font-bold uppercase mt-1">
-                                    <span class="flex items-center gap-1.5 bg-slate-100 px-2 py-0.5 rounded-lg"><span class="material-symbols-outlined text-[16px]">schedule</span> <%= new Date(session.scheduledTime).toLocaleTimeString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', hour: '2-digit', minute: '2-digit', hour12: false }) %></span>
+                                    <span class="flex items-center gap-1.5 bg-slate-100 px-2 py-0.5 rounded-lg"><span class="material-symbols-outlined text-[16px]">schedule</span> <%= new Date(session.scheduledTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false }) %></span>
                                     <span class="flex items-center gap-1.5 px-2 py-0.5 rounded-lg <%= session.status === 'Completed' ? 'bg-emerald-50 text-emerald-600' : (session.status === 'In_Progress' ? 'bg-accent/10 text-accent' : 'bg-slate-50 text-slate-400') %> italic">
                                         <%= session.status %>
                                     </span>

@@ -161,39 +161,21 @@
     <!-- KPI Cards -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mb-8">
         <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-            <p class="text-slate-500 text-sm font-medium mb-1">Tổng giá trị HĐ (trước thuế)</p>
+            <p class="text-slate-500 text-sm font-medium mb-1">Doanh thu trước thuế</p>
             <h3 class="text-2xl font-bold text-slate-800">
                 <%= new Intl.NumberFormat('vi-VN').format(Math.round(totalRevenueBeforeTax)) %> <span
                         class="text-sm font-normal text-slate-400">VNĐ</span>
             </h3>
-            <p class="text-xs text-slate-400 mt-2">Tổng giá trị hợp đồng chưa tính VAT</p>
+            <p class="text-xs text-slate-400 mt-2">Tổng doanh thu chưa tính VAT</p>
         </div>
 
         <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm border-l-4 border-l-green-500">
-            <p class="text-slate-500 text-sm font-medium mb-1">Tổng giá trị HĐ (sau thuế)</p>
+            <p class="text-slate-500 text-sm font-medium mb-1">Doanh thu sau thuế</p>
             <h3 class="text-2xl font-bold text-green-600">
                 <%= new Intl.NumberFormat('vi-VN').format(Math.round(totalRevenueAfterTax)) %> <span
                         class="text-sm font-normal text-slate-400">VNĐ</span>
             </h3>
-            <p class="text-xs text-slate-400 mt-2">Tổng giá trị hợp đồng đã tính VAT</p>
-        </div>
-
-        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm border-l-4 border-l-lime-500">
-            <p class="text-slate-500 text-sm font-medium mb-1">Đã thu</p>
-            <h3 class="text-2xl font-bold text-lime-600">
-                <%= new Intl.NumberFormat('vi-VN').format(Math.round(totalPaidAmount || 0)) %> <span
-                        class="text-sm font-normal text-slate-400">VNĐ</span>
-            </h3>
-            <p class="text-xs text-slate-400 mt-2">Tổng tiền đã thu từ hợp đồng</p>
-        </div>
-
-        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm border-l-4 border-l-amber-500">
-            <p class="text-slate-500 text-sm font-medium mb-1">Công nợ</p>
-            <h3 class="text-2xl font-bold text-amber-600">
-                <%= new Intl.NumberFormat('vi-VN').format(Math.round(pendingReceivables || 0)) %> <span
-                        class="text-sm font-normal text-slate-400">VNĐ</span>
-            </h3>
-            <p class="text-xs text-slate-400 mt-2">Công nợ chưa thu</p>
+            <p class="text-xs text-slate-400 mt-2">Tổng doanh thu bao gồm VAT</p>
         </div>
 
         <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm border-l-4 border-l-rose-500">
@@ -207,9 +189,16 @@
                 Lương đã trả: <%= new Intl.NumberFormat('vi-VN').format(Math.round(totalPayrollPaid || 0)) %>
             </p>
         </div>
-    </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+            <p class="text-slate-500 text-sm font-medium mb-1">Lợi nhuận gộp</p>
+            <h3 class="text-2xl font-bold text-emerald-600">
+                <%= new Intl.NumberFormat('vi-VN').format(Math.round(netProfit)) %> <span
+                        class="text-sm font-normal text-slate-400">VNĐ</span>
+            </h3>
+            <p class="text-xs text-slate-400 mt-2">Doanh thu sau thuế − tổng chi</p>
+        </div>
+
         <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm border-l-4 border-l-blue-500">
             <p class="text-slate-500 text-sm font-medium mb-1">Người đang online / HĐ còn hạn</p>
             <h3 class="text-2xl font-bold text-blue-600">

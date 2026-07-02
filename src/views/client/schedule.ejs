@@ -22,7 +22,6 @@
         
         #calendar {
             min-height: 500px;
-            min-width: 560px;
             width: 100%;
             font-family: 'Inter', sans-serif;
         }
@@ -97,44 +96,6 @@
         
         .fc-event-title, .fc-event-time {
             font-weight: 700 !important;
-            overflow: hidden !important;
-            text-overflow: ellipsis !important;
-            white-space: nowrap !important;
-        }
-        .fc-daygrid-event, .fc-timegrid-event {
-            overflow: hidden !important;
-        }
-        /* Weekly view (timeGridWeek) */
-        .fc-timegrid-event .fc-event-main {
-            overflow: hidden !important;
-            padding: 2px 4px !important;
-        }
-        .fc-timegrid-event .fc-event-title {
-            font-size: 0.72rem !important;
-            line-height: 1.2 !important;
-            white-space: nowrap !important;
-            overflow: hidden !important;
-            text-overflow: ellipsis !important;
-        }
-        .fc-timegrid-event .fc-event-time {
-            font-size: 0.65rem !important;
-            white-space: nowrap !important;
-            overflow: hidden !important;
-        }
-        .fc-col-header-cell-cushion {
-            font-size: 0.72rem !important;
-            font-weight: 700 !important;
-            padding: 4px 2px !important;
-        }
-        .fc-timegrid-slot-label {
-            font-size: 0.65rem !important;
-        }
-        @media (max-width: 480px) {
-            .fc-event-title { font-size: 0.6rem !important; }
-            .fc-daygrid-event-dot { display: none !important; }
-            .fc-timegrid-event .fc-event-title { font-size: 0.6rem !important; }
-            .fc-col-header-cell-cushion { font-size: 0.6rem !important; padding: 2px 1px !important; }
-            .fc-timegrid-slot-label { font-size: 0.55rem !important; }
         }
         
         /* Modal background */
@@ -182,7 +143,7 @@
         </section>
 
         <section id="tab-calendar">
-            <div class="bg-white border border-slate-200 rounded-[32px] p-4 md:p-6 mb-2 shadow-sm" style="overflow-x:auto;">
+            <div class="bg-white border border-slate-200 rounded-[32px] p-4 md:p-6 mb-2 overflow-hidden shadow-sm">
                 <!-- Simple view switcher (replaces FullCalendar right toolbar) -->
                 <div class="flex items-center justify-between gap-3 mb-4 relative z-10">
                     <div class="bg-slate-50 border border-slate-200 rounded-full p-1 flex items-center gap-1">
@@ -410,7 +371,6 @@
                 slotMaxTime: '22:00:00',
                 allDaySlot: false,
                 height: 'auto',
-                scrollTime: '07:00:00',
                 events: '/api/calendar/sessions', // Fetch events from API
                 eventClick: function(info) {
                     showEventModal(info.event);

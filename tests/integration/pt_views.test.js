@@ -67,11 +67,14 @@ describe('PT Views Integration', () => {
         expect(res.text).toContain('Lịch Dạy');
     });
 
-    // NOTE: '/pt/slots' was a dead link (no route or view ever existed for it —
-    // ptRoutes.js / slotRoutes.js only mount slot management under
-    // '/admin/slots'). The PT-facing calendar/slot view actually lives at
-    // '/pt/schedule' (covered by the test above), so the nav link was fixed to
-    // point there instead of building a separate, never-implemented page.
+    it('Should render PT slots page', async () => {
+        const res = await request(app)
+            .get('/pt/slots')
+            .set('Cookie', ptCookie);
+
+        expect(res.statusCode).toBe(200);
+        expect(res.text).toContain('Slot mở sẵn');
+    });
 
     it('Should render PT requests page', async () => {
         const res = await request(app)

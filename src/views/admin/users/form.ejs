@@ -225,15 +225,26 @@
                         <label for="ptCommissionRate" class="block text-sm font-medium text-slate-700 mb-1">Hoa hồng PT (% trên giá trị HĐ trước VAT)</label>
                         <div class="relative max-w-xs">
                             <input type="number" id="ptCommissionRate" name="ptCommissionRate" min="0" max="100" step="0.1"
-                                value="<%= (typeof userData !== 'undefined' && userData.ptCommissionRate != null) ? userData.ptCommissionRate : 10 %>"
+                                value="<%= (typeof userData !== 'undefined' && userData.ptCommissionRate != null) ? userData.ptCommissionRate : 0 %>"
                                 class="block w-full rounded-md border-slate-300 shadow-sm focus:border-lime-500 focus:ring focus:ring-lime-500 text-sm py-2 pl-3 pr-8 border bg-white"
-                                placeholder="10">
+                                placeholder="0">
                             <span class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-400 font-medium text-sm">%</span>
                         </div>
                         <p class="mt-1 text-[11px] text-slate-500">Khi tạo HĐ: HH = netAmount × %. Payroll cộng ptCommission trên HĐ Paid.</p>
                     </div>
-                    <div x-show="!['Client','SA'].includes(selectedRole)" x-cloak class="sm:col-span-2">
-                        <label for="salesCommissionRate" class="block text-sm font-medium text-slate-700 mb-1">Hoa hồng bán hàng (% trên giá trị HĐ trước VAT)</label>
+                    <div x-show="selectedRole === 'PT'" x-cloak class="sm:col-span-2">
+                        <label for="salesCommissionRatePT" class="block text-sm font-medium text-slate-700 mb-1">Hoa hồng chốt hợp đồng (comm) (% trên giá trị HĐ trước VAT)</label>
+                        <div class="relative max-w-xs">
+                            <input type="number" id="salesCommissionRatePT" name="salesCommissionRate" min="0" max="100" step="0.1"
+                                value="<%= (typeof userData !== 'undefined' && userData.salesCommissionRate != null) ? userData.salesCommissionRate : 0 %>"
+                                class="block w-full rounded-md border-slate-300 shadow-sm focus:border-lime-500 focus:ring focus:ring-lime-500 text-sm py-2 pl-3 pr-8 border bg-white"
+                                placeholder="0">
+                            <span class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-400 font-medium text-sm">%</span>
+                        </div>
+                        <p class="mt-1 text-[11px] text-slate-500">Hoa hồng PT nhận khi chốt hợp đồng mới.</p>
+                    </div>
+                    <div x-show="['Sales','Manager'].includes(selectedRole)" x-cloak class="sm:col-span-2">
+                        <label for="salesCommissionRate" class="block text-sm font-medium text-slate-700 mb-1">Hoa hồng Sales/QL (% trên giá trị HĐ trước VAT)</label>
                         <div class="relative max-w-xs">
                             <input type="number" id="salesCommissionRate" name="salesCommissionRate" min="0" max="100" step="0.1"
                                 value="<%= (typeof userData !== 'undefined' && userData.salesCommissionRate != null) ? userData.salesCommissionRate : 5 %>"

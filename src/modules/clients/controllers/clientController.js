@@ -7,18 +7,6 @@ const PaymentTransaction = require('../../contracts/models/transactionModel.js')
 const Notification = require('../../platform/models/notificationModel.js');
 const PTChangeRequest = require('../../pt/models/ptChangeRequestModel.js');
 const notificationService = require('../../platform/services/notificationService');
-const { decrypt } = require('../../../utils/encryption');
-
-const _decryptField = (val) => { try { return val ? decrypt(val) : val; } catch { return val; } };
-function _decryptContractUsers(contract) {
-    if (contract && contract.client) {
-        contract.client.phone = _decryptField(contract.client.phone);
-        contract.client.email = _decryptField(contract.client.email);
-    }
-    if (contract && contract.pt) {
-        contract.pt.phone = _decryptField(contract.pt.phone);
-    }
-}
 
 /**
  * POST /client/sessions/:id/feedback — Đánh giá PT sau buổi tập
@@ -243,8 +231,7 @@ exports.getSessionQr = async (req, res, next) => {
             sid: session._id,
             act: action,
             cid: session.client,
-            pid: session.pt && session.pt._id ? session.pt._id : session.pt,
-            ttlSeconds: 300
+            pid: session.pt && session.pt._id ? session.pt._id : session.pt
         });
 
         if (isJson) {
@@ -425,20 +412,20 @@ exports.previewMyContract = async (req, res, next) => {
     try {
         const clientId = req.session.user.id;
 
-        const contract = await Contract.findOne({ _id: req.params.id, client: clientId })
+        const contractDoc = await Contract.findOne({ _id: req.params.id, client: clientId })
             .populate('client', 'name email phone avatar cccdHash')
             .populate('servicePackage', 'name price durationInMonths maxSessions type')
             .populate('pt', 'name phone')
             .populate('branch', 'name address')
-            .populate('sales', 'name')
-            .lean();
+            .populate('sales', 'name');
 
-        if (!contract) {
+        if (!contractDoc) {
             req.flash('error_msg', 'Không tìm thấy hợp đồng hoặc bạn không có quyền xem!');
             return res.redirect('/client/contracts');
         }
 
-        _decryptContractUsers(contract);
+        // toObject({ getters: true }) để decrypt phone/email bị mã hóa trong populated docs
+        const contract = contractDoc.toObject({ getters: true });
 
         // Dùng chung template preview với admin
         res.render('admin/contracts/templates/contract-preview', {
@@ -470,8 +457,6 @@ exports.previewMyReceipt = async (req, res, next) => {
             req.flash('error_msg', 'Không tìm thấy hợp đồng hoặc bạn không có quyền xem!');
             return res.redirect('/client/contracts');
         }
-
-        _decryptContractUsers(contract);
 
         const transaction = await paymentService.getTransactionDetail(req.params.transactionId);
 

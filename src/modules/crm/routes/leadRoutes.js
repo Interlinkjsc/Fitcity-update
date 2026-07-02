@@ -6,8 +6,6 @@ const { protect, checkPermission } = require('../../../middlewares/authMiddlewar
 // Public routes
 router.get('/', leadController.getLandingPage);
 router.get('/contact', leadController.getContactPage);
-router.get('/chi-nhanh', leadController.getChiNhanh);
-router.get('/chuong-trinh', leadController.getChuongTrinh);
 router.get('/blog', leadController.getBlogList);
 router.get('/blog/:slug', leadController.getBlogPost);
 router.post('/register-lead', leadController.registerLead);

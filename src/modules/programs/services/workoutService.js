@@ -5,8 +5,7 @@ const notificationService = require('../../platform/services/notificationService
 async function ensureSessionAndContractUsable(session) {
     if (!session) throw new Error('Buổi tập không tồn tại');
     const contract = await Contract.findById(session.contract);
-    const schedulable = contract && (contract.contractStatus === 'Active' || (contract.contractStatus === 'Draft' && contract.paymentStatus === 'Deposit'));
-    if (!schedulable) {
+    if (!contract || contract.contractStatus !== 'Active') {
         const status = contract ? contract.contractStatus : 'N/A';
         throw new Error(`Không thể thực hiện. Hợp đồng đang ở trạng thái: ${status}.`);
     }
@@ -77,30 +76,6 @@ exports.processQrScan = async (sessionId, authUserId) => {
         session.startTime = new Date();
         session.status = 'In_Progress';
         await session.save();
-
-        // ZNS check-in — truly fire-and-forget, never blocks the response
-        ;(async () => {
-            try {
-                const User = require('../../users/models/userModel');
-                const Branch = require('../../crm/models/branchModel');
-                const zaloService = require('../../platform/services/zaloService');
-                const [client, pt, branch] = await Promise.all([
-                    User.findById(session.client),
-                    User.findById(session.pt),
-                    Branch.findById(session.branch)
-                ]);
-                await zaloService.sendZnsCheckin(
-                    client && client.phone,
-                    client && client.name,
-                    pt && pt.name,
-                    session.startTime,
-                    branch ? branch.name : ''
-                );
-            } catch (e) {
-                console.error('[ZaloZNS] checkin error', e.message);
-            }
-        })();
-
         return session;
     }
 
@@ -122,27 +97,6 @@ exports.processQrScan = async (sessionId, authUserId) => {
         } catch (_notifErr) {
             // Không block luồng chính nếu notification lỗi
         }
-
-        // ZNS check-out — truly fire-and-forget, never blocks the response
-        ;(async () => {
-            try {
-                const User = require('../../users/models/userModel');
-                const zaloService = require('../../platform/services/zaloService');
-                const [client, pt] = await Promise.all([
-                    User.findById(session.client),
-                    User.findById(session.pt)
-                ]);
-                await zaloService.sendZnsCheckout(
-                    client && client.phone,
-                    client && client.name,
-                    pt && pt.name,
-                    session.startTime,
-                    session.endTime
-                );
-            } catch (e) {
-                console.error('[ZaloZNS] checkout error', e.message);
-            }
-        })();
 
         return session;
     }
