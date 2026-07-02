@@ -70,8 +70,8 @@ const PERMISSIONS = [
     { id: 'slots.manage', resource: 'slots', action: 'manage', label: 'Quản lý lịch tập', group: 'Vận hành PT', suggestedRoles: ['Admin', 'Manager'] },
 
     // Hợp đồng
-    { id: 'contract.view', resource: 'contract', action: 'view', label: 'Xem hợp đồng', group: 'Hợp đồng & Doanh thu', suggestedRoles: ['Admin', 'CEO', 'Manager', 'Accountant', 'Sales', 'PT', 'Client'], menuKey: 'contracts' },
-    { id: 'contract.create', resource: 'contract', action: 'create', label: 'Tạo hợp đồng', group: 'Hợp đồng & Doanh thu', suggestedRoles: ['PT', 'Sales', 'Admin', 'Manager'] },
+    { id: 'contract.view', resource: 'contract', action: 'view', label: 'Xem hợp đồng', group: 'Hợp đồng & Doanh thu', suggestedRoles: ['Admin', 'CEO', 'Manager', 'Accountant', 'Sales', 'PT', 'Marketing', 'Client'], menuKey: 'contracts' },
+    { id: 'contract.create', resource: 'contract', action: 'create', label: 'Tạo hợp đồng', group: 'Hợp đồng & Doanh thu', suggestedRoles: ['PT', 'Sales', 'Admin', 'Manager', 'Marketing'] },
     { id: 'contract.manage', resource: 'contract', action: 'manage', label: 'Quản lý HĐ (sửa, TT, bảo lưu)', group: 'Hợp đồng & Doanh thu', suggestedRoles: ['Admin', 'Accountant', 'Manager'] },
     { id: 'contract.delete', resource: 'contract', action: 'delete', label: 'Xóa hợp đồng', group: 'Hợp đồng & Doanh thu', suggestedRoles: ['Admin'] },
 

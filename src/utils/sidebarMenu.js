@@ -201,7 +201,7 @@ const MENU_ITEMS = [
         href: '/admin/contracts/list',
         icon: 'description',
         permission: { resource: 'contract', action: 'view' },
-        roles: ['Admin', 'CEO', 'Manager', 'Accountant', 'Sales', 'SA', 'PT', 'Client'],
+        roles: ['Admin', 'CEO', 'Manager', 'Accountant', 'Sales', 'SA', 'PT', 'Marketing', 'Client'],
     },
     {
         key: 'payroll',
