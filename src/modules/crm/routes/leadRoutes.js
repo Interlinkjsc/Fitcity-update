@@ -11,6 +11,8 @@ router.get('/contact', (req, res) => res.redirect((process.env.WEBSITE_URL || 'h
 router.get('/blog', (req, res) => res.redirect((process.env.WEBSITE_URL || 'http://160.25.81.177') + '/blog'));
 router.get('/blog/:slug', (req, res) => res.redirect((process.env.WEBSITE_URL || 'http://160.25.81.177') + '/blog/' + encodeURIComponent(req.params.slug)));
 router.post('/register-lead', leadController.registerLead);
+// Alias tương thích: web/env cũ trỏ /api/crm/register-lead → tránh 404 form học thử
+router.post('/api/crm/register-lead', leadController.registerLead);
 
 // Admin-only routes (for Leads management)
 router.get('/admin/leads', protect, checkPermission('leads', 'view'), leadController.getAllLeads);
