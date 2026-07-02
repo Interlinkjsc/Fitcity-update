@@ -36,10 +36,13 @@ services:
       TRUST_PROXY: "1"
       # HTTP via IP (no domain/SSL yet). Set "true" when behind HTTPS.
       COOKIE_SECURE: "false"
+      # Ảnh website do CMS upload — nằm ngoài container để sống qua rebuild
+      UPLOAD_DIR: /app/uploads
     ports:
       - "3000:3000"
     volumes:
       - /opt/fitcity/secrets:/opt/fitcity/secrets:ro
+      - /opt/fitcity/uploads:/app/uploads
     depends_on:
       mongo:
         condition: service_healthy

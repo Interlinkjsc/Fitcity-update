@@ -36,6 +36,20 @@ async function notifyLeadCreated(lead, branchId, name, interestedPackage) {
  * Hiển thị Landing Page với form thu thập Leads
  */
 exports.getLandingPage = async (req, res, next) => {
+    // Web ĐEN (fitcity-web) là website chính thức — landing trắng cũ chỉ gây nhầm lẫn.
+    // Đã đăng nhập → về dashboard theo role; chưa → sang website chính.
+    const user = req.session && req.session.user;
+    if (user) {
+        if (user.role === 'Client') return res.redirect('/client');
+        if (user.role === 'PT') return res.redirect('/pt');
+        return res.redirect('/admin');
+    }
+    const websiteUrl = process.env.WEBSITE_URL || 'http://160.25.81.177';
+    return res.redirect(websiteUrl);
+};
+
+// Landing trắng cũ — giữ lại tại /landing-old phòng khi cần tham chiếu
+exports.getLandingPageOld = async (req, res, next) => {
     try {
         const [branches, banners, homeSeo] = await Promise.all([
             Branch.find({ status: 'Open' }),

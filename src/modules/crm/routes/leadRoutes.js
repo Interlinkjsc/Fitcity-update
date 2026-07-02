@@ -5,9 +5,11 @@ const { protect, checkPermission } = require('../../../middlewares/authMiddlewar
 
 // Public routes
 router.get('/', leadController.getLandingPage);
-router.get('/contact', leadController.getContactPage);
-router.get('/blog', leadController.getBlogList);
-router.get('/blog/:slug', leadController.getBlogPost);
+router.get('/landing-old', leadController.getLandingPageOld);
+// Blog/contact công khai giờ nằm trên web đen (fitcity-web) — redirect giữ SEO cũ
+router.get('/contact', (req, res) => res.redirect((process.env.WEBSITE_URL || 'http://160.25.81.177') + '/dang-ky'));
+router.get('/blog', (req, res) => res.redirect((process.env.WEBSITE_URL || 'http://160.25.81.177') + '/blog'));
+router.get('/blog/:slug', (req, res) => res.redirect((process.env.WEBSITE_URL || 'http://160.25.81.177') + '/blog/' + encodeURIComponent(req.params.slug)));
 router.post('/register-lead', leadController.registerLead);
 
 // Admin-only routes (for Leads management)

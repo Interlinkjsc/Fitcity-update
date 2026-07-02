@@ -1,0 +1,34 @@
+[
+  {
+    "slug": "gymkid",
+    "name": "GymKid",
+    "tagline": "Vận động & phát triển chiều cao",
+    "summary": "Bài tập vận động như bật nhảy và tăng cường cơ bắp, hỗ trợ trẻ phát triển chiều cao và sự nhanh nhẹn một cách an toàn, khoa học theo từng độ tuổi.",
+    "ages": "6–16 tuổi",
+    "accent": "brand"
+  },
+  {
+    "slug": "boxingkid",
+    "name": "BoxingKid",
+    "tagline": "Vận động & tăng cường nền tảng thể lực",
+    "summary": "Bài tập boxing thiết kế phù hợp theo độ tuổi, giúp trẻ nâng cao sức bền, cải thiện thể lực, phát triển sức mạnh toàn thân và rèn luyện phản xạ, tự vệ an toàn.",
+    "ages": "6–16 tuổi",
+    "accent": "sky"
+  },
+  {
+    "slug": "pilateskid",
+    "name": "PilatesKid",
+    "tagline": "Cột sống khoẻ & dáng đẹp",
+    "summary": "Bài tập giúp điều chỉnh cơ lõi, kéo giãn cột sống, cải thiện thăng bằng, nền tảng cho tư thế chuẩn.",
+    "ages": "6–16 tuổi",
+    "accent": "leaf"
+  },
+  {
+    "slug": "chinh-tu-the",
+    "name": "Chỉnh tư thế",
+    "tagline": "Khắc phục gù – vẹo – cổ rùa",
+    "summary": "Lộ trình vận động trị liệu KHÔNG xâm lấn, đánh giá tư thế đầu khoá và theo dõi cải thiện theo tuần.",
+    "ages": "6–16 tuổi",
+    "accent": "leaf"
+  }
+]

@@ -56,13 +56,19 @@ function mountFeatureRouters(app) {
     app.use('/admin/meal-plans', mealPlanApprovalRoutes);
     app.use('/api/calendar', calendarRoutes);
 
-    // Public web settings API (no auth)
+    // Public web APIs (no auth): settings / branches / programs / posts / slot-images
     const webSettingCtrl = require('../modules/website/controllers/webSettingController');
     app.get('/api/web/settings', webSettingCtrl.apiGetSettings);
+    app.get('/api/web/slot-images', webSettingCtrl.apiGetSlotImages);
+    const webApiRoutes = require('../modules/website/routes/webApiRoutes');
+    app.use('/api/web', webApiRoutes);
 
-    // Admin website settings CMS
+    // Admin website CMS: settings (mount TRƯỚC /admin/website để không bị nuốt route)
     const webSettingRoutes = require('../modules/website/routes/webSettingRoutes');
     app.use('/admin/website/settings', webSettingRoutes);
+    // Admin website CMS: chi nhánh / chương trình / bài viết
+    const websiteRoutes = require('../modules/website/routes/websiteRoutes');
+    app.use('/admin/website', websiteRoutes);
 }
 
 /**

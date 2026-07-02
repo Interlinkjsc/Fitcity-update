@@ -168,6 +168,15 @@ const MENU_ITEMS = [
         roles: ['Admin', 'SA'],
     },
     {
+        key: 'website-content',
+        moduleId: 'crm',
+        label: 'Nội dung Website',
+        href: '/admin/website',
+        icon: 'language',
+        permission: { resource: 'cms', action: 'view' },
+        roles: ['Admin', 'SA'],
+    },
+    {
         key: 'content_library',
         moduleId: 'crm',
         label: 'Kho nội dung',

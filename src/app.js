@@ -30,6 +30,8 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, '../public')));
+// Ảnh website do CMS upload (volume ngoài container) — web đọc qua PUBLIC_MEDIA_URL
+app.use('/uploads', express.static(process.env.UPLOAD_DIR || path.join(__dirname, '../uploads')));
 
 // Cấu hình Session (Dùng MongoStore để lưu trữ lâu dài và bảo mật)
 app.use(session({
