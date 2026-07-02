@@ -208,9 +208,14 @@ exports.storeContract = async (req, res, next) => {
         let resolvedClient = client;
         let newClientCredentials = null;
         if (req.body.createNewClient === 'true') {
-            const { newClientName, newClientPhone, newClientEmail } = req.body;
+            const { newClientName, newClientPhone, newClientEmail, newClientCccd, newClientGender, newClientEmergencyPhone } = req.body;
             if (!newClientName || !newClientPhone) {
                 req.flash('error_msg', 'Vui lòng nhập đầy đủ họ tên và số điện thoại cho hội viên mới.');
+                return res.redirect(back);
+            }
+            // Bug 1.5/3.3 (2/7): CCCD, giới tính, SĐT khẩn cấp là trường bắt buộc
+            if (!newClientCccd || !newClientGender || !newClientEmergencyPhone) {
+                req.flash('error_msg', 'Vui lòng nhập đầy đủ: số CCCD, giới tính và SĐT liên hệ khẩn cấp cho hội viên mới.');
                 return res.redirect(back);
             }
             const crypto = require('crypto');
@@ -226,6 +231,9 @@ exports.storeContract = async (req, res, next) => {
                     password: tempPassword,
                     role: 'Client',
                     branch: branch || req.session.user.branch,
+                    cccdNumber: newClientCccd,
+                    gender: newClientGender,
+                    emergencyContact: { phone: newClientEmergencyPhone }
                 });
             } catch (createErr) {
                 if (createErr.code === 11000) {

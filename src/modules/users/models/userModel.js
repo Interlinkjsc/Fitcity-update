@@ -139,6 +139,11 @@ const userSchema = new mongoose.Schema({
     dob: {
         type: Date
     },
+    /** Bug 1.5 (2/7): giới tính — bắt buộc khi tạo hội viên từ form hợp đồng */
+    gender: {
+        type: String,
+        enum: ['Nam', 'Nữ', 'Khác']
+    },
     address: {
         type: String
     },

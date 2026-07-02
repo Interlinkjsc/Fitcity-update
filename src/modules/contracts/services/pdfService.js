@@ -66,8 +66,15 @@ exports.generateContractPDF = (contract, outputPath) => {
             drawSectionHeader('Bên A: Thông tin khách hàng');
             const client = contract.client || {};
             drawEntry('Họ và tên', client.name);
+            // Bug 1.5/1.6 (2/7): hợp đồng phải thể hiện CCCD, giới tính, SĐT khẩn cấp theo form chuẩn
+            drawEntry('Số CCCD / Hộ chiếu', client.cccdNumber);
+            drawEntry('Giới tính', client.gender);
+            if (client.dob) drawEntry('Ngày sinh', new Date(client.dob).toLocaleDateString('vi-VN'));
             drawEntry('Địa chỉ email', client.email);
             drawEntry('Số điện thoại', client.phone);
+            if (client.address) drawEntry('Địa chỉ liên lạc', client.address);
+            const emergency = client.emergencyContact || {};
+            drawEntry('Liên hệ khẩn cấp', emergency.phone ? `${emergency.name ? emergency.name + ' — ' : ''}${emergency.phone}${emergency.relationship ? ' (' + emergency.relationship + ')' : ''}` : null);
             doc.moveDown(1.5);
 
             // --- SECTION 2: SERVICE ---

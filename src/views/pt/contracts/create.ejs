@@ -165,6 +165,29 @@
                                     class="w-full bg-white border border-slate-200 rounded-2xl py-4 px-6 text-slate-900 font-bold outline-none focus:border-primary mt-1"
                                     placeholder="email@example.com">
                             </div>
+                            <%# Bug 3.3 (2/7): CCCD / giới tính / SĐT khẩn cấp bắt buộc trước khi tạo pass tạm %>
+                            <div>
+                                <label class="text-[10px] font-black text-slate-500 uppercase tracking-wider ml-1">Số CCCD / Định danh *</label>
+                                <input type="text" name="newClientCccd" :required="createNew"
+                                    class="w-full bg-white border border-slate-200 rounded-2xl py-4 px-6 text-slate-900 font-bold outline-none focus:border-primary mt-1"
+                                    placeholder="0123456789xx">
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-black text-slate-500 uppercase tracking-wider ml-1">Giới tính *</label>
+                                <select name="newClientGender" :required="createNew"
+                                    class="w-full bg-white border border-slate-200 rounded-2xl py-4 px-6 text-slate-900 font-bold outline-none focus:border-primary mt-1">
+                                    <option value="">-- Chọn giới tính --</option>
+                                    <option value="Nam">Nam</option>
+                                    <option value="Nữ">Nữ</option>
+                                    <option value="Khác">Khác</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-black text-slate-500 uppercase tracking-wider ml-1">SĐT liên hệ khẩn cấp *</label>
+                                <input type="tel" name="newClientEmergencyPhone" :required="createNew"
+                                    class="w-full bg-white border border-slate-200 rounded-2xl py-4 px-6 text-slate-900 font-bold outline-none focus:border-primary mt-1"
+                                    placeholder="09xx xxx xxx">
+                            </div>
                             <p class="text-[10px] text-slate-400 bg-slate-50 rounded-xl px-4 py-2">
                                 Hội viên mới sẽ được tạo tự động với mật khẩu tạm thời gửi qua email.
                             </p>

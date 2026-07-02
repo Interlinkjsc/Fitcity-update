@@ -105,6 +105,7 @@
 <p style="position:absolute;top:283px;left:469px;white-space:nowrap" class="ft13"><b>Ngày cấp: <span class="data-fill"><%= contract.client && contract.client.cccdIssueDate ? new Date(contract.client.cccdIssueDate).toLocaleDateString('vi-VN') : '........../........../...........' %></span></b></p>
 <p style="position:absolute;top:340px;left:469px;white-space:nowrap" class="ft13"><b>Email: <span class="data-fill"><%= contract.client ? contract.client.email : '' %></span></b></p>
 <p style="position:absolute;top:283px;left:684px;white-space:nowrap" class="ft13"><b>Nơi cấp: <span class="data-fill"><%= contract.client ? contract.client.cccdIssuePlace : '' %></span></b></p>
+<p style="position:absolute;top:311px;left:469px;white-space:nowrap" class="ft13"><b>Giới tính: <span class="data-fill"><%= contract.client && contract.client.gender ? contract.client.gender : '..........' %></span></b></p>
 <p style="position:absolute;top:373px;left:139px;white-space:nowrap" class="ft14"><b>THÔNG TIN&#160;</b></p>
 <p style="position:absolute;top:394px;left:88px;white-space:nowrap" class="ft14"><b>NGƯỜI&#160;TẬP LUYỆN (NTL)</b></p>
 <p style="position:absolute;top:384px;left:388px;white-space:nowrap" class="ft14"><b>LIÊN LẠC KHẨN CẤP</b></p>
