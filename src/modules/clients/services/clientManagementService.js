@@ -54,12 +54,19 @@ const buildClientFilters = (keyword) => {
     return filters;
 };
 
-exports.getClientList = async (query = {}) => {
+exports.getClientList = async (query = {}, requestingUser = null) => {
     const page = parseInt(query.page, 10) || 1;
     const limit = 10;
     const skip = (page - 1) * limit;
     const keyword = (query.keyword || '').trim();
     const filters = buildClientFilters(keyword);
+
+    // Manager chỉ xem client trong chi nhánh mình quản lý
+    if (requestingUser?.role === 'Manager' && requestingUser?.branch) {
+        filters.branch = requestingUser.branch;
+    } else if (query.branchId && query.branchId !== 'all') {
+        filters.branch = query.branchId;
+    }
 
     const totalDocs = await User.countDocuments(filters);
     const clients = await User.find(filters)

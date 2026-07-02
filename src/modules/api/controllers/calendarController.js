@@ -21,13 +21,8 @@ const isValidDate = (d) => d instanceof Date && !isNaN(d);
 exports.getSessions = async (req, res) => {
     try {
         const query = {};
-        
-        console.log('--- Calendar API Request ---');
         const user = req.user || {};
         const { start: qStart, end: qEnd, branchId } = req.query;
-
-        console.log('User:', { id: user._id || user.id, role: user.role });
-        console.log('Params:', { qStart, qEnd, branchId });
 
         // Phân quyền theo Role
         if (user.role === 'Client') {
@@ -36,7 +31,7 @@ exports.getSessions = async (req, res) => {
             query.pt = user._id || user.id;
         } else if (['Manager', 'Sales'].includes(user.role)) {
             if (user.branch) query.branch = user.branch;
-        } else if (['Admin', 'SA', 'CEO', 'SA'].includes(user.role)) {
+        } else if (['Admin', 'SA', 'CEO', 'Accountant', 'Marketing'].includes(user.role)) {
             // Admin có thể lọc theo chi nhánh nếu được truyền vào
             if (branchId && branchId !== 'all' && branchId !== 'undefined' && branchId !== '') {
                 query.branch = branchId;
@@ -56,16 +51,12 @@ exports.getSessions = async (req, res) => {
             }
         }
 
-        console.log('Mongoose Query:', JSON.stringify(query));
-
         const sessions = await WorkoutSession.find(query)
             .populate('client', 'name email phone')
             .populate('pt', 'name email avatar')
             .populate('branch', 'name')
             .sort({ scheduledTime: 1 })
             .lean();
-
-        console.log(`Found ${sessions.length} sessions.`);
 
         // Map sang định dạng FullCalendar chuẩn
         const mappedData = sessions.map(session => {
@@ -105,6 +96,7 @@ exports.getSessions = async (req, res) => {
                         pt: ptName,
                         ptName: ptName,
                         client: clientName,
+                        clientName: clientName,
                         branchName: branchName,
                         workoutTitle: workoutTitle
                     }

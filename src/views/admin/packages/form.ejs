@@ -44,10 +44,11 @@
 
             <!-- Mục tiêu tập luyện -->
             <div>
-                <% 
+                <%
                     const standardTargets = ['Giảm cân', 'Tăng cơ', 'Sức bền', 'Dẻo dai', 'Duy trì'];
-                    const currentTarget = (typeof pkg !== 'undefined') ? pkg.target : 'Giảm cân';
-                    const isOther = currentTarget && !standardTargets.includes(currentTarget) && currentTarget !== 'Khác';
+                    const currentTarget = (typeof pkg !== 'undefined' && pkg.target) ? pkg.target : 'Giảm cân';
+                    // isOther = target là text tự do (không nằm trong list chuẩn)
+                    const isOther = !standardTargets.includes(currentTarget);
                 %>
                 <label for="targetSelect" class="block text-sm font-medium text-slate-700 mb-1">Mục tiêu Gói tập</label>
                 <select id="targetSelect" onchange="toggleTargetCustom(this.value)"
@@ -59,15 +60,15 @@
                     <option value="Duy trì" <%= currentTarget === 'Duy trì' ? 'selected' : '' %>>Duy trì & Sức khỏe</option>
                     <option value="Khác" <%= isOther ? 'selected' : '' %>>Mục tiêu khác</option>
                 </select>
-                
-                <!-- Hidden real input for target -->
+
+                <!-- Hidden real input for target — giữ giá trị thực sự submit -->
                 <input type="hidden" id="target" name="target" value="<%= currentTarget %>">
 
-                <!-- Other target input -->
+                <!-- Ô nhập custom target khi chọn "Khác" -->
                 <div id="targetCustomContainer" class="mt-2 <%= isOther ? '' : 'hidden' %>">
                     <input type="text" id="targetCustom" value="<%= isOther ? currentTarget : '' %>"
                         class="block w-full rounded-md border-slate-300 shadow-sm focus:border-lime-500 focus:ring focus:ring-lime-500 text-sm py-2 px-3 border bg-amber-50/30"
-                        placeholder="Nhập mục tiêu cụ thể khác..."
+                        placeholder="Nhập mục tiêu cụ thể..."
                         oninput="document.getElementById('target').value = this.value">
                 </div>
             </div>
@@ -77,13 +78,19 @@
                     const container = document.getElementById('targetCustomContainer');
                     const customInput = document.getElementById('targetCustom');
                     const realInput = document.getElementById('target');
-                    
+
                     if (value === 'Khác') {
                         container.classList.remove('hidden');
-                        realInput.value = customInput.value;
+                        // Nếu custom field đang trống, đặt focus để user nhập
+                        if (!customInput.value.trim()) {
+                            realInput.value = '';
+                        } else {
+                            realInput.value = customInput.value;
+                        }
                         customInput.focus();
                     } else {
                         container.classList.add('hidden');
+                        customInput.value = '';
                         realInput.value = value;
                     }
                 }

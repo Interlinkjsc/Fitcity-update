@@ -15,7 +15,7 @@ function normalizeVnPhone(s) {
 
 exports.getClientList = async (req, res, next) => {
     try {
-        const { clients, pagination, query } = await clientManagementService.getClientList(req.query);
+        const { clients, pagination, query } = await clientManagementService.getClientList(req.query, req.session.user);
 
         const assignableCoupons = await Coupon.find({
             active: true,

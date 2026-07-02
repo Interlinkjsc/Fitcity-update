@@ -23,6 +23,9 @@
                 <option value="PT" <%= typeof role !== 'undefined' && role === 'PT' ? 'selected' : '' %>>HLV (PT)</option>
                 <option value="Sales" <%= typeof role !== 'undefined' && role === 'Sales' ? 'selected' : '' %>>Sales</option>
                 <option value="Manager" <%= typeof role !== 'undefined' && role === 'Manager' ? 'selected' : '' %>>Quản lý</option>
+                <option value="Admin" <%= typeof role !== 'undefined' && role === 'Admin' ? 'selected' : '' %>>Admin</option>
+                <option value="Accountant" <%= typeof role !== 'undefined' && role === 'Accountant' ? 'selected' : '' %>>Kế toán</option>
+                <option value="Marketing" <%= typeof role !== 'undefined' && role === 'Marketing' ? 'selected' : '' %>>Marketing</option>
             </select>
         </div>
         <% if (typeof isManager === 'undefined' || !isManager) { %>

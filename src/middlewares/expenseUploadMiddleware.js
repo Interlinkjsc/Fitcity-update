@@ -2,7 +2,8 @@ const path = require('path');
 const fs = require('fs');
 const Busboy = require('busboy');
 
-const uploadDir = path.join(__dirname, '../public/uploads/expenses');
+// /app/uploads/expenses — writable by the fitcity process
+const uploadDir = path.join(__dirname, '../../uploads/expenses');
 
 function ensureUploadDir() {
     if (!fs.existsSync(uploadDir)) {
@@ -22,22 +23,28 @@ function expenseUploadMiddleware(req, res, next) {
     req.expenseUpload = null;
 
     busboy.on('file', (fieldname, file, info) => {
-        if (fieldname !== 'invoiceFile') {
+        if (fieldname !== 'invoiceFile' || !info.filename) {
             file.resume();
             return;
         }
-        ensureUploadDir();
-        const safeName = `${Date.now()}_${(info.filename || 'invoice').replace(/[^\w.\-]/g, '_')}`;
+        try {
+            ensureUploadDir();
+        } catch (dirErr) {
+            file.resume();
+            return;
+        }
+        const safeName = `${Date.now()}_${info.filename.replace(/[^\w.\-]/g, '_')}`;
         const dest = path.join(uploadDir, safeName);
         const writeStream = fs.createWriteStream(dest);
         file.pipe(writeStream);
         writeStream.on('close', () => {
             req.expenseUpload = {
                 path: dest,
-                fileName: info.filename || safeName,
+                fileName: info.filename,
                 publicUrl: `/uploads/expenses/${safeName}`
             };
         });
+        writeStream.on('error', () => { file.resume(); });
     });
 
     busboy.on('field', (name, value) => {

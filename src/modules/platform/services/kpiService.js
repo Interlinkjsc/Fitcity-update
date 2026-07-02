@@ -169,13 +169,15 @@ async function getPTKPI(user, monthOverride, yearOverride) {
     const { month, year } = getPeriod(null, monthOverride, yearOverride);
     const dateFilter = monthRangeFilter(month, year);
 
-    // Completed/Confirmed/Scheduled(past) sessions this month
-    const now = new Date();
+    // Bug 1.4: dùng scheduledTime để nhất quán với HR section trên admin detail page
+    const startOfPeriod = new Date(year, month - 1, 1);
+    const endOfPeriod = new Date(year, month, 1);
     const sessionResult = await WorkoutSession.aggregate([
-        { $match: { pt: user._id, ...dateFilter, $or: [
-            { status: { $in: ['Completed', 'Confirmed'] } },
-            { status: 'Scheduled', scheduledTime: { $lte: now } }
-        ] } },
+        { $match: {
+            pt: user._id,
+            status: { $in: ['Completed', 'Confirmed', 'Scheduled', 'In_Progress'] },
+            scheduledTime: { $gte: startOfPeriod, $lt: endOfPeriod }
+        }},
         {
             $group: {
                 _id: null,
@@ -208,9 +210,14 @@ async function getPTKPI(user, monthOverride, yearOverride) {
     const commission = payrollService.calculatePTCommissionFromContracts(paidContracts);
     const newContractRevenue = Math.round(revenueResult[0]?.totalNet || 0);
 
-    // Hoa hồng chốt HĐ (salesCommission) = salesCommissionRate % * netAmount của HĐ Paid
+    // Bug 1.1: Hoa hồng chốt HĐ chỉ tính HĐ mà chính PT đó chốt (sales === pt)
     const salesCommissionRate = user.salesCommissionRate || 0;
-    const salesCommissionBase = paidContracts.reduce((sum, c) => {
+    const salesPaidContracts = await Contract.find({
+        sales: user._id,
+        paymentStatus: 'Paid',
+        ...dateFilter
+    }).select('netAmount basePrice discount').lean();
+    const salesCommissionBase = salesPaidContracts.reduce((sum, c) => {
         const net = (c.netAmount != null) ? c.netAmount : Math.max(0, (c.basePrice || 0) - (c.discount || 0));
         return sum + net;
     }, 0);
@@ -272,11 +279,25 @@ async function getEmployeeKPI(user, monthOverride, yearOverride) {
     if (user.role === 'Sales') {
         return await getSalesKPI(user, month, year);
     }
-    if (user.role === 'Manager' && user.branch) {
-        const branch = await require('../../crm/models/branchModel').findById(user.branch).lean();
+    if (user.role === 'Manager') {
+        const branchModel = require('../../crm/models/branchModel');
+        const branch = user.branch ? await branchModel.findById(user.branch).lean() : null;
         const branchKPI = branch ? await getBranchKPI(branch, month, year) : null;
-        const staffKPIs = await getBranchStaffKPIs(user.branch, month, year);
-        return { branch: branchKPI, staff: staffKPIs };
+        const staffKPIs = user.branch ? await getBranchStaffKPIs(user.branch, month, year) : { sales: [], pt: [] };
+        // Bug 1.3/1.4/1.5: tính commission cá nhân của Manager (HĐ manager tự chốt)
+        const dateFilter = monthRangeFilter(month, year);
+        const salesCommissionRate = user.salesCommissionRate || 5;
+        const managerContracts = await Contract.find({
+            sales: user._id,
+            paymentStatus: 'Paid',
+            ...dateFilter
+        }).select('netAmount basePrice discount').lean();
+        const managerNetTotal = managerContracts.reduce((sum, c) => {
+            const net = (c.netAmount != null) ? c.netAmount : Math.max(0, (c.basePrice || 0) - (c.discount || 0));
+            return sum + net;
+        }, 0);
+        const personalCommission = Math.round(managerNetTotal * salesCommissionRate / 100);
+        return { branch: branchKPI, staff: staffKPIs, personalCommission, personalContractCount: managerContracts.length, salesCommissionRate };
     }
     return null;
 }

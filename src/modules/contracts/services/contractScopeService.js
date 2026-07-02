@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const GLOBAL_VIEW_ROLES = ['SA', 'Admin', 'CEO', 'Accountant'];
+const GLOBAL_VIEW_ROLES = ['SA', 'Admin', 'CEO', 'Accountant', 'Marketing'];
 
 function toObjectId(id) {
     if (!id) return null;

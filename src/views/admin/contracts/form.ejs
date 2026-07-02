@@ -126,41 +126,71 @@
                 <div class="contents" x-data="contractStep1Combos()" x-init="init()">
                     <div>
                         <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Khách Hàng *</label>
-                        <input type="hidden" name="client" id="client" :value="clientId">
-                        <div class="relative" @click.outside="clientOpen = false">
-                            <input
-                                id="clientSearchField"
-                                type="text"
-                                autocomplete="off"
-                                x-model="clientSearch"
-                                @focus="clientOpen = true"
-                                @click="clientOpen = true"
-                                @input="onClientSearchInput()"
-                                @keydown.escape.prevent="clientOpen = false"
-                                placeholder="Gõ tên, SĐT hoặc email để tìm..."
-                                class="w-full border border-slate-300 rounded-lg text-sm py-2.5 pl-3 pr-10 focus:ring-2 focus:ring-green-500 outline-none transition-all"
-                            >
-                            <span class="material-symbols-outlined pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]">search</span>
-                            <div
-                                x-show="clientOpen"
-                                x-transition
-                                class="absolute left-0 right-0 top-full z-30 mt-1 max-h-52 overflow-y-auto rounded-lg border border-slate-200 bg-white py-1 shadow-lg"
-                                style="display: none;"
-                            >
-                                <div x-show="filteredClients.length === 0" class="px-3 py-2.5 text-sm text-slate-500">Không tìm thấy khách hàng.</div>
-                                <template x-for="c in filteredClients" :key="c._id">
-                                    <button
-                                        type="button"
-                                        class="w-full px-3 py-2 text-left text-sm hover:bg-green-50 text-slate-800 border-b border-slate-50 last:border-0"
-                                        @click="pickClient(c)"
-                                    >
-                                        <span class="font-semibold" x-text="c.name"></span>
-                                        <span class="block text-xs text-slate-500" x-text="(c.phone || c.email || '—')"></span>
-                                    </button>
-                                </template>
-                            </div>
+                        <input type="hidden" name="client" id="client" :value="createNew ? '' : clientId">
+                        <input type="hidden" id="createNewClientFlag" :value="createNew ? 'true' : 'false'">
+                        <input type="hidden" name="createNewClient" :value="createNew ? 'true' : 'false'">
+
+                        <!-- Tab toggle -->
+                        <div class="flex gap-1 mb-2">
+                            <button type="button" @click="createNew = false"
+                                :class="!createNew ? 'bg-green-600 text-white' : 'bg-slate-100 text-slate-500'"
+                                class="px-3 py-1.5 rounded-lg text-xs font-bold transition-colors">
+                                Chọn hội viên
+                            </button>
+                            <button type="button" @click="createNew = true; clientId = ''; clientSearch = ''"
+                                :class="createNew ? 'bg-green-600 text-white' : 'bg-slate-100 text-slate-500'"
+                                class="px-3 py-1.5 rounded-lg text-xs font-bold transition-colors">
+                                + Tạo hội viên mới
+                            </button>
                         </div>
-                        <p class="text-[10px] text-slate-400 mt-1">Chọn một dòng trong danh sách sau khi tìm.</p>
+
+                        <!-- Existing client search -->
+                        <div x-show="!createNew">
+                            <div class="relative" @click.outside="clientOpen = false">
+                                <input
+                                    id="clientSearchField"
+                                    type="text"
+                                    autocomplete="off"
+                                    x-model="clientSearch"
+                                    @focus="clientOpen = true"
+                                    @click="clientOpen = true"
+                                    @input="onClientSearchInput()"
+                                    @keydown.escape.prevent="clientOpen = false"
+                                    placeholder="Gõ tên, SĐT hoặc email để tìm..."
+                                    class="w-full border border-slate-300 rounded-lg text-sm py-2.5 pl-3 pr-10 focus:ring-2 focus:ring-green-500 outline-none transition-all"
+                                >
+                                <span class="material-symbols-outlined pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]">search</span>
+                                <div
+                                    x-show="clientOpen"
+                                    x-transition
+                                    class="absolute left-0 right-0 top-full z-30 mt-1 max-h-52 overflow-y-auto rounded-lg border border-slate-200 bg-white py-1 shadow-lg"
+                                    style="display: none;"
+                                >
+                                    <div x-show="filteredClients.length === 0" class="px-3 py-2.5 text-sm text-slate-500">Không tìm thấy khách hàng.</div>
+                                    <template x-for="c in filteredClients" :key="c._id">
+                                        <button
+                                            type="button"
+                                            class="w-full px-3 py-2 text-left text-sm hover:bg-green-50 text-slate-800 border-b border-slate-50 last:border-0"
+                                            @click="pickClient(c)"
+                                        >
+                                            <span class="font-semibold" x-text="c.name"></span>
+                                            <span class="block text-xs text-slate-500" x-text="(c.phone || c.email || '—')"></span>
+                                        </button>
+                                    </template>
+                                </div>
+                            </div>
+                            <p class="text-[10px] text-slate-400 mt-1">Chọn một dòng trong danh sách sau khi tìm.</p>
+                        </div>
+
+                        <!-- Create new client fields -->
+                        <div x-show="createNew" class="space-y-2" style="display:none;">
+                            <input type="text" name="newClientName" x-model="newClientName" placeholder="Họ và tên *"
+                                class="w-full border border-slate-300 rounded-lg text-sm py-2.5 px-3 focus:ring-2 focus:ring-green-500 outline-none">
+                            <input type="tel" name="newClientPhone" x-model="newClientPhone" placeholder="Số điện thoại *"
+                                class="w-full border border-slate-300 rounded-lg text-sm py-2.5 px-3 focus:ring-2 focus:ring-green-500 outline-none">
+                            <input type="email" name="newClientEmail" x-model="newClientEmail" placeholder="Email (tùy chọn)"
+                                class="w-full border border-slate-300 rounded-lg text-sm py-2.5 px-3 focus:ring-2 focus:ring-green-500 outline-none">
+                        </div>
                     </div>
 
                     <div>
@@ -441,6 +471,10 @@
             branchOpen: false,
             salesOpen: false,
             branchLocked: false,
+            createNew: false,
+            newClientName: '',
+            newClientPhone: '',
+            newClientEmail: '',
 
             init() {
                 const el = document.getElementById('contract-step1-json');
@@ -716,10 +750,25 @@
         let ok = true;
 
         if (step === 1) {
-            const clientEl = document.getElementById('client');
-            if (!clientEl || !clientEl.value) {
-                setFieldError('client', 'Vui lòng chọn khách hàng từ danh sách.');
-                ok = false;
+            const isCreateNew = document.getElementById('createNewClientFlag')?.value === 'true';
+            if (isCreateNew) {
+                const nameEl = document.querySelector('input[name="newClientName"]');
+                const phoneEl = document.querySelector('input[name="newClientPhone"]');
+                if (!nameEl?.value?.trim()) {
+                    if (nameEl) { nameEl.classList.add('border-red-500'); }
+                    ok = false;
+                }
+                if (!phoneEl?.value?.trim()) {
+                    if (phoneEl) { phoneEl.classList.add('border-red-500'); }
+                    ok = false;
+                }
+                if (!ok) alert('Vui lòng nhập họ tên và số điện thoại cho hội viên mới.');
+            } else {
+                const clientEl = document.getElementById('client');
+                if (!clientEl || !clientEl.value) {
+                    setFieldError('client', 'Vui lòng chọn khách hàng từ danh sách.');
+                    ok = false;
+                }
             }
             const branchEl = document.getElementById('branch');
             if (branchEl && !branchEl.value) {

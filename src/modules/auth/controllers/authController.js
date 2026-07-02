@@ -155,7 +155,6 @@ exports.login = async (req, res) => {
             await user.save({ validateBeforeSave: false });
         }
 
-        console.log(`User ${user.email} logged in. Role: ${user.role}. Session ID: ${req.sessionID}`);
         startUserSession(req, res, user);
 
     } catch (err) {

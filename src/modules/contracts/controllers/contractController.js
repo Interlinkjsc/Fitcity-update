@@ -158,7 +158,7 @@ exports.getCreateForm = async (req, res, next) => {
             .lean();
 
         let salesStaff = await User.find({
-            role: { $in: ['Sales', 'Manager', 'Admin', 'SA', 'PT'] },
+            role: { $in: ['Sales', 'Manager', 'Admin', 'SA', 'PT', 'Marketing'] },
             status: 'Active'
         })
             .select('name _id role')
@@ -206,6 +206,7 @@ exports.storeContract = async (req, res, next) => {
 
         // Tạo hội viên mới nếu PT chọn "Tạo hội viên mới"
         let resolvedClient = client;
+        let newClientCredentials = null;
         if (req.body.createNewClient === 'true') {
             const { newClientName, newClientPhone, newClientEmail } = req.body;
             if (!newClientName || !newClientPhone) {
@@ -215,6 +216,7 @@ exports.storeContract = async (req, res, next) => {
             const crypto = require('crypto');
             const tempPassword = crypto.randomBytes(5).toString('hex');
             const tempEmail = newClientEmail || `client_${Date.now()}@fitcity.temp`;
+            newClientCredentials = { name: newClientName, email: tempEmail, password: tempPassword };
             let newUser;
             try {
                 newUser = await User.create({
@@ -384,7 +386,12 @@ exports.storeContract = async (req, res, next) => {
             } catch (e) { /* notification không block flow */ }
         }
 
-        req.flash('success_msg', 'Tạo hợp đồng thành công! Dòng tiền đã được ghi nhận.');
+        if (newClientCredentials) {
+            // Bug 2.2: lưu credentials vào session để hiện modal có nút copy (thay vì flash biến mất)
+            req.session.newClientCredentials = newClientCredentials;
+        } else {
+            req.flash('success_msg', 'Tạo hợp đồng thành công! Dòng tiền đã được ghi nhận.');
+        }
 
         // Dynamic redirect based on role
         if (req.user && req.user.role === 'PT') {
@@ -418,7 +425,7 @@ exports.getEditForm = async (req, res, next) => {
         const packages = await ServicePackage.find({ status: 'Active' });
         const branches = await Branch.find();
         const salesStaff = await User.find({
-            role: { $in: ['Sales', 'Manager', 'Admin', 'SA', 'PT'] },
+            role: { $in: ['Sales', 'Manager', 'Admin', 'SA', 'PT', 'Marketing'] },
             status: 'Active'
         })
             .select('name _id role')

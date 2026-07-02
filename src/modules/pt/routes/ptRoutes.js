@@ -11,6 +11,25 @@ const { protect, checkPermission, restrictTo } = require('../../../middlewares/a
 
 router.use(protect);
 
+// Bug 2.1: API realtime sessions count
+router.get('/api/sessions-count', async (req, res) => {
+    try {
+        const WorkoutSession = require('../../programs/models/workoutSessionModel.js');
+        const ptId = req.session.user.id;
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+        const count = await WorkoutSession.countDocuments({
+            pt: ptId,
+            status: { $in: ['Completed', 'Confirmed', 'Scheduled', 'In_Progress'] },
+            scheduledTime: { $gte: startOfMonth, $lte: endOfMonth }
+        });
+        res.json({ count });
+    } catch (e) {
+        res.json({ count: 0 });
+    }
+});
+
 router.post('/sessions/complete', checkPermission('pt_session', 'update'), (req, res) => {
     const { clientConfirmed } = req.body;
     if (!clientConfirmed) {
@@ -34,10 +53,6 @@ router.delete('/slots/:id', restrictTo('PT'), ptController.deleteSlot);
 
 router.get('/income', ptController.getIncome);
 
-// BỎ CHẤM CÔNG PT — bug report 26/6
-// router.get('/attendance', restrictTo('PT'), timesheetController.getPtAttendancePage);
-// router.post('/attendance/check-in', restrictTo('PT'), timesheetController.ptCheckIn);
-// router.post('/attendance/check-out', restrictTo('PT'), timesheetController.ptCheckOut);
 router.get('/attendance', (req, res) => res.redirect('/pt'));
 
 router.get('/daily-report', restrictTo('PT'), dailyReportController.getSubmitPage);

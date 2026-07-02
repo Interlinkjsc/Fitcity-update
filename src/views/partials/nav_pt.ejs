@@ -53,6 +53,14 @@
         Quét mã từ điện thoại khách hàng
     </p>
 
+    <div id="cameraWarning" class="hidden w-full mb-3 px-4 py-3 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-3">
+        <span class="material-symbols-outlined text-amber-500 text-[20px] shrink-0 mt-0.5">warning</span>
+        <div>
+            <p class="text-xs font-bold text-amber-800">Camera không khả dụng</p>
+            <p class="text-[10px] text-amber-700 mt-0.5">Camera chỉ hoạt động trên HTTPS. Vui lòng <strong>nhập mã thủ công</strong> bên dưới để quét QR.</p>
+        </div>
+    </div>
+
     <div class="w-full relative">
         <div id="scanReader" class="w-full rounded-3xl overflow-hidden border-2 border-slate-100 shadow-inner bg-slate-50 min-h-[260px] flex items-center justify-center relative">
             <!-- Camera UI will be rendered here -->
@@ -112,7 +120,8 @@
             
             const cams = await Html5Qrcode.getCameras();
             if (!cams || cams.length === 0) {
-                console.warn('Không tìm thấy camera.');
+                document.getElementById('cameraWarning').classList.remove('hidden');
+                document.getElementById('scanReader').classList.add('hidden');
                 return;
             }
             
@@ -127,6 +136,8 @@
         } catch (e) {
             console.error('Lỗi khởi động camera:', e);
             isScanning = false;
+            document.getElementById('cameraWarning').classList.remove('hidden');
+            document.getElementById('scanReader').classList.add('hidden');
         }
     }
 

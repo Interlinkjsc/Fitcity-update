@@ -231,7 +231,8 @@ exports.getSessionQr = async (req, res, next) => {
             sid: session._id,
             act: action,
             cid: session.client,
-            pid: session.pt && session.pt._id ? session.pt._id : session.pt
+            pid: session.pt && session.pt._id ? session.pt._id : session.pt,
+            ttlSeconds: 600
         });
 
         if (isJson) {

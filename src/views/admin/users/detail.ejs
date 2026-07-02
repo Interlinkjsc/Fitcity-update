@@ -360,7 +360,24 @@
                         </div>
                     </div>
                 </div>
-            <% } else if (userData.role === 'Manager' && employeeKPI.branch) { %>
+            <% } else if (userData.role === 'Manager') { %>
+                <% if (employeeKPI.personalCommission !== undefined) { %>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                    <div class="bg-orange-50 rounded-lg p-4 text-center">
+                        <p class="text-xs text-orange-600 font-semibold uppercase tracking-wider">Hoa hồng chốt HĐ</p>
+                        <p class="text-lg font-extrabold text-orange-700 mt-1"><%= new Intl.NumberFormat('vi-VN').format(employeeKPI.personalCommission) %>đ</p>
+                        <p class="text-[10px] text-orange-400 mt-1"><%= employeeKPI.personalContractCount || 0 %> HĐ · Rate <%= employeeKPI.salesCommissionRate || 5 %>%</p>
+                    </div>
+                    <% if (employeeKPI.branch) { %>
+                    <div class="bg-purple-50 rounded-lg p-4 text-center">
+                        <p class="text-xs text-purple-600 font-semibold uppercase tracking-wider">Doanh thu CN</p>
+                        <p class="text-lg font-extrabold text-purple-700 mt-1"><%= new Intl.NumberFormat('vi-VN').format(employeeKPI.branch.revenueActual) %>đ</p>
+                        <p class="text-[10px] text-purple-400 mt-1">MT: <%= new Intl.NumberFormat('vi-VN').format(employeeKPI.branch.revenueTarget) %>đ</p>
+                    </div>
+                    <% } %>
+                </div>
+                <% } %>
+                <% if (employeeKPI.branch) { %>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div class="bg-purple-50 rounded-lg p-4 text-center">
                         <p class="text-xs text-purple-600 font-semibold uppercase tracking-wider">Doanh thu CN</p>
@@ -409,6 +426,7 @@
                     </div>
                     <% } %>
                 </div>
+                <% } %>
                 <% } %>
             <% } %>
         </div>

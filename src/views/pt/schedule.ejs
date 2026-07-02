@@ -422,14 +422,17 @@
             const selectedOption = select.options[select.selectedIndex];
             const contractId = select.value;
             const clientId = selectedOption.dataset.clientId;
-            const scheduledTime = document.getElementById('csScheduledTime').value;
+            const scheduledTimeLocal = document.getElementById('csScheduledTime').value;
             const notes = document.getElementById('csNotes').value;
 
-            if (!contractId || !clientId || !scheduledTime) {
+            if (!contractId || !clientId || !scheduledTimeLocal) {
                 errorMsg.textContent = 'Vui lòng chọn khách hàng và thời gian tập.';
                 errorMsg.classList.remove('hidden');
                 return;
             }
+
+            // Bug 2.3: datetime-local trả về local time (VN UTC+7), cần convert sang ISO UTC trước khi gửi server
+            const scheduledTime = new Date(scheduledTimeLocal).toISOString();
 
             submitBtn.disabled = true;
             submitBtn.textContent = 'Đang xử lý...';
