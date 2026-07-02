@@ -44,8 +44,9 @@ const leadSchema = new mongoose.Schema({
     },
     branch: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Branch',
-        required: [true, 'Chi nhánh quan tâm là bắt buộc']
+        ref: 'Branch'
+        // Bug audit (2/7): KHÔNG required — lead website gửi slug web (khác hệ ERP);
+        // không để mất lead chỉ vì chưa map được chi nhánh. Chi nhánh mong muốn lưu ở notes.
     },
     source: {
         type: String,

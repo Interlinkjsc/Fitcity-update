@@ -102,8 +102,6 @@ exports.registerLead = async (req, res, next) => {
             name,
             phone,
             email,
-            branchId,
-            interestedPackage,
             notes,
             weight,
             height,
@@ -114,10 +112,49 @@ exports.registerLead = async (req, res, next) => {
             redirectTo
         } = req.body;
 
+        // Bug audit (2/7): web gửi field `branch` (slug) + `program`; admin/nội bộ gửi `branchId` + `interestedPackage`.
+        // Nhận cả hai để không mất dữ liệu.
+        const rawBranch = req.body.branchId || req.body.branch || '';
+        const rawProgram = req.body.interestedPackage || req.body.program || '';
+
         const leadSource = LEAD_SOURCES.includes(source) ? source : 'Website';
-        const pkg = ['Gym', 'Yoga', 'PT', 'Kickfit', 'Pilates'].includes(interestedPackage)
-            ? interestedPackage
-            : 'Gym';
+
+        // Map tên chương trình (kể cả từ web: GymKid/PilatesKid/BoxingKid) về enum của Lead
+        const pkgEnum = ['Gym', 'Yoga', 'PT', 'Kickfit', 'Pilates'];
+        let pkg = 'Gym';
+        if (pkgEnum.includes(rawProgram)) {
+            pkg = rawProgram;
+        } else if (/pilates/i.test(rawProgram)) {
+            pkg = 'Pilates';
+        } else if (/box|kick/i.test(rawProgram)) {
+            pkg = 'Kickfit';
+        } else if (/yoga/i.test(rawProgram)) {
+            pkg = 'Yoga';
+        } else if (/pt|personal/i.test(rawProgram)) {
+            pkg = 'PT';
+        }
+
+        // Resolve branch best-effort: ObjectId hợp lệ → dùng luôn; ngược lại thử khớp slug/tên ERP.
+        const { isValidObjectId } = require('mongoose');
+        let branchId = null;
+        let branchNote = '';
+        if (rawBranch) {
+            if (isValidObjectId(rawBranch)) {
+                branchId = rawBranch;
+            } else {
+                const Branch = require('../models/branchModel');
+                const norm = String(rawBranch).replace(/-/g, ' ');
+                const matched = await Branch.findOne({
+                    $or: [
+                        { slug: rawBranch },
+                        { name: new RegExp(norm, 'i') }
+                    ]
+                }).select('_id').lean();
+                if (matched) branchId = matched._id;
+                else branchNote = `Cơ sở quan tâm (web): ${rawBranch}`;
+            }
+        }
+        const mergedNotes = [notes, branchNote].filter(Boolean).join(' | ') || undefined;
 
         /** R1 (act-11): không tạo Lead nếu email đã là tài khoản hội viên (Client). */
         const emailTrim = typeof email === 'string' ? email.trim() : '';
@@ -142,9 +179,9 @@ exports.registerLead = async (req, res, next) => {
             name,
             phone,
             email,
-            branch: branchId,
+            branch: branchId || undefined,
             interestedPackage: pkg,
-            notes,
+            notes: mergedNotes,
             weight: Number(weight) || undefined,
             height: Number(height) || undefined,
             bodyFat: Number(bodyFat) || undefined,
