@@ -6,7 +6,7 @@
         <span class="material-symbols-outlined text-[20px]">close</span>
     </button>
     <h2 id="qrModalTitle" class="text-2xl font-black italic tracking-tighter uppercase text-slate-900 mb-1"><span class="text-primary tracking-normal">QR</span> CHECK-IN</h2>
-    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center mb-6">Đưa màn hình cho PT quét · Mã tự hết hạn</p>
+    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center mb-6">Đưa màn hình cho PT quét · Mã có hiệu lực 10 phút</p>
     <div class="relative w-64 h-64 bg-slate-50 rounded-[32px] border-2 border-slate-200 p-6 flex flex-col items-center justify-center shadow-inner">
         <div id="qrLoading" class="absolute inset-0 flex flex-col items-center justify-center bg-slate-50 rounded-[30px] z-10 transition-opacity duration-300">
             <div class="w-10 h-10 border-4 border-slate-200 border-t-primary rounded-full animate-spin mb-3"></div>
@@ -14,7 +14,17 @@
         </div>
         <div id="qrcode" class="w-full h-full flex items-center justify-center"></div>
     </div>
-    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-6">Hết hạn sau ~60 giây</p>
+    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-6">Mã có hiệu lực 10 phút</p>
+
+    <div class="w-full mt-5 flex flex-col gap-2">
+        <div id="qrTokenBox" class="hidden w-full bg-slate-100 rounded-2xl px-4 py-3 flex items-center justify-between gap-3">
+            <span id="qrTokenText" class="text-slate-700 font-mono text-sm break-all leading-tight flex-1"></span>
+            <button type="button" onclick="copyQrToken()" class="shrink-0 w-9 h-9 bg-white rounded-xl border border-slate-200 flex items-center justify-center text-slate-500 hover:text-primary hover:border-primary transition-all" title="Copy mã">
+                <span class="material-symbols-outlined text-[18px]">content_copy</span>
+            </button>
+        </div>
+        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest text-center">Nếu PT không quét được, copy mã gửi cho PT dán vào</p>
+    </div>
 </div>
 
 <script>
@@ -53,6 +63,12 @@
                     qrContainer.textContent = data.token;
                 }
                 loading.style.opacity = '0';
+                const tokenBox = document.getElementById('qrTokenBox');
+                const tokenText = document.getElementById('qrTokenText');
+                if (tokenBox && tokenText) {
+                    tokenText.textContent = data.token;
+                    tokenBox.classList.remove('hidden');
+                }
             } else {
                 alert(data.message || 'Lỗi tạo mã QR');
                 closeQrModal();
@@ -63,11 +79,39 @@
             closeQrModal();
         }
     }
+    async function copyQrToken() {
+        const text = document.getElementById('qrTokenText')?.textContent?.trim();
+        if (!text) return;
+        let copied = false;
+        try {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                await navigator.clipboard.writeText(text);
+                copied = true;
+            }
+        } catch (e) { /* fallback below */ }
+        if (!copied) {
+            // Fallback cho HTTP: tạo textarea ẩn và execCommand('copy')
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;';
+            document.body.appendChild(ta);
+            ta.focus(); ta.select();
+            try { copied = document.execCommand('copy'); } catch(e) {}
+            document.body.removeChild(ta);
+        }
+        const btn = document.querySelector('[onclick="copyQrToken()"]');
+        if (btn) {
+            const icon = btn.querySelector('.material-symbols-outlined');
+            if (icon) { icon.textContent = 'check'; setTimeout(() => { icon.textContent = 'content_copy'; }, 2000); }
+        }
+    }
     function closeQrModal() {
         const overlay = document.getElementById('qrModalOverlay');
         const modal = document.getElementById('qrModal');
         if (!overlay || !modal) return;
         overlay.classList.add('opacity-0', 'pointer-events-none');
         modal.classList.add('translate-y-full');
+        const tokenBox = document.getElementById('qrTokenBox');
+        if (tokenBox) tokenBox.classList.add('hidden');
     }
 </script>

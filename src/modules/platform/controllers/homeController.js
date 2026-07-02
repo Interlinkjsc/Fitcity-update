@@ -154,15 +154,17 @@ exports.getAdminDashboard = async (req, res, next) => {
         const distinctActiveContractClients = await Contract.distinct('client', { contractStatus: 'Active' });
         const membersWithActiveContract = distinctActiveContractClients.length;
 
-        // 7. Sessions Today - Loại bỏ buổi tập Cancelled
+        // 7. Sessions Today - Loại bỏ buổi tập Cancelled, filter theo branch nếu Manager
         const todayAtZero = new Date();
         todayAtZero.setHours(0,0,0,0);
         const tomorrow = new Date(todayAtZero);
         tomorrow.setDate(tomorrow.getDate() + 1);
-        const sessionsToday = await WorkoutSession.countDocuments({
+        const sessionsTodayFilter = {
             scheduledTime: { $gte: todayAtZero, $lt: tomorrow },
             status: { $ne: 'Cancelled' }
-        });
+        };
+        if (branchId && branchId !== 'all') sessionsTodayFilter.branch = branchId;
+        const sessionsToday = await WorkoutSession.countDocuments(sessionsTodayFilter);
 
         
         // 8. KPI Performance by Branch - Đồng bộ Target theo bộ lọc
@@ -202,7 +204,7 @@ exports.getAdminDashboard = async (req, res, next) => {
         
         // 9. Staff Performance (PT sessions, working days, Sales Revenue with Targets)
         const ptPerformance = await WorkoutSession.aggregate([
-            { $match: { scheduledTime: dateFilter.createdAt, status: 'Completed' } },
+            { $match: { scheduledTime: dateFilter.createdAt, status: { $in: ['Completed', 'Confirmed'] } } },
             { $group: { 
                 _id: '$pt', 
                 sessionCount: { $sum: 1 },
@@ -254,8 +256,12 @@ exports.getAdminDashboard = async (req, res, next) => {
             s.leadCount = leadCountMap[s._id.toString()] || 0;
         });
 
-        // 10. Recent pending contracts
-        const pendingContracts = await Contract.find({ paymentStatus: { $ne: 'Paid' } })
+        // 10. Recent pending contracts - scope theo branch của Manager
+        const pendingContractsFilter = mergeContractScope(
+            { paymentStatus: { $ne: 'Paid' }, contractStatus: { $ne: 'Cancelled' } },
+            user, branchId
+        );
+        const pendingContracts = await Contract.find(pendingContractsFilter)
             .populate('client', 'name avatar')
             .populate('pt', 'name')
             .sort({ createdAt: -1 })
@@ -329,17 +335,17 @@ exports.getPtDashboard = async (req, res, next) => {
             status: { $in: ['Pending_Admin', 'Scheduled', 'In_Progress'] }
         }).populate('client', 'name avatar');
 
-        const startOfMonth = new Date();
-        startOfMonth.setDate(1);
-        startOfMonth.setHours(0,0,0,0);
-        
+        const _now = new Date();
+        const startOfMonth = new Date(_now.getFullYear(), _now.getMonth(), 1, 0, 0, 0, 0);
+        const endOfMonth = new Date(_now.getFullYear(), _now.getMonth() + 1, 0, 23, 59, 59, 999);
+
         const ptUser = await User.findById(ptId);
         const baseSalary = ptUser ? ptUser.baseSalary || 5000000 : 5000000;
 
         const completedSessions = await WorkoutSession.countDocuments({
             pt: ptId,
-            status: { $in: ['Completed', 'Confirmed', 'Scheduled'] },
-            scheduledTime: { $gte: startOfMonth, $lte: new Date() }
+            status: { $in: ['Completed', 'Confirmed', 'Scheduled', 'In_Progress'] },
+            scheduledTime: { $gte: startOfMonth, $lte: endOfMonth }
         });
 
         const paidContractsThisMonth = await Contract.find({
@@ -375,14 +381,16 @@ exports.getPtDashboard = async (req, res, next) => {
         });
         const totalDeductions = violations.reduce((sum, v) => sum + v.penaltyAmount, 0);
 
-        const estimatedCommission = payrollService.calculatePTCommissionFromContracts(paidContractsThisMonth);
+        // Bug 2.3: estimatedCommission (hoa hồng dạy) = 0 trên dashboard PT
+        // ptCommission trên HĐ là input cho payroll, không hiển thị ở đây
+        const estimatedCommission = 0;
 
-        // Hoa hồng chốt HĐ trong tháng (salesCommissionRate * netAmount)
+        // Hoa hồng chốt HĐ: chỉ tính HĐ mà chính PT đó chốt (sales === ptId)
         const ptUserFull = ptUser || await User.findById(ptId).lean();
         const salesCommissionRate = ptUserFull ? (ptUserFull.salesCommissionRate || 0) : 0;
         const salesCommissionResult = await Contract.aggregate([
             { $match: {
-                pt: new mongoose.Types.ObjectId(ptId),
+                sales: new mongoose.Types.ObjectId(ptId),
                 paymentStatus: 'Paid',
                 createdAt: { $gte: startOfMonth }
             }},
@@ -401,6 +409,10 @@ exports.getPtDashboard = async (req, res, next) => {
         .limit(5)
         .lean();
 
+        // Bug 2.2: lấy credentials từ session rồi xoá đi để chỉ hiện 1 lần
+        const newClientCredentials = req.session.newClientCredentials || null;
+        if (req.session.newClientCredentials) delete req.session.newClientCredentials;
+
         res.render('pt/dashboard', {
             estimatedCommission,
             salesCommission,
@@ -413,7 +425,8 @@ exports.getPtDashboard = async (req, res, next) => {
             rosterCount: roster.length,
             roster,
             recentFeedbacks,
-            violations: violations.slice(0, 3)
+            violations: violations.slice(0, 3),
+            newClientCredentials
         });
     } catch (error) {
         next(error);

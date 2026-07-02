@@ -71,6 +71,14 @@ exports.processQrScan = async (sessionId, authUserId) => {
         throw new Error('Buổi tập đã kết thúc hoặc bị hủy.');
     }
 
+    if (session.status === 'Pending_Admin') {
+        throw new Error('Lịch tập này chưa được Admin phê duyệt. Vui lòng liên hệ quản lý để duyệt lịch trước khi điểm danh.');
+    }
+
+    if (session.status === 'Cancel_Requested') {
+        throw new Error('Buổi tập đang có yêu cầu hủy từ khách hàng. Vui lòng xử lý yêu cầu hủy trước.');
+    }
+
     if (session.status === 'Scheduled') {
         await ensureNoDoubleBooking(session, sessionId);
         session.startTime = new Date();
@@ -100,7 +108,7 @@ exports.processQrScan = async (sessionId, authUserId) => {
 
         return session;
     }
-    
-    return session;
+
+    throw new Error(`Không thể điểm danh. Trạng thái buổi tập: ${session.status}.`);
 };
 

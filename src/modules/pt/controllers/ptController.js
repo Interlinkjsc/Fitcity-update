@@ -152,7 +152,17 @@ exports.getIncome = async (req, res, next) => {
                     startOfMonth,
                     endOfMonth
                 );
-                records = await payrollService.generateBiMonthlyPayroll(staff, commission, month, year);
+                // Cộng thêm salesCommission nếu PT cũng là người chốt HĐ
+                const salesContracts = await Contract.find({
+                    sales: ptId,
+                    paymentStatus: 'Paid',
+                    createdAt: { $gte: startOfMonth, $lte: endOfMonth }
+                });
+                const salesRate = staff.salesCommissionRate || 0;
+                const salesComm = salesContracts.length > 0
+                    ? payrollService.calculateSalesCommission(salesContracts, salesRate)
+                    : 0;
+                records = await payrollService.generateBiMonthlyPayroll(staff, commission + salesComm, month, year);
             }
         }
 
@@ -297,7 +307,7 @@ exports.createDirectSession = async (req, res, next) => {
 
         // 4. Gửi Push Notification thông báo cho Admin/Manager chờ duyệt
         const User = require('../../users/models/userModel.js');
-        const admins = await User.find({ role: { $in: ['Admin', 'Manager'] } }).select('_id').lean();
+        const admins = await User.find({ role: { $in: ['Admin', 'Manager'] }, status: 'Active' }).select('_id').lean();
         for (const admin of admins) {
             await notificationService.pushNotification(
                 admin._id,

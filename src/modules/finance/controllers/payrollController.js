@@ -15,15 +15,25 @@ async function computeStaffCommission(staff, startOfMonth, endOfMonth) {
             startOfMonth,
             endOfMonth
         );
+        // Bug 1.1: PT có thể đồng thời là sales → cộng thêm hoa hồng chốt HĐ vào lương
+        const salesContracts = await Contract.find({
+            sales: staff._id,
+            paymentStatus: 'Paid',
+            createdAt: { $gte: startOfMonth, $lte: endOfMonth }
+        });
+        const salesRate = staff.salesCommissionRate || 0;
+        const salesCommission = salesContracts.length > 0
+            ? payrollService.calculateSalesCommission(salesContracts, salesRate)
+            : 0;
         return {
-            commission: resolved.commission,
-            detailCount: resolved.detailCount,
+            commission: resolved.commission + salesCommission,
+            detailCount: resolved.detailCount + salesContracts.length,
             commissionSource: resolved.commissionSource,
             contractCommission: resolved.contractCommission,
             timesheetCommission: resolved.timesheetCommission
         };
     }
-    if (staff.role === 'Sales' || staff.role === 'Manager') {
+    if (staff.role === 'Sales' || staff.role === 'Manager' || staff.role === 'Marketing') {
         const contracts = await Contract.find({
             sales: staff._id,
             paymentStatus: 'Paid',
@@ -118,7 +128,7 @@ exports.getPayrollSummary = async (req, res, next) => {
         const skip = (page - 1) * limit;
 
         let staffQuery = {
-            role: { $in: ['Sales', 'PT', 'Manager'] },
+            role: { $in: ['Sales', 'PT', 'Manager', 'Admin', 'Accountant', 'Marketing'] },
             status: 'Active'
         };
         if (roleFilter !== 'All') {
@@ -201,7 +211,7 @@ exports.autoSuggestPayroll = async (req, res, next) => {
         const year = parseInt(req.body.year) || now.getFullYear();
 
         const staffList = await User.find({ 
-            role: { $in: ['Sales', 'PT', 'Manager'] }, 
+            role: { $in: ['Sales', 'PT', 'Manager', 'Admin', 'Accountant', 'Marketing'] },
             status: 'Active' 
         });
 
@@ -234,7 +244,7 @@ exports.markAsPaid = async (req, res, next) => {
     try {
         const { bonus, tax, insurance, deductions, note } = req.body;
 
-        const payroll = await Payroll.findById(req.params.id);
+        const payroll = await Payroll.findById(req.params.id).populate('staff', 'name');
         if (!payroll) throw new Error('Không tìm thấy bản ghi lương');
 
         const totalBonus = Number(bonus) || 0;
@@ -274,7 +284,7 @@ exports.exportPayrollCSV = async (req, res, next) => {
         const roleFilter = req.query.role || 'All';
 
         let query = { 
-            role: { $in: ['Sales', 'PT', 'Manager'] }, 
+            role: { $in: ['Sales', 'PT', 'Manager', 'Admin', 'Accountant', 'Marketing'] },
             status: 'Active' 
         };
         if (roleFilter !== 'All') {

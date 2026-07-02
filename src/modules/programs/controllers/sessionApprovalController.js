@@ -18,7 +18,7 @@ exports.getPendingList = async (req, res, next) => {
       PtAvailabilitySlot.find({ status: 'Open' })
         .populate('pt', 'name avatar')
         .populate('branch', 'name')
-        .sort({ startTime: 1 })
+        .sort({ startTime: -1 })
         .lean()
     ]);
     res.render('admin/sessions/pending-list', { sessions, pendingSlots, activePage: 'session-approval' });

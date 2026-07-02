@@ -62,7 +62,7 @@
                     <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Huấn luyện viên</th>
                     <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Chi nhánh</th>
                     <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Thời gian dự kiến</th>
-                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Ngày tạo</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Thời gian yêu cầu</th>
                     <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Ghi chú</th>
                     <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">Hành động</th>
                 </tr>
@@ -125,7 +125,7 @@
 
                     <!-- Ngày tạo -->
                     <td class="px-4 py-3 text-slate-500 text-xs">
-                        <%= session.createdAt ? new Date(session.createdAt).toLocaleDateString('vi-VN') : '—' %>
+                        <%= session.createdAt ? new Date(session.createdAt).toLocaleString('vi-VN') : '—' %>
                     </td>
 
                     <!-- Ghi chú -->
@@ -248,9 +248,15 @@
 </div>
 
 <script>
+function utcToLocalInputValue(utcStr) {
+    if (!utcStr) return '';
+    const dt = new Date(utcStr + 'Z');
+    return new Date(dt.getTime() - dt.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+}
+
 function openEditModal(id, scheduledTime, notes) {
     document.getElementById('form-edit-approve').action = '/admin/sessions/' + id + '/edit-approve';
-    document.getElementById('edit-scheduledTime').value = scheduledTime;
+    document.getElementById('edit-scheduledTime').value = utcToLocalInputValue(scheduledTime);
     document.getElementById('edit-notes').value = notes;
     document.getElementById('modal-edit-approve').classList.remove('hidden');
 }
@@ -265,6 +271,19 @@ function openRejectModal(id) {
 function closeRejectModal() {
     document.getElementById('modal-reject').classList.add('hidden');
 }
+
+document.getElementById('form-edit-approve').addEventListener('submit', function(e) {
+    const dtInput = document.getElementById('edit-scheduledTime');
+    if (dtInput && dtInput.value) {
+        const isoUTC = new Date(dtInput.value).toISOString();
+        const hidden = document.createElement('input');
+        hidden.type = 'hidden';
+        hidden.name = 'scheduledTime';
+        hidden.value = isoUTC;
+        dtInput.removeAttribute('name');
+        this.appendChild(hidden);
+    }
+});
 </script>
 
 <%- include('../../partials/footer') %>

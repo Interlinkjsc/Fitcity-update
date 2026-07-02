@@ -68,7 +68,7 @@ exports.getSchedule = async (req, res, next) => {
 
         const upcomingSessions = await WorkoutSession.find({
             client: clientId,
-            status: 'Scheduled',
+            status: { $in: ['Scheduled', 'Pending_Admin', 'In_Progress'] },
             scheduledTime: { $gte: new Date() }
         })
             .populate('pt', 'name avatar')
@@ -80,7 +80,7 @@ exports.getSchedule = async (req, res, next) => {
         const pastSessions = await WorkoutSession.find({
             client: clientId,
             $or: [
-                { status: { $in: ['Completed', 'Cancelled', 'No_Show'] } },
+                { status: { $in: ['Completed', 'Confirmed', 'Cancelled', 'No_Show'] } },
                 { status: 'Scheduled', scheduledTime: { $lt: new Date(nowMs - 24 * 60 * 60 * 1000) } }
             ]
         })

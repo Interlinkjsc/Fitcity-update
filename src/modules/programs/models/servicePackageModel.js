@@ -35,11 +35,7 @@ const servicePackageSchema = new mongoose.Schema({
     target: {
         type: String,
         trim: true,
-        default: 'Giảm cân',
-        enum: {
-            values: ['Giảm cân', 'Tăng cơ', 'Gym', 'Gym Kids', 'Pilates', 'Yoga', 'CrossFit', 'Boxing'],
-            message: '{VALUE} không phải là mục tiêu tập luyện hợp lệ'
-        }
+        default: 'Giảm cân'
     },
     sessionType: {
         type: String,

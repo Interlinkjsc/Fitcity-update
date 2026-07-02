@@ -30,8 +30,12 @@ exports.resolvePtCommissionRate = async (ptId, explicitRate) => {
 
     if (!ptId) return fallback;
     const pt = await User.findById(ptId).select('ptCommissionRate').lean();
-    const r = Number(pt?.ptCommissionRate);
-    return Number.isFinite(r) && r >= 0 ? Math.min(100, r) : fallback;
+    // Nếu PT đã set tường minh (kể cả 0%), dùng giá trị đó — không fallback
+    if (pt && pt.ptCommissionRate !== undefined && pt.ptCommissionRate !== null) {
+        const r = Number(pt.ptCommissionRate);
+        if (Number.isFinite(r)) return Math.max(0, Math.min(100, r));
+    }
+    return fallback;
 };
 
 /**
@@ -150,7 +154,9 @@ exports.createContract = async (data) => {
     const finalDiscountBounded = Math.min(finalDiscount, basePrice);
     const netAmount = basePrice - finalDiscountBounded;
     const ptRate = ptCommissionRate;
-    const ptCommission = Math.round(netAmount * (ptRate / 100));
+    // Bug 1.2: chỉ tính ptCommission khi PT chính là người chốt HĐ (pt === sales)
+    const ptIsSales = ptId && salesId && ptId.toString() === salesId.toString();
+    const ptCommission = ptIsSales ? Math.round(netAmount * (ptRate / 100)) : 0;
     const globalSettings = await systemSettingsService.getGlobalSettings();
     const vatPercent = Number(globalSettings?.defaultVat);
     const vat = Number.isFinite(vatPercent) && vatPercent >= 0 ? Math.min(100, vatPercent) : 10;

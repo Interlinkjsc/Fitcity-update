@@ -66,6 +66,28 @@
             font-weight: 700 !important;
         }
         
+        /* Mobile-first toolbar layout */
+        .fc .fc-toolbar.fc-header-toolbar {
+            margin-bottom: 12px !important;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .fc .fc-toolbar-chunk {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .fc .fc-button {
+            padding: 0.35rem 0.55rem !important;
+            font-size: 0.75rem !important;
+            line-height: 1 !important;
+        }
+        @media (max-width: 480px) {
+            .fc-toolbar-title { font-size: 1rem !important; }
+            .fc .fc-button { padding: 0.3rem 0.5rem !important; font-size: 0.7rem !important; }
+        }
+
         /* Modal background */
         #eventModal {
             display: none;
@@ -84,14 +106,40 @@
     </header>
 
     <main class="px-6 relative">
-        <div class="glass rounded-[32px] p-6 mb-8 mt-2 overflow-hidden bg-white shadow-sm">
-            <div class="flex justify-between items-center mb-4">
-                <span></span>
-                <button onclick="openCreateSessionModal()" class="flex items-center gap-2 px-5 py-2.5 bg-primary text-white text-sm font-bold rounded-xl hover:bg-green-700 transition-all shadow-md">
-                    <span class="material-symbols-outlined text-base">add_circle</span>
-                    Lên lịch tập cho Khách hàng
+        <div class="glass rounded-[32px] p-4 mb-8 mt-2 overflow-hidden bg-white shadow-sm">
+            <!-- Header: custom view switcher + Hôm nay + Lên lịch button -->
+            <div class="flex items-center justify-between gap-2 mb-3">
+                <div class="bg-slate-50 border border-slate-200 rounded-full p-1 flex items-center gap-1">
+                    <button type="button" id="viewMonthBtn" class="px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-primary text-white">
+                        Tháng
+                    </button>
+                    <button type="button" id="viewWeekBtn" class="px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-transparent text-slate-600">
+                        Tuần
+                    </button>
+                </div>
+                <button type="button" id="todayBtn" onclick="goToday()" class="px-3 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest bg-slate-100 hover:bg-slate-200 text-slate-700 transition-all">
+                    Hôm nay
+                </button>
+                <button onclick="openCreateSessionModal()" class="flex items-center gap-1.5 px-3 py-2 bg-primary text-white text-[10px] font-black rounded-xl hover:bg-green-700 transition-all shadow-sm uppercase tracking-widest">
+                    <span class="material-symbols-outlined text-[14px]">add_circle</span>
+                    Lên lịch
                 </button>
             </div>
+
+            <!-- Color legend -->
+            <div class="mb-3 rounded-2xl border border-slate-100 bg-slate-50/80 px-3 py-2.5" role="note">
+                <p class="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Màu trạng thái trên lịch</p>
+                <div class="flex flex-wrap gap-x-3 gap-y-1.5">
+                    <span class="inline-flex items-center gap-1.5 text-[10px] font-bold text-slate-600"><span class="w-2.5 h-2.5 rounded-full shrink-0 ring-1 ring-black/5" style="background:#3788d8"></span>Đã lên lịch</span>
+                    <span class="inline-flex items-center gap-1.5 text-[10px] font-bold text-slate-600"><span class="w-2.5 h-2.5 rounded-full shrink-0 ring-1 ring-black/5" style="background:#f59e0b"></span>Chờ Admin duyệt</span>
+                    <span class="inline-flex items-center gap-1.5 text-[10px] font-bold text-slate-600"><span class="w-2.5 h-2.5 rounded-full shrink-0 ring-1 ring-black/5" style="background:#f39c12"></span>Đang tập</span>
+                    <span class="inline-flex items-center gap-1.5 text-[10px] font-bold text-slate-600"><span class="w-2.5 h-2.5 rounded-full shrink-0 ring-1 ring-black/5" style="background:#2ecc71"></span>Hoàn thành</span>
+                    <span class="inline-flex items-center gap-1.5 text-[10px] font-bold text-slate-600"><span class="w-2.5 h-2.5 rounded-full shrink-0 ring-1 ring-black/5" style="background:#10b981"></span>Đã xác nhận</span>
+                    <span class="inline-flex items-center gap-1.5 text-[10px] font-bold text-slate-600"><span class="w-2.5 h-2.5 rounded-full shrink-0 ring-1 ring-black/5" style="background:#e74c3c"></span>Đã hủy</span>
+                    <span class="inline-flex items-center gap-1.5 text-[10px] font-bold text-slate-600"><span class="w-2.5 h-2.5 rounded-full shrink-0 ring-1 ring-black/5" style="background:#95a5a6"></span>Vắng mặt</span>
+                </div>
+            </div>
+
             <div id='calendar'></div>
         </div>
     </main>
@@ -202,30 +250,46 @@
         document.addEventListener('DOMContentLoaded', function() {
             const calendarEl = document.getElementById('calendar');
             calendarApp = new FullCalendar.Calendar(calendarEl, {
-                initialView: 'timeGridWeek',
+                initialView: 'dayGridMonth',
                 headerToolbar: {
-                    left: 'prev,next today',
+                    left: 'prev,next',
                     center: 'title',
-                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
-                },
-                buttonText: {
-                    today: 'Hôm nay',
-                    month: 'Tháng',
-                    week: 'Tuần',
-                    day: 'Ngày'
+                    right: ''
                 },
                 locale: 'vi',
                 slotMinTime: '06:00:00',
                 slotMaxTime: '22:00:00',
                 allDaySlot: false,
                 height: 'auto',
-                events: '/api/calendar/sessions', // Fetch events directly via HTTP GET
+                events: '/api/calendar/sessions',
                 eventClick: function(info) {
                     showEventModal(info.event);
                 }
             });
             calendarApp.render();
+
+            // Custom view switcher
+            const monthBtn = document.getElementById('viewMonthBtn');
+            const weekBtn = document.getElementById('viewWeekBtn');
+            function setViewButtons(active) {
+                const monthActive = active === 'month';
+                monthBtn.className = monthActive
+                    ? 'px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-primary text-white'
+                    : 'px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-transparent text-slate-600';
+                weekBtn.className = !monthActive
+                    ? 'px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-primary text-white'
+                    : 'px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-transparent text-slate-600';
+            }
+            monthBtn.addEventListener('click', () => { calendarApp.changeView('dayGridMonth'); setViewButtons('month'); });
+            weekBtn.addEventListener('click', () => { calendarApp.changeView('timeGridWeek'); setViewButtons('week'); });
+            setViewButtons('month');
         });
+
+        function goToday() {
+            if (!calendarApp) return;
+            calendarApp.today();
+            if (typeof calendarApp.updateSize === 'function') setTimeout(() => calendarApp.updateSize(), 30);
+        }
 
         function showEventModal(event) {
             currentEventId = event.id;
@@ -358,14 +422,17 @@
             const selectedOption = select.options[select.selectedIndex];
             const contractId = select.value;
             const clientId = selectedOption.dataset.clientId;
-            const scheduledTime = document.getElementById('csScheduledTime').value;
+            const scheduledTimeLocal = document.getElementById('csScheduledTime').value;
             const notes = document.getElementById('csNotes').value;
 
-            if (!contractId || !clientId || !scheduledTime) {
+            if (!contractId || !clientId || !scheduledTimeLocal) {
                 errorMsg.textContent = 'Vui lòng chọn khách hàng và thời gian tập.';
                 errorMsg.classList.remove('hidden');
                 return;
             }
+
+            // Bug 2.3: datetime-local trả về local time (VN UTC+7), cần convert sang ISO UTC trước khi gửi server
+            const scheduledTime = new Date(scheduledTimeLocal).toISOString();
 
             submitBtn.disabled = true;
             submitBtn.textContent = 'Đang xử lý...';

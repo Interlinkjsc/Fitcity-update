@@ -322,13 +322,13 @@ exports.getDetail = async (req, res, next) => {
 
         let sessionsThisMonth = 0;
         if (userData.role === 'PT') {
-            const startOfMonth = new Date();
-            startOfMonth.setDate(1);
-            startOfMonth.setHours(0, 0, 0, 0);
+            const now = new Date();
+            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+            const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
             sessionsThisMonth = await WorkoutSession.countDocuments({
                 pt: userData._id,
-                status: { $in: ['Completed', 'Confirmed', 'Scheduled'] },
-                scheduledTime: { $gte: startOfMonth, $lte: new Date() }
+                status: { $in: ['Completed', 'Confirmed', 'Scheduled', 'In_Progress'] },
+                scheduledTime: { $gte: startOfMonth, $lte: endOfMonth }
             });
         }
 

@@ -38,7 +38,6 @@ exports.uploadToDrive = async (filePath, fileName, folderId) => {
         
         // If no credentials, use mock for local dev
         if (!drive) {
-            console.log(`[GDrive Mock] Simulating upload for ${fileName}...`);
             await new Promise(r => setTimeout(r, 1000));
             return `mock_drive_id_${Date.now()}`;
         }
@@ -58,7 +57,6 @@ exports.uploadToDrive = async (filePath, fileName, folderId) => {
             fields: 'id'
         });
 
-        console.log(`[GDrive Service] File uploaded to Cloud. ID: ${response.data.id}`);
         return response.data.id;
     } catch (err) {
         console.error('[GDrive Service] Upload Failed:', err);

@@ -12,8 +12,6 @@ exports.init = (server) => {
     });
 
     io.on('connection', (socket) => {
-        console.log('New client connected:', socket.id);
-
         socket.on('identify', (userData) => {
             // userData: { userId, role }
             if (userData && userData.userId) {
