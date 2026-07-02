@@ -59,6 +59,10 @@ services:
     image: fitcity-app:latest
     restart: unless-stopped
     command: ["node", "src/cron/runner.js"]
+    # Base image có HEALTHCHECK curl :3000 nhưng cron không chạy HTTP server —
+    # tắt để container không báo unhealthy vĩnh viễn.
+    healthcheck:
+      disable: true
     env_file:
       - /opt/fitcity/env/.env.production
     environment:
