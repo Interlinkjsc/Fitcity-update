@@ -344,7 +344,7 @@ exports.getDetail = async (req, res, next) => {
 
         let employeeKPI = null;
         let employeeKPITarget = null;
-        if (['PT', 'Sales', 'Manager'].includes(userData.role)) {
+        if (['PT', 'Sales', 'Manager', 'Marketing'].includes(userData.role)) {
             try {
                 employeeKPI = await kpiService.getEmployeeKPI(userData, kpiMonth, kpiYear);
             } catch (kpiErr) {

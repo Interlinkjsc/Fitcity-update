@@ -270,6 +270,30 @@ async function getBranchStaffKPIs(branchId, monthOverride, yearOverride) {
  * For Sales: returns sales KPI.
  * For PT: returns PT KPI.
  */
+/**
+ * Hoa hồng chốt HĐ cá nhân (HĐ chính user chốt với vai trò sales, đã Paid).
+ * Dùng chung cho Manager / Sales / Marketing — bug 1.2: role ngoài PT cũng
+ * phải thấy thưởng comm giống phần Lương & thưởng.
+ */
+async function getPersonalSalesCommission(user, month, year) {
+    const dateFilter = monthRangeFilter(month, year);
+    const salesCommissionRate = user.salesCommissionRate || 5;
+    const contracts = await Contract.find({
+        sales: user._id,
+        paymentStatus: 'Paid',
+        ...dateFilter
+    }).select('netAmount basePrice discount').lean();
+    const netTotal = contracts.reduce((sum, c) => {
+        const net = (c.netAmount != null) ? c.netAmount : Math.max(0, (c.basePrice || 0) - (c.discount || 0));
+        return sum + net;
+    }, 0);
+    return {
+        personalCommission: Math.round(netTotal * salesCommissionRate / 100),
+        personalContractCount: contracts.length,
+        salesCommissionRate
+    };
+}
+
 async function getEmployeeKPI(user, monthOverride, yearOverride) {
     const { month, year } = getPeriod(null, monthOverride, yearOverride);
 
@@ -277,7 +301,9 @@ async function getEmployeeKPI(user, monthOverride, yearOverride) {
         return await getPTKPI(user, month, year);
     }
     if (user.role === 'Sales') {
-        return await getSalesKPI(user, month, year);
+        const salesKPI = await getSalesKPI(user, month, year);
+        const commission = await getPersonalSalesCommission(user, month, year);
+        return { ...salesKPI, ...commission };
     }
     if (user.role === 'Manager') {
         const branchModel = require('../../crm/models/branchModel');
@@ -285,19 +311,11 @@ async function getEmployeeKPI(user, monthOverride, yearOverride) {
         const branchKPI = branch ? await getBranchKPI(branch, month, year) : null;
         const staffKPIs = user.branch ? await getBranchStaffKPIs(user.branch, month, year) : { sales: [], pt: [] };
         // Bug 1.3/1.4/1.5: tính commission cá nhân của Manager (HĐ manager tự chốt)
-        const dateFilter = monthRangeFilter(month, year);
-        const salesCommissionRate = user.salesCommissionRate || 5;
-        const managerContracts = await Contract.find({
-            sales: user._id,
-            paymentStatus: 'Paid',
-            ...dateFilter
-        }).select('netAmount basePrice discount').lean();
-        const managerNetTotal = managerContracts.reduce((sum, c) => {
-            const net = (c.netAmount != null) ? c.netAmount : Math.max(0, (c.basePrice || 0) - (c.discount || 0));
-            return sum + net;
-        }, 0);
-        const personalCommission = Math.round(managerNetTotal * salesCommissionRate / 100);
-        return { branch: branchKPI, staff: staffKPIs, personalCommission, personalContractCount: managerContracts.length, salesCommissionRate };
+        const commission = await getPersonalSalesCommission(user, month, year);
+        return { branch: branchKPI, staff: staffKPIs, ...commission };
+    }
+    if (user.role === 'Marketing') {
+        return await getPersonalSalesCommission(user, month, year);
     }
     return null;
 }
