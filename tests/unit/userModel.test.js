@@ -117,11 +117,11 @@ describe('User Model Unit Test', () => {
         expect(user.status).toBe('Active');
     });
 
-    it('Should default avatar to /images/default-avatar.png', async () => {
+    it('Should default avatar to /images/default-avatar-client.svg', async () => {
         const user = new User({
             name: 'User', email: 'user@test.com', password: '123456', role: 'SA'
         });
-        expect(user.avatar).toBe('/images/default-avatar.png');
+        expect(user.avatar).toBe('/images/default-avatar-client.svg');
     });
 
     describe('Password Hashing (pre-save hook)', () => {

@@ -105,10 +105,10 @@ describe('Unified Controllers Error Coverage', () => {
     });
 
     describe('leadController Error Handling', () => {
-        it('getLandingPage err', async () => {
-            Branch.find.mockImplementation(() => { throw new Error('err'); });
+        it('getLandingPage redirects (landing trắng thay bằng web đen — không còn query Branch)', async () => {
             await leadController.getLandingPage(req, res, next);
-            expect(next).toHaveBeenCalled();
+            expect(res.redirect).toHaveBeenCalled();
+            expect(next).not.toHaveBeenCalled();
         });
         it('getAllLeads err', async () => {
             Lead.find.mockReturnValue({ populate: jest.fn().mockReturnThis(), sort: jest.fn().mockImplementation(() => { throw new Error('err'); }) });

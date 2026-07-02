@@ -78,7 +78,8 @@ describe('Contract Service - Unit Test', () => {
             const expectedBase = 50000000 * 30;
             expect(result.basePrice).toBe(expectedBase);
             expect(result.netAmount).toBe(expectedBase - 5000000);
-            expect(result.ptCommission).toBe(Math.round((expectedBase - 5000000) * 0.1));
+            // Bug 1.2: ptCommission chỉ tính khi PT chính là người chốt HĐ (pt === sales) — ở đây không có ptId
+            expect(result.ptCommission).toBe(0);
             expect(result.totalAmount).toBe(Math.round((expectedBase - 5000000) * 1.1));
             expect(result.packageSnapshot.price).toBe(50000000);
             expect(result.totalSessions).toBe(mockPackage.sessions);
@@ -207,7 +208,8 @@ describe('Contract Service - Unit Test', () => {
 
             const result = await contractService.createContract({
                 packageId: 'p1',
-                ptId
+                ptId,
+                salesId: ptId // Bug 1.2: commission chỉ khi PT tự chốt HĐ
             });
 
             const net = 10000000;

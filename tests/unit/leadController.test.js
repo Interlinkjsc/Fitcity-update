@@ -17,20 +17,25 @@ describe('Lead Controller', () => {
     afterEach(() => jest.restoreAllMocks());
 
     describe('getLandingPage', () => {
-        it('Should render landing page with branches', async () => {
-            jest.spyOn(Branch, 'find').mockResolvedValue([{ name: 'Branch 1' }]);
-            jest.spyOn(cmsService, 'getPublishedBanners').mockResolvedValue([]);
-            jest.spyOn(cmsService, 'getHomeSeo').mockResolvedValue({});
-
-            const req = { flash: jest.fn().mockReturnValue([]) };
+        it('Should redirect guests to the black website (landing trắng đã thay bằng web đen)', async () => {
+            const req = { flash: jest.fn().mockReturnValue([]), session: {} };
             const res = mockRes();
             const next = jest.fn();
 
             await leadController.getLandingPage(req, res, next);
 
-            expect(res.render).toHaveBeenCalledWith('landing', expect.objectContaining({
-                branches: expect.any(Array)
-            }));
+            expect(res.redirect).toHaveBeenCalled();
+            expect(res.render).not.toHaveBeenCalled();
+        });
+
+        it('Should redirect logged-in users to role dashboard', async () => {
+            const req = { flash: jest.fn().mockReturnValue([]), session: { user: { role: 'PT' } } };
+            const res = mockRes();
+            const next = jest.fn();
+
+            await leadController.getLandingPage(req, res, next);
+
+            expect(res.redirect).toHaveBeenCalledWith('/pt');
         });
     });
 

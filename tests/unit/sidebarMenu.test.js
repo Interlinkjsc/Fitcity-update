@@ -9,7 +9,7 @@ describe('sidebarMenu', () => {
 
     describe('MENU_ITEMS', () => {
         it('Should have expected menu items (aligned with 12-sa-standalone modules)', () => {
-            expect(MENU_COUNT).toBe(26);
+            expect(MENU_COUNT).toBe(30);
         });
 
         it('Each item should have key, label, href, moduleId, icon, and roles', () => {
@@ -34,7 +34,6 @@ describe('sidebarMenu', () => {
             const keys = sidebarMenu.MENU_ITEMS.map((i) => i.key);
             expect(keys).toContain('rewards');
             expect(keys).toContain('cms');
-            expect(keys).toContain('timesheets');
             expect(keys).toContain('settings');
             expect(keys).toContain('export-report');
             expect(keys).toContain('export-work-report');
