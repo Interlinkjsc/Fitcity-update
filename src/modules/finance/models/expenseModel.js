@@ -3,8 +3,9 @@ const mongoose = require('mongoose');
 const expenseSchema = new mongoose.Schema({
     branch: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Branch',
-        required: [true, 'Chi nhánh là bắt buộc']
+        ref: 'Branch'
+        // Bug 29/6#1: Admin/SA không thuộc chi nhánh nào (branch=null) → khoản chi cấp công ty.
+        // Bỏ required để chi phí toàn hệ thống ghi nhận được; chi nhánh vẫn chọn được trên form.
     },
     category: {
         type: String,

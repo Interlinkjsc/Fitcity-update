@@ -363,6 +363,7 @@
                 <div class="space-y-1">
                     <label class="block text-sm font-medium text-slate-700 mb-1">Chi nhánh</label>
                     <select name="branchId" class="block w-full rounded-md border-slate-300 shadow-sm focus:border-lime-500 focus:ring focus:ring-lime-500 text-sm py-2 px-3 border bg-white">
+                        <option value="">Toàn hệ thống (không theo chi nhánh)</option>
                         <% branches.forEach(b => { %>
                             <option value="<%= b._id %>"><%= b.name %></option>
                         <% }) %>
