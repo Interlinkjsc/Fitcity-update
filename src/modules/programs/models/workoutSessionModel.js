@@ -55,4 +55,11 @@ const workoutSessionSchema = new mongoose.Schema({
     }
 }, { timestamps: true });
 
+// Audit DB (2/7): collection query nhiều nhất (KPI/dashboard/calendar) — index pt/client/status theo thời gian
+workoutSessionSchema.index({ pt: 1, scheduledTime: -1 });
+workoutSessionSchema.index({ client: 1, scheduledTime: -1 });
+workoutSessionSchema.index({ status: 1, scheduledTime: -1 });
+workoutSessionSchema.index({ pt: 1, status: 1, scheduledTime: 1 });
+workoutSessionSchema.index({ branch: 1, scheduledTime: -1 });
+
 module.exports = mongoose.model('WorkoutSession', workoutSessionSchema);

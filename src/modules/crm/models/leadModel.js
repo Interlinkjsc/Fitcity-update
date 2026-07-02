@@ -93,4 +93,9 @@ leadSchema.pre('validate', async function() {
     }
 });
 
+// Audit DB (2/7): index CRM lead theo chi nhánh / người phụ trách / thời gian
+leadSchema.index({ branch: 1, createdAt: -1 });
+leadSchema.index({ assignedTo: 1, createdAt: -1 });
+leadSchema.index({ status: 1 });
+
 module.exports = mongoose.model('Lead', leadSchema);

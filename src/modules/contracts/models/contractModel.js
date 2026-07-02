@@ -221,4 +221,11 @@ contractSchema.pre('save', async function(next) {
     }
 });
 
+// Audit DB (2/7): index cho query nóng — KPI, payroll, dashboard lọc theo pt/sales/client + trạng thái + thời gian
+contractSchema.index({ pt: 1, paymentStatus: 1, startDate: -1 });
+contractSchema.index({ sales: 1, paymentStatus: 1, startDate: -1 });
+contractSchema.index({ client: 1 });
+contractSchema.index({ branch: 1, contractStatus: 1 });
+contractSchema.index({ contractStatus: 1, startDate: -1 });
+
 module.exports = mongoose.model('Contract', contractSchema);
