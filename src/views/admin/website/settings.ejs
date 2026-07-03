@@ -165,6 +165,52 @@
     <% } %>
 </div>
 
+<!-- ZALO ZNS — thông báo check-in/check-out cho khách -->
+<div class="bg-white rounded-xl border border-slate-200 p-6 max-w-3xl mt-8">
+    <h3 class="font-bold text-slate-800 mb-1">Zalo ZNS (thông báo check-in / check-out)</h3>
+    <% const zs = (typeof zaloStatus !== 'undefined' && zaloStatus) ? zaloStatus : {}; %>
+    <p class="text-xs text-slate-400 mb-1">
+        Mẫu check-in: <span class="font-mono font-semibold"><%= zs.templateCheckin || 'chưa cấu hình' %></span>
+        · Mẫu check-out: <span class="font-mono font-semibold"><%= zs.templateCheckout || 'chưa cấu hình' %></span>
+    </p>
+    <p class="text-xs mb-4">
+        <% if (zs.hasToken) { %><span class="text-emerald-600 font-semibold">● Đã có token</span><% } else { %><span class="text-red-500 font-semibold">● Chưa có token</span><% } %>
+        <% if (zs.expiresAt) { %><span class="text-slate-400"> · hạn dùng đến <%= new Date(zs.expiresAt).toLocaleString('vi-VN') %></span><% } %>
+        <% if (zs.hasAppCreds && zs.hasRefresh) { %><span class="text-emerald-600"> · tự động gia hạn: BẬT</span><% } else { %><span class="text-amber-500"> · tự động gia hạn: TẮT (cần App ID + Secret + refresh token)</span><% } %>
+    </p>
+
+    <form method="POST" action="/admin/website/settings/zalo" class="space-y-3">
+        <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">Access token (CỦA OA — không phải token đăng nhập cá nhân)</label>
+            <textarea name="zaloAccessToken" rows="2" placeholder="Dán access token OA mới vào đây..."
+                class="w-full border border-slate-300 rounded-lg text-xs py-2 px-3 font-mono focus:ring-2 focus:ring-lime-500 outline-none"></textarea>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">Refresh token (khuyến nghị — để hệ thống tự gia hạn)</label>
+            <textarea name="zaloRefreshToken" rows="2" placeholder="Dán refresh token (hiện cùng chỗ với access token)..."
+                class="w-full border border-slate-300 rounded-lg text-xs py-2 px-3 font-mono focus:ring-2 focus:ring-lime-500 outline-none"></textarea>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">App ID</label>
+                <input type="text" name="zaloAppId" placeholder="Dãy số App ID"
+                    class="w-full border border-slate-300 rounded-lg text-sm py-2 px-3 font-mono focus:ring-2 focus:ring-lime-500 outline-none">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Secret key</label>
+                <input type="password" name="zaloAppSecret" placeholder="App secret key" autocomplete="new-password"
+                    class="w-full border border-slate-300 rounded-lg text-sm py-2 px-3 font-mono focus:ring-2 focus:ring-lime-500 outline-none">
+            </div>
+        </div>
+        <p class="text-[11px] text-slate-400">Chỉ cần điền ô muốn cập nhật — ô bỏ trống sẽ giữ giá trị cũ. Lấy token tại <span class="font-mono">developers.zalo.me/tools/explorer</span> (chọn loại <b>Official Account</b>).</p>
+        <div class="flex gap-3">
+            <button type="submit" class="px-5 py-2.5 bg-lime-500 hover:bg-lime-600 text-slate-900 font-bold rounded-lg text-sm">Lưu cấu hình Zalo</button>
+            <button type="button" id="zalo-test-btn" class="px-5 py-2.5 border border-slate-300 text-slate-700 font-semibold rounded-lg text-sm hover:bg-slate-50">Kiểm tra kết nối</button>
+        </div>
+    </form>
+    <div id="zalo-test-result" class="mt-4 hidden text-sm rounded-lg p-4 whitespace-pre-wrap font-mono text-xs"></div>
+</div>
+
 <script>
 // Sync color picker → text input
 document.querySelectorAll('input[type=color]').forEach(picker => {
@@ -172,6 +218,33 @@ document.querySelectorAll('input[type=color]').forEach(picker => {
     const textInput = document.getElementById(name + '_text');
     if (textInput) {
         picker.addEventListener('input', () => textInput.value = picker.value);
+    }
+});
+
+// Zalo ZNS: kiểm tra kết nối
+document.getElementById('zalo-test-btn')?.addEventListener('click', async function () {
+    const box = document.getElementById('zalo-test-result');
+    box.classList.remove('hidden');
+    box.className = 'mt-4 text-xs rounded-lg p-4 whitespace-pre-wrap font-mono bg-slate-50 border border-slate-200 text-slate-600';
+    box.textContent = 'Đang kiểm tra với Zalo...';
+    try {
+        const res = await fetch('/admin/website/settings/zalo/test', { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+        const data = await res.json();
+        if (data.ok) {
+            let msg = '✅ TOKEN HỢP LỆ — ZNS sẵn sàng gửi.\n';
+            if (data.quota) msg += 'Quota: ' + JSON.stringify(data.quota) + '\n';
+            for (const [k, t] of Object.entries(data.templates || {})) {
+                msg += '\nMẫu ' + k + ' (' + (t.id || '?') + '): ' + (t.error ? ('⚠️ ' + t.error) : (t.name + ' — trạng thái ' + t.status + '\n  Tham số: ' + (t.params || []).join(', ')));
+            }
+            box.className = 'mt-4 text-xs rounded-lg p-4 whitespace-pre-wrap font-mono bg-emerald-50 border border-emerald-200 text-emerald-800';
+            box.textContent = msg;
+        } else {
+            box.className = 'mt-4 text-xs rounded-lg p-4 whitespace-pre-wrap font-mono bg-red-50 border border-red-200 text-red-700';
+            box.textContent = '❌ ' + (data.reason || 'Không kiểm tra được.');
+        }
+    } catch (e) {
+        box.className = 'mt-4 text-xs rounded-lg p-4 whitespace-pre-wrap font-mono bg-red-50 border border-red-200 text-red-700';
+        box.textContent = '❌ Lỗi gọi kiểm tra: ' + e.message;
     }
 });
 </script>

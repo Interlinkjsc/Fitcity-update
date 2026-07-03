@@ -23,7 +23,9 @@ exports.formatPhone = (rawPhone) => {
 const TOKEN_KEYS = {
     access: 'zalo_access_token',
     refresh: 'zalo_refresh_token',
-    expiresAt: 'zalo_token_expires_at'
+    expiresAt: 'zalo_token_expires_at',
+    appId: 'zalo_app_id',
+    appSecret: 'zalo_app_secret'
 };
 let tokenCache = { access: null, expiresAt: 0 };
 
@@ -46,10 +48,12 @@ async function readStoredToken() {
         return {
             access: map[TOKEN_KEYS.access] || null,
             refresh: map[TOKEN_KEYS.refresh] || null,
-            expiresAt: Number(map[TOKEN_KEYS.expiresAt] || 0)
+            expiresAt: Number(map[TOKEN_KEYS.expiresAt] || 0),
+            appId: map[TOKEN_KEYS.appId] || null,
+            appSecret: map[TOKEN_KEYS.appSecret] || null
         };
     } catch (_) {
-        return { access: null, refresh: null, expiresAt: 0 };
+        return { access: null, refresh: null, expiresAt: 0, appId: null, appSecret: null };
     }
 }
 
@@ -118,8 +122,8 @@ async function getAccessToken() {
         return stored.access;
     }
 
-    const appId = process.env.ZALO_APP_ID;
-    const appSecret = process.env.ZALO_APP_SECRET;
+    const appId = stored.appId || process.env.ZALO_APP_ID;
+    const appSecret = stored.appSecret || process.env.ZALO_APP_SECRET;
     const refreshToken = stored.refresh || process.env.ZALO_REFRESH_TOKEN;
     if (appId && appSecret && refreshToken) {
         const resp = await requestTokenRefresh(refreshToken, appId, appSecret);
@@ -277,4 +281,74 @@ exports.sendZnsCheckout = async (phone, clientName, ptName, startTime, endTime) 
         console.error('[ZaloZNS] sendZnsCheckout error:', e.message);
         return null;
     }
+};
+
+// ── Self-serve helpers (dùng bởi trang admin Cài đặt Website) ────────────────
+
+/** Admin dán token thủ công từ UI — lưu DB, coi như còn hạn 24h. */
+exports.saveManualTokens = async ({ accessToken, refreshToken, appId, appSecret }) => {
+    const stored = await readStoredToken();
+    const expiresAt = accessToken ? Date.now() + 24 * 3600 * 1000 : stored.expiresAt;
+    await persistToken({
+        access: accessToken || stored.access,
+        refresh: refreshToken || stored.refresh,
+        expiresAt
+    });
+    try {
+        const WebSetting = getWebSetting();
+        const extra = [];
+        if (appId !== undefined && appId !== '') extra.push([TOKEN_KEYS.appId, appId]);
+        if (appSecret !== undefined && appSecret !== '') extra.push([TOKEN_KEYS.appSecret, appSecret]);
+        await Promise.all(extra.map(([key, value]) =>
+            WebSetting.findOneAndUpdate({ key }, { key, value }, { upsert: true })
+        ));
+    } catch (e) {
+        console.error('[ZaloZNS] save app creds error:', e.message);
+    }
+    if (accessToken) tokenCache = { access: accessToken, expiresAt };
+};
+
+/** GET JSON từ Zalo với access_token header. Không throw. */
+function getZaloJson(hostname, path, token) {
+    return new Promise((resolve) => {
+        const req = https.request({ hostname, path, method: 'GET', headers: { access_token: token } }, (res) => {
+            let data = '';
+            res.on('data', (c) => { data += c; });
+            res.on('end', () => { try { resolve(JSON.parse(data)); } catch (_) { resolve(null); } });
+        });
+        req.on('error', () => resolve(null));
+        req.end();
+    });
+}
+
+/** Kiểm tra token hiện tại với ZNS + lấy cấu trúc template. */
+exports.checkZnsConnection = async () => {
+    const token = await getAccessToken();
+    if (!token) return { ok: false, reason: 'Chưa có access token (dán vào ô bên trên rồi Lưu).' };
+
+    const quota = await getZaloJson('business.openapi.zalo.me', '/message/quota', token);
+    if (!quota || quota.error !== 0) {
+        return {
+            ok: false,
+            reason: `Zalo từ chối token (error ${quota ? quota.error : 'network'}: ${quota ? quota.message : 'không gọi được API'}). Kiểm tra: phải là token CỦA OA (Official Account), không phải token đăng nhập cá nhân.`
+        };
+    }
+
+    const templates = {};
+    for (const [label, envKey] of [['checkin', 'ZALO_ZNS_TEMPLATE_CHECKIN'], ['checkout', 'ZALO_ZNS_TEMPLATE_CHECKOUT']]) {
+        const tid = process.env[envKey];
+        if (!tid) { templates[label] = { error: `${envKey} chưa cấu hình` }; continue; }
+        const info = await getZaloJson('business.openapi.zalo.me', `/template/info/v2?template_id=${tid}`, token);
+        if (info && info.error === 0 && info.data) {
+            templates[label] = {
+                id: tid,
+                name: info.data.templateName,
+                status: info.data.status,
+                params: (info.data.listParams || []).map(p => p.name)
+            };
+        } else {
+            templates[label] = { id: tid, error: info ? `${info.error}: ${info.message}` : 'network' };
+        }
+    }
+    return { ok: true, quota: quota.data, templates };
 };

@@ -1,4 +1,5 @@
 const WebSetting = require('../models/webSettingModel');
+const zaloService = require('../../platform/services/zaloService');
 const WebSlotImage = require('../models/webSlotImageModel');
 const WebBranch = require('../models/webBranchModel');
 
@@ -43,7 +44,18 @@ exports.getAdminSettingsPage = async (req, res, next) => {
                 { id: `branch-${b.slug}-g3`, label: `CN ${b.name} — gallery 3` },
             ]))
         ];
-        res.render('admin/website/settings', { settings, slotImages, knownSlots: KNOWN_SLOTS, activePage: 'website-settings' });
+        const zaloRows = await WebSetting.find({ key: { $in: ['zalo_access_token', 'zalo_refresh_token', 'zalo_app_id', 'zalo_token_expires_at'] } }).lean();
+        const zaloMap = {};
+        zaloRows.forEach(r => { zaloMap[r.key] = r.value; });
+        const zaloStatus = {
+            hasToken: !!(zaloMap.zalo_access_token || process.env.ZALO_OA_ACCESS_TOKEN),
+            hasRefresh: !!zaloMap.zalo_refresh_token,
+            hasAppCreds: !!zaloMap.zalo_app_id || !!process.env.ZALO_APP_ID,
+            expiresAt: Number(zaloMap.zalo_token_expires_at || 0),
+            templateCheckin: process.env.ZALO_ZNS_TEMPLATE_CHECKIN || '',
+            templateCheckout: process.env.ZALO_ZNS_TEMPLATE_CHECKOUT || ''
+        };
+        res.render('admin/website/settings', { settings, slotImages, knownSlots: KNOWN_SLOTS, zaloStatus, activePage: 'website-settings' });
     } catch (err) { next(err); }
 };
 
@@ -77,6 +89,31 @@ exports.deleteSlotImage = async (req, res, next) => {
         req.flash('success_msg', `Đã gỡ ảnh vị trí "${slotId}" — website dùng lại ảnh mặc định.`);
         res.redirect('/admin/website/settings');
     } catch (err) { next(err); }
+};
+
+// POST /admin/website/settings/zalo — lưu token/app creds Zalo ZNS (admin dán từ UI)
+exports.updateZaloSettings = async (req, res, next) => {
+    try {
+        const { zaloAccessToken, zaloRefreshToken, zaloAppId, zaloAppSecret } = req.body;
+        if (!zaloAccessToken && !zaloRefreshToken && !zaloAppId && !zaloAppSecret) {
+            req.flash('error_msg', 'Chưa nhập thông tin Zalo nào.');
+            return res.redirect('/admin/website/settings');
+        }
+        await zaloService.saveManualTokens({
+            accessToken: (zaloAccessToken || '').trim(),
+            refreshToken: (zaloRefreshToken || '').trim(),
+            appId: (zaloAppId || '').trim(),
+            appSecret: (zaloAppSecret || '').trim()
+        });
+        req.flash('success_msg', 'Đã lưu cấu hình Zalo ZNS. Bấm "Kiểm tra kết nối" để xác nhận token.');
+        res.redirect('/admin/website/settings');
+    } catch (err) { next(err); }
+};
+
+// POST /admin/website/settings/zalo/test — kiểm tra token + cấu trúc template (JSON)
+exports.testZaloConnection = async (req, res) => {
+    const result = await zaloService.checkZnsConnection();
+    res.json(result);
 };
 
 // GET /api/web/slot-images — public map { slotId: mediaKey }
