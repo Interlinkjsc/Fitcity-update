@@ -50,7 +50,7 @@ async function seedAdmin() {
     console.log('Email:   ', ADMIN.email);
     console.log('Password:', ADMIN.password);
     console.log('Role:    ', ADMIN.role);
-    console.log('Login:   http://localhost:4000/auth/login\n');
+    console.log('Login:   https://erp.fitcity.fit/auth/login\n');
 
     await mongoose.disconnect();
     process.exit(0);

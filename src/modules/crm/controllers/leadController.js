@@ -44,7 +44,7 @@ exports.getLandingPage = async (req, res, next) => {
         if (user.role === 'PT') return res.redirect('/pt');
         return res.redirect('/admin');
     }
-    const websiteUrl = process.env.WEBSITE_URL || 'http://160.25.81.177';
+    const websiteUrl = process.env.WEBSITE_URL || 'https://fitcity.fit';
     return res.redirect(websiteUrl);
 };
 
