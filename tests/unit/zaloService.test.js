@@ -133,12 +133,15 @@ describe('sendZnsCheckin', () => {
         const writtenBody = JSON.parse(mockWrite.mock.calls[0][0]);
         expect(writtenBody.phone).toBe('84912345678');
         expect(writtenBody.template_id).toBe('tpl_checkin_123');
+        // Params khớp template 601710 đã duyệt: customer_name, booking_code, schedule_time, address, name
         expect(writtenBody.template_data).toMatchObject({
-            client_name: 'Nguyen Van A',
-            pt_name: 'PT Minh',
-            branch_name: 'FitCity Quan 1'
+            customer_name: 'Nguyen Van A',
+            name: 'PT Minh',
+            address: 'FitCity Quan 1'
         });
-        expect(writtenBody.template_data.session_time).toBeDefined();
+        expect(writtenBody.template_data.booking_code).toBeDefined();
+        // DATE format "HH:mm dd/MM/yyyy"
+        expect(writtenBody.template_data.schedule_time).toMatch(/^\d{2}:\d{2} \d{2}\/\d{2}\/\d{4}$/);
     });
 
     it('does NOT throw when https throws a network error', async () => {
@@ -179,15 +182,15 @@ describe('sendZnsCheckin', () => {
 // ── SUITE 3: sendZnsCheckout ─────────────────────────────────────────────────
 describe('sendZnsCheckout', () => {
     it('calls https.request with correct url and body shape', async () => {
-        const start = new Date('2025-01-15T08:00:00+07:00');
         const end = new Date('2025-01-15T09:05:00+07:00');
 
         const promise = zaloService.sendZnsCheckout(
             '0987654321',
             'Tran Thi B',
             'PT Long',
-            start,
-            end
+            end,
+            'FitCity Quan 1 — 1 Le Loi',
+            'FS-ABC12345'
         );
         await waitForRequest();
         simulateSuccess();
@@ -200,14 +203,14 @@ describe('sendZnsCheckout', () => {
         const writtenBody = JSON.parse(mockWrite.mock.calls[0][0]);
         expect(writtenBody.phone).toBe('84987654321');
         expect(writtenBody.template_id).toBe('tpl_checkout_456');
+        // Params khớp template 601713 đã duyệt (cùng bộ với check-in)
         expect(writtenBody.template_data).toMatchObject({
-            client_name: 'Tran Thi B',
-            pt_name: 'PT Long'
+            customer_name: 'Tran Thi B',
+            name: 'PT Long',
+            booking_code: 'FS-ABC12345',
+            address: 'FitCity Quan 1 — 1 Le Loi'
         });
-        expect(writtenBody.template_data.start_time).toBeDefined();
-        expect(writtenBody.template_data.end_time).toBeDefined();
-        // 65 minutes session
-        expect(writtenBody.template_data.duration).toBe('65 phút');
+        expect(writtenBody.template_data.schedule_time).toMatch(/^\d{2}:\d{2} \d{2}\/\d{2}\/\d{4}$/);
     });
 
     it('does NOT throw when https throws a network error', async () => {

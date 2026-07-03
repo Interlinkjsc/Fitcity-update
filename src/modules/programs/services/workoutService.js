@@ -96,12 +96,14 @@ exports.processQrScan = async (sessionId, authUserId) => {
                     User.findById(session.pt),
                     Branch.findById(session.branch)
                 ]);
+                const bookingCode = 'FS-' + String(session._id).slice(-8).toUpperCase();
                 await zaloService.sendZnsCheckin(
                     client && client.phone,
                     client && client.name,
                     pt && pt.name,
                     session.startTime,
-                    branch ? branch.name : ''
+                    branch ? [branch.name, branch.address].filter(Boolean).join(' — ') : '',
+                    bookingCode
                 );
             } catch (e) {
                 console.error('[ZaloZNS] checkin error', e.message);
@@ -134,17 +136,21 @@ exports.processQrScan = async (sessionId, authUserId) => {
         ;(async () => {
             try {
                 const User = require('../../users/models/userModel');
+                const Branch = require('../../crm/models/branchModel');
                 const zaloService = require('../../platform/services/zaloService');
-                const [client, pt] = await Promise.all([
+                const [client, pt, branch] = await Promise.all([
                     User.findById(session.client),
-                    User.findById(session.pt)
+                    User.findById(session.pt),
+                    Branch.findById(session.branch)
                 ]);
+                const bookingCode = 'FS-' + String(session._id).slice(-8).toUpperCase();
                 await zaloService.sendZnsCheckout(
                     client && client.phone,
                     client && client.name,
                     pt && pt.name,
-                    session.startTime,
-                    session.endTime
+                    session.endTime,
+                    branch ? [branch.name, branch.address].filter(Boolean).join(' — ') : '',
+                    bookingCode
                 );
             } catch (e) {
                 console.error('[ZaloZNS] checkout error', e.message);

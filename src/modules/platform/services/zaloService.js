@@ -199,7 +199,25 @@ async function postZns(body) {
  * Send check-in notification via Zalo ZNS.
  * Never throws — errors are swallowed so main flow is never blocked.
  */
-exports.sendZnsCheckin = async (phone, clientName, ptName, sessionTime, branchName) => {
+
+/** Cắt chuỗi theo maxLength của template (tránh Zalo từ chối -114). */
+function truncate(v, max) {
+    const str = (v == null ? '' : String(v)).trim();
+    return str.length > max ? str.slice(0, max) : (str || ' ');
+}
+
+/** Param DATE của ZNS: "HH:mm dd/MM/yyyy" (≤20 ký tự), múi giờ VN. */
+function formatZnsDate(d) {
+    const date = d instanceof Date ? d : new Date(d || Date.now());
+    const parts = new Intl.DateTimeFormat('vi-VN', {
+        timeZone: 'Asia/Ho_Chi_Minh',
+        hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric', hour12: false
+    }).formatToParts(date);
+    const get = (t) => (parts.find(x => x.type === t) || {}).value || '';
+    return `${get('hour')}:${get('minute')} ${get('day')}/${get('month')}/${get('year')}`;
+}
+
+exports.sendZnsCheckin = async (phone, clientName, ptName, sessionTime, branchLabel, bookingCode) => {
     try {
         const formattedPhone = exports.formatPhone(phone);
         if (!formattedPhone) {
@@ -213,18 +231,17 @@ exports.sendZnsCheckin = async (phone, clientName, ptName, sessionTime, branchNa
             return null;
         }
 
-        const timeStr = sessionTime instanceof Date
-            ? sessionTime.toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' })
-            : String(sessionTime);
-
+        // Template 601710 "Thông báo CHECK IN" — params thật của mẫu đã duyệt:
+        // customer_name, booking_code, schedule_time (DATE "HH:mm dd/MM/yyyy"), address, name
         return await postZns({
             phone: formattedPhone,
             template_id: templateId,
             template_data: {
-                client_name: clientName || '',
-                pt_name: ptName || '',
-                session_time: timeStr,
-                branch_name: branchName || ''
+                customer_name: truncate(clientName, 30),
+                booking_code: truncate(bookingCode || 'FITCITY', 30),
+                schedule_time: formatZnsDate(sessionTime),
+                address: truncate(branchLabel || 'FITCITY', 200),
+                name: truncate(ptName, 30)
             },
             tracking_id: `checkin_${Date.now()}`
         });
@@ -234,11 +251,7 @@ exports.sendZnsCheckin = async (phone, clientName, ptName, sessionTime, branchNa
     }
 };
 
-/**
- * Send check-out notification via Zalo ZNS.
- * Never throws — errors are swallowed so main flow is never blocked.
- */
-exports.sendZnsCheckout = async (phone, clientName, ptName, startTime, endTime) => {
+exports.sendZnsCheckout = async (phone, clientName, ptName, endTime, branchLabel, bookingCode) => {
     try {
         const formattedPhone = exports.formatPhone(phone);
         if (!formattedPhone) {
@@ -252,28 +265,16 @@ exports.sendZnsCheckout = async (phone, clientName, ptName, startTime, endTime) 
             return null;
         }
 
-        const fmt = (d) => d instanceof Date
-            ? d.toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' })
-            : String(d || '');
-
-        const startStr = fmt(startTime);
-        const endStr = fmt(endTime);
-
-        let durationStr = '';
-        if (startTime instanceof Date && endTime instanceof Date) {
-            const mins = Math.round((endTime - startTime) / 60000);
-            durationStr = mins > 0 ? `${mins} phút` : '';
-        }
-
+        // Template 601713 "Thông báo CHECKOUT buổi tập" — cùng bộ params với check-in
         return await postZns({
             phone: formattedPhone,
             template_id: templateId,
             template_data: {
-                client_name: clientName || '',
-                pt_name: ptName || '',
-                start_time: startStr,
-                end_time: endStr,
-                duration: durationStr
+                customer_name: truncate(clientName, 30),
+                booking_code: truncate(bookingCode || 'FITCITY', 30),
+                schedule_time: formatZnsDate(endTime),
+                address: truncate(branchLabel || 'FITCITY', 200),
+                name: truncate(ptName, 30)
             },
             tracking_id: `checkout_${Date.now()}`
         });
