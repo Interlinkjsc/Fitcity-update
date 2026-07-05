@@ -143,13 +143,18 @@ exports.registerLead = async (req, res, next) => {
                 branchId = rawBranch;
             } else {
                 const Branch = require('../models/branchModel');
-                const norm = String(rawBranch).replace(/-/g, ' ');
-                const matched = await Branch.findOne({
-                    $or: [
-                        { slug: rawBranch },
-                        { name: new RegExp(norm, 'i') }
-                    ]
-                }).select('_id').lean();
+                // Bug 6/7 #14: slug web (khong dau) vs ten chi nhanh ERP (co dau)
+                // → so khop bo dau ca 2 phia, khong phu thuoc regex co dau.
+                const stripAccents = (str) => String(str || '')
+                    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                    .replace(/[dĐ]/gi, (m) => (m === 'Đ' || m === 'D' ? 'd' : 'd'))
+                    .toLowerCase();
+                const normQuery = stripAccents(rawBranch).replace(/-/g, ' ').trim();
+                const allBranches = await Branch.find().select('_id name slug').lean();
+                const matched = allBranches.find(b =>
+                    (b.slug && b.slug === rawBranch) ||
+                    stripAccents(b.name).includes(normQuery)
+                );
                 if (matched) branchId = matched._id;
                 else branchNote = `Cơ sở quan tâm (web): ${rawBranch}`;
             }
@@ -256,6 +261,19 @@ function applyCreatedAtRange(filter, dateFrom, dateTo) {
 /**
  * [Admin] Xem danh sách Leads (có hỗ trợ lọc qua query string)
  */
+
+// .lean() bỏ qua getter giải mã của Mongoose — tự giải mã email/phone trước khi render
+function decryptLeadFields(lead) {
+    if (!lead) return lead;
+    const { decrypt } = require('../../../utils/encryption');
+    for (const f of ['email', 'phone']) {
+        if (lead[f] && String(lead[f]).includes(':')) {
+            try { lead[f] = decrypt(lead[f]); } catch (e) { lead[f] = ''; }
+        }
+    }
+    return lead;
+}
+
 exports.getAllLeads = async (req, res, next) => {
     try {
         const { status, interestedPackage, source, dateFrom, dateTo } = req.query;
@@ -296,6 +314,7 @@ exports.getAllLeads = async (req, res, next) => {
                 : '0';
         const funnel = await getFunnelCounts(filter);
 
+        leads.forEach(decryptLeadFields);
         res.render('admin/leads/list', {
             leads,
             pagination,
@@ -403,7 +422,10 @@ exports.getDetail = async (req, res, next) => {
             req.flash('error_msg', 'Không tìm thấy hồ sơ khách hàng tiềm năng!');
             return res.redirect('/admin/leads');
         }
-        res.render('admin/leads/detail', { lead, activePage: 'leads' });
+        decryptLeadFields(lead);
+        // Bug 6/7 #14: cho phép admin gán/đổi chi nhánh ngay trong chi tiết lead
+        const allBranches = await Branch.find({ status: 'Open' }).select('name').sort({ name: 1 }).lean();
+        res.render('admin/leads/detail', { lead, allBranches, activePage: 'leads' });
     } catch (err) {
         next(err);
     }
@@ -444,6 +466,21 @@ exports.updateLeadStatus = async (req, res, next) => {
 /**
  * Đường B (R2): Convert Lead → User Client (staff CRM).
  */
+
+/** [Admin] Gán/đổi chi nhánh cho lead (Bug 6/7 #14) */
+exports.updateLeadBranch = async (req, res, next) => {
+    try {
+        const { branchId } = req.body;
+        if (!branchId) {
+            req.flash('error_msg', 'Chưa chọn chi nhánh.');
+            return res.redirect(`/admin/leads/detail/${req.params.id}`);
+        }
+        await Lead.findByIdAndUpdate(req.params.id, { branch: branchId });
+        req.flash('success_msg', 'Đã cập nhật chi nhánh cho khách hàng tiềm năng.');
+        res.redirect(`/admin/leads/detail/${req.params.id}`);
+    } catch (err) { next(err); }
+};
+
 exports.convertLeadToClient = async (req, res, next) => {
     const detailUrl = `/admin/leads/detail/${req.params.id}`;
     const redirectBack = () => res.redirect(detailUrl);
@@ -478,12 +515,22 @@ exports.convertLeadToClient = async (req, res, next) => {
             return redirectBack();
         }
 
+        // Bug 6/7 #17: cho chọn chi nhánh ngay trong form convert nếu lead chưa có
+        const chosenBranch = req.body.branchId || lead.branch;
+        if (!chosenBranch) {
+            req.flash('error_msg', 'Vui lòng chọn chi nhánh cho khách hàng trước khi tạo tài khoản.');
+            return redirectBack();
+        }
+        if (!lead.branch) {
+            lead.branch = chosenBranch;
+            await lead.save();
+        }
         const client = await clientManagementService.createClient({
             name: lead.name.trim(),
             email,
             password,
             phone: lead.phone || undefined,
-            branch: lead.branch,
+            branch: chosenBranch,
             status: 'Active'
         });
         await sendClientWelcomeEmail(client, 'lead_convert');

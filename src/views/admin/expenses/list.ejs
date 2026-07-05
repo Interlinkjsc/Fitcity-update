@@ -15,7 +15,7 @@
                 <option value="1">Q1</option><option value="2">Q2</option><option value="3">Q3</option><option value="4">Q4</option>
             </select>
             <select name="year" class="text-xs border border-slate-300 rounded-lg py-2 px-2">
-                <% for (let y = 2024; y <= new Date().getFullYear()+5; y++) { %><option value="<%= y %>" <%= y === new Date().getFullYear() ? 'selected' : '' %>><%= y %></option><% } %>
+                <% for (let y = 2024; y <= new Date().getFullYear()+10; y++) { %><option value="<%= y %>" <%= y === new Date().getFullYear() ? 'selected' : '' %>><%= y %></option><% } %>
             </select>
             <button type="submit" class="text-xs font-bold text-indigo-600 hover:underline">Excel quý</button>
         </form>

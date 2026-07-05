@@ -24,6 +24,7 @@ router.post(
     checkPermission('leads', 'manage'),
     leadController.updateLeadStatus
 );
+router.post('/admin/leads/detail/:id/branch', protect, checkPermission('leads', 'view'), leadController.updateLeadBranch);
 router.post(
     '/admin/leads/detail/:id/convert',
     protect,

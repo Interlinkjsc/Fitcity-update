@@ -189,7 +189,8 @@
                             </td>
                             <td class="p-4 text-center">
                                 <div class="flex items-center justify-center gap-2 text-slate-400">
-                                    <a href="/admin/contracts/download/<%= contract._id %>" class="hover:text-emerald-600 transition-colors bg-slate-50 p-1.5 rounded" title="Xuất PDF Hợp đồng">
+                                    <%# Bug 6/7 #5: ẩn download PDF (form không đúng mẫu) — dùng View & In trong chi tiết HĐ %>
+                                    <a href="/admin/contracts/download/<%= contract._id %>" style="display:none" class="hover:text-emerald-600 transition-colors bg-slate-50 p-1.5 rounded" title="Xuất PDF Hợp đồng">
                                         <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                                         </svg>

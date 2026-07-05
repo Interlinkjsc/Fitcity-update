@@ -35,7 +35,13 @@
                          alt="<%= lead.name %>" 
                          class="w-24 h-24 mx-auto rounded-full border-4 border-white shadow-md mb-4">
                     <h3 class="text-xl font-bold text-slate-800"><%= lead.name %></h3>
-                    <p class="text-sm text-slate-500 mt-1"><%= lead.phone %></p>
+                    <p class="text-sm text-slate-500 mt-1">
+                        <a href="tel:<%= lead.phone %>" class="hover:text-lime-600 font-medium"><%= lead.phone %></a>
+                        <% if (lead.phone) { %>
+                        · <a href="tel:<%= lead.phone %>" class="text-lime-600 font-semibold hover:underline">Gọi</a>
+                        · <a href="sms:<%= lead.phone %>" class="text-blue-600 font-semibold hover:underline">Nhắn tin</a>
+                        <% } %>
+                    </p>
                     <p class="text-sm text-slate-500"><%= lead.email || 'Chưa có email' %></p>
                 </div>
 
@@ -59,6 +65,15 @@
                     <div>
                         <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider mb-1">Chi nhánh</p>
                         <p class="font-medium text-slate-800"><%= lead.branch ? lead.branch.name : 'Chưa chọn' %></p>
+                        <form action="/admin/leads/detail/<%= lead._id %>/branch" method="POST" class="flex items-center gap-2 mt-2">
+                            <select name="branchId" class="text-xs border border-slate-300 rounded-lg px-2 py-1.5 flex-1 min-w-0">
+                                <option value="">-- Chọn chi nhánh --</option>
+                                <% (typeof allBranches !== 'undefined' ? allBranches : []).forEach(b => { %>
+                                <option value="<%= b._id %>" <%= lead.branch && String(lead.branch._id) === String(b._id) ? 'selected' : '' %>><%= b.name %></option>
+                                <% }) %>
+                            </select>
+                            <button type="submit" class="text-xs px-3 py-1.5 bg-lime-500 hover:bg-lime-600 text-slate-900 font-bold rounded-lg shrink-0">Lưu</button>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -120,6 +135,14 @@
                         <h5 class="text-sm font-bold text-violet-800 mb-2">Chuyển thành hội viên</h5>
                         <p class="text-xs text-slate-500 mb-3">Email: <strong><%= lead.email %></strong></p>
                         <form action="/admin/leads/detail/<%= lead._id %>/convert" method="POST" class="space-y-3 max-w-md">
+                            <% if (!lead.branch) { %>
+                            <select name="branchId" required class="w-full text-sm border border-slate-300 rounded-lg px-3 py-2">
+                                <option value="">-- Chọn chi nhánh cho khách hàng * --</option>
+                                <% (typeof allBranches !== 'undefined' ? allBranches : []).forEach(b => { %>
+                                <option value="<%= b._id %>"><%= b.name %></option>
+                                <% }) %>
+                            </select>
+                            <% } %>
                             <input type="password" name="password" required minlength="6" autocomplete="new-password" placeholder="Mật khẩu (≥6 ký tự)" class="w-full border border-slate-300 rounded-lg py-2 px-3 text-sm">
                             <input type="password" name="confirmPassword" required minlength="6" autocomplete="new-password" placeholder="Xác nhận mật khẩu" class="w-full border border-slate-300 rounded-lg py-2 px-3 text-sm">
                             <button type="submit" class="px-4 py-2 bg-violet-600 text-white text-sm font-bold rounded-lg hover:bg-violet-700">Tạo tài khoản &amp; liên kết</button>

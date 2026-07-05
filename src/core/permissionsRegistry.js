@@ -49,11 +49,16 @@ const PERMISSIONS = [
     { id: 'user_management.manage', resource: 'user_management', action: 'manage', label: 'Sửa chi nhánh', group: 'Tổ chức', suggestedRoles: ['Admin', 'SA'] },
     { id: 'user_management.delete', resource: 'user_management', action: 'delete', label: 'Xóa chi nhánh', group: 'Tổ chức', suggestedRoles: ['Admin', 'SA'] },
     { id: 'branch_dashboard.view', resource: 'branch_dashboard', action: 'view', label: 'Dashboard chi nhánh', group: 'Tổ chức', suggestedRoles: ['CEO', 'Manager', 'Admin'], menuKey: 'branches' },
-    { id: 'staff_management.view', resource: 'staff_management', action: 'view', label: 'Xem nhân sự / KH admin', group: 'Tổ chức', suggestedRoles: ['Admin', 'Manager', 'Sales'], menuKey: 'users' },
-    { id: 'staff_management.create', resource: 'staff_management', action: 'create', label: 'Tạo nhân sự / KH', group: 'Tổ chức', suggestedRoles: ['Admin', 'Manager', 'Sales'] },
-    { id: 'staff_management.update', resource: 'staff_management', action: 'update', label: 'Sửa nhân sự / KH', group: 'Tổ chức', suggestedRoles: ['Admin', 'Manager', 'Sales'] },
+    { id: 'staff_management.view', resource: 'staff_management', action: 'view', label: 'Xem nhân sự', group: 'Tổ chức', suggestedRoles: ['Admin', 'Manager'], menuKey: 'users' },
+    { id: 'staff_management.create', resource: 'staff_management', action: 'create', label: 'Tạo nhân sự', group: 'Tổ chức', suggestedRoles: ['Admin', 'Manager'] },
+    { id: 'staff_management.update', resource: 'staff_management', action: 'update', label: 'Sửa nhân sự', group: 'Tổ chức', suggestedRoles: ['Admin', 'Manager'] },
     { id: 'staff_management.manage', resource: 'staff_management', action: 'manage', label: 'Quản lý nhân sự (nâng cao)', group: 'Tổ chức', suggestedRoles: ['Admin'] },
-    { id: 'staff_management.delete', resource: 'staff_management', action: 'delete', label: 'Xóa nhân sự / KH', group: 'Tổ chức', suggestedRoles: ['Admin'] },
+    { id: 'staff_management.delete', resource: 'staff_management', action: 'delete', label: 'Xóa nhân sự', group: 'Tổ chức', suggestedRoles: ['Admin'] },
+    // Bug 6/7 #25: tách quyền KHÁCH HÀNG khỏi quyền NHÂN SỰ — sale/mkt chỉ được KH
+    { id: 'client_management.view', resource: 'client_management', action: 'view', label: 'Xem khách hàng', group: 'CRM & Marketing', suggestedRoles: ['Admin', 'Manager', 'Sales', 'Marketing'], menuKey: 'clients' },
+    { id: 'client_management.create', resource: 'client_management', action: 'create', label: 'Tạo khách hàng', group: 'CRM & Marketing', suggestedRoles: ['Admin', 'Manager', 'Sales', 'Marketing'] },
+    { id: 'client_management.update', resource: 'client_management', action: 'update', label: 'Sửa khách hàng', group: 'CRM & Marketing', suggestedRoles: ['Admin', 'Manager', 'Sales', 'Marketing'] },
+    { id: 'client_management.delete', resource: 'client_management', action: 'delete', label: 'Xóa khách hàng', group: 'CRM & Marketing', suggestedRoles: ['Admin'] },
 
     // CRM
     { id: 'leads.view', resource: 'leads', action: 'view', label: 'Xem leads', group: 'CRM & Marketing', suggestedRoles: ['Admin', 'Manager', 'Marketing'], menuKey: 'leads' },

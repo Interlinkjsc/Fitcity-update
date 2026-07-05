@@ -6,9 +6,20 @@
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
 <style type="text/css">
     @media print {
-        body { background-color: #fff !important; padding: 0 !important; }
+        /* Bug 6/7 #6: trang gốc rộng 892px > khổ A4 (~794px) → tràn lề, vỡ form khi in.
+           Ép khổ A4, thu tỉ lệ và ngắt trang đúng theo từng page div. */
+        @page { size: A4 portrait; margin: 0; }
+        html, body { width: 892px; }
+        body { background-color: #fff !important; padding: 0 !important; margin: 0 !important; }
         .no-print { display: none !important; }
-        div[id$="-div"] { box-shadow: none !important; margin-bottom: 0 !important; }
+        div[id$="-div"] {
+            box-shadow: none !important;
+            margin: 0 !important;
+            page-break-after: always;
+            break-inside: avoid;
+            zoom: 0.888;
+        }
+        div[id$="-div"]:last-of-type { page-break-after: auto; }
     }
     .no-print {
         position: fixed; top: 20px; right: 20px; z-index: 1000;

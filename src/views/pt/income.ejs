@@ -36,7 +36,7 @@
                             </div>
                             <div class="relative flex-1">
                                 <select name="year" class="w-full appearance-none bg-white border border-slate-200 rounded-2xl text-xs font-black py-4 px-5 focus:border-primary outline-none transition-all">
-                                    <% for(let y=2024; y<=new Date().getFullYear()+5; y++) { %>
+                                    <% for(let y=2024; y<=new Date().getFullYear()+10; y++) { %>
                                         <option value="<%= y %>" <%= y == year ? 'selected' : '' %>><%= y %></option>
                                     <% } %>
                                 </select>

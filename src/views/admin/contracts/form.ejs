@@ -352,7 +352,11 @@
 
             <div class="pt-6 border-t border-slate-100">
                 <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Huấn luyện viên (PT)</label>
-                <select id="pt" name="pt" class="w-full border border-slate-300 rounded-lg text-sm py-2.5 px-3 focus:ring-2 focus:ring-green-500 outline-none transition-all">
+                <%# Bug 6/7 #7: ô lọc nhanh PT theo tên — tránh chọn nhầm khi danh sách dài %>
+                <input type="text" id="pt-filter" placeholder="Gõ tên PT để lọc nhanh..." autocomplete="off"
+                    class="w-full border border-slate-200 rounded-lg text-sm py-2 px-3 mb-2 focus:ring-2 focus:ring-green-500 outline-none bg-slate-50"
+                    oninput="(function(v){const sel=document.getElementById('pt');const q=v.trim().toLowerCase();let firstVisible=null;for(const opt of sel.options){if(!opt.value){opt.hidden=false;continue;}const match=!q||opt.text.toLowerCase().includes(q);opt.hidden=!match;if(match&&!firstVisible)firstVisible=opt;}if(q&&firstVisible)sel.value=firstVisible.value;})(this.value)">
+                <select id="pt" name="pt" size="1" class="w-full border border-slate-300 rounded-lg text-sm py-2.5 px-3 focus:ring-2 focus:ring-green-500 outline-none transition-all">
                     <option value="">-- Không sử dụng PT --</option>
                     <% if(typeof pts !== 'undefined') { %>
                         <% pts.forEach(p => { %>

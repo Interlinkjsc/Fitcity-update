@@ -22,10 +22,10 @@ exports.storePayment = async (req, res, next) => {
 
         // Lấy contract để biết clientId
         const contract = await Contract.findById(contractId);
-        if (!contractDoc) {
+        if (!contract) {
             return denyContractAccess(req, res, null);
         }
-        if (!contractScope.canAccessContract(req.session.user, contractDoc)) {
+        if (!contractScope.canAccessContract(req.session.user, contract)) {
             return denyContractAccess(req, res, contract);
         }
 

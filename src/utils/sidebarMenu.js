@@ -191,8 +191,8 @@ const MENU_ITEMS = [
         label: 'Quản lý Khách hàng',
         href: '/admin/clients/list',
         icon: 'people',
-        permission: { resource: 'staff_management', action: 'view' },
-        roles: ['Admin', 'Manager', 'SA', 'Sales'],
+        permission: { resource: 'client_management', action: 'view' },
+        roles: ['Admin', 'Manager', 'SA', 'Sales', 'Marketing'],
     },
     {
         key: 'contracts',

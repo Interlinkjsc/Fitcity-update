@@ -5,13 +5,13 @@ const { protect, checkPermission } = require('../../../middlewares/authMiddlewar
 
 router.use(protect);
 
-router.get('/list', checkPermission('staff_management', 'view'), clientManagementController.getClientList);
-router.get('/create', checkPermission('staff_management', 'create'), clientManagementController.getCreateForm);
-router.post('/store', checkPermission('staff_management', 'create'), clientManagementController.storeClient);
-router.get('/edit/:id', checkPermission('staff_management', 'update'), clientManagementController.getEditForm);
-router.post('/update/:id', checkPermission('staff_management', 'update'), clientManagementController.updateClient);
-router.post('/delete/:id', checkPermission('staff_management', 'delete'), clientManagementController.deleteClient);
-router.get('/detail/:id', checkPermission('staff_management', 'view'), clientManagementController.getDetail);
+router.get('/list', checkPermission('client_management', 'view'), clientManagementController.getClientList);
+router.get('/create', checkPermission('client_management', 'create'), clientManagementController.getCreateForm);
+router.post('/store', checkPermission('client_management', 'create'), clientManagementController.storeClient);
+router.get('/edit/:id', checkPermission('client_management', 'update'), clientManagementController.getEditForm);
+router.post('/update/:id', checkPermission('client_management', 'update'), clientManagementController.updateClient);
+router.post('/delete/:id', checkPermission('client_management', 'delete'), clientManagementController.deleteClient);
+router.get('/detail/:id', checkPermission('client_management', 'view'), clientManagementController.getDetail);
 
 module.exports = router;
 
