@@ -40,6 +40,10 @@ exports.storePackage = async (req, res, next) => {
         req.flash('success_msg', 'Tạo gói tập mới thành công!');
         res.redirect('/admin/packages/list');
     } catch (err) {
+        if (err && err.code === 11000) {
+            req.flash('error_msg', 'Tên gói tập đã tồn tại — vui lòng đặt tên khác.');
+            return res.redirect('/admin/packages/create');
+        }
         if (err.name === 'ValidationError') {
             const messages = Object.values(err.errors).map(val => val.message).join(', ');
             req.flash('error_msg', messages);
@@ -76,6 +80,10 @@ exports.updatePackage = async (req, res, next) => {
         req.flash('success_msg', 'Cập nhật gói tập thành công!');
         res.redirect('/admin/packages/list');
     } catch (err) {
+        if (err && err.code === 11000) {
+            req.flash('error_msg', 'Tên gói tập đã tồn tại — vui lòng đặt tên khác.');
+            return res.redirect('/admin/packages');
+        }
         if (err.name === 'ValidationError') {
             const messages = Object.values(err.errors).map(val => val.message).join(', ');
             req.flash('error_msg', messages);

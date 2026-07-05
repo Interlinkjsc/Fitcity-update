@@ -10,7 +10,7 @@ const servicePackageSchema = new mongoose.Schema({
         type: String,
         required: [true, 'Loại gói tập là bắt buộc'],
         enum: {
-            values: ['Gym', 'Gym Kids', 'Pilates'],
+            values: ['Gym', 'Gym Kids', 'Pilates', 'Khác'],
             message: '{VALUE} không phải là loại gói tập hợp lệ'
         }
     },

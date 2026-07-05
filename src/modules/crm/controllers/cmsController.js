@@ -44,7 +44,7 @@ exports.store = async (req, res, next) => {
             seoDescription,
             published: isPublished,
             publishedAt: isPublished ? new Date() : undefined,
-            author: req.user._id
+            author: (req.user && (req.user._id || req.user.id)) || (req.session.user && req.session.user.id)
         });
         req.flash('success_msg', 'Đã tạo nội dung CMS.');
         res.redirect('/admin/cms');

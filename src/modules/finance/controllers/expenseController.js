@@ -65,10 +65,14 @@ async function syncExpenseDriveUpload(expense, uploadMeta) {
         expense.invoiceImage = uploadMeta.publicUrl;
     }
     await expense.save();
-    try {
-        if (fs.existsSync(uploadMeta.path)) fs.unlinkSync(uploadMeta.path);
-    } catch (_) {
-        /* ignore */
+    // Bug 6/7 #21: chưa có Google Drive → giữ file local để xem chứng từ tại /uploads;
+    // chỉ xóa file tạm khi đã đẩy thành công lên Drive.
+    if (driveId) {
+        try {
+            if (fs.existsSync(uploadMeta.path)) fs.unlinkSync(uploadMeta.path);
+        } catch (_) {
+            /* ignore */
+        }
     }
 }
 

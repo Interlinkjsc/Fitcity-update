@@ -28,7 +28,7 @@ exports.store = async (req, res, next) => {
             description,
             mediaType: mediaType || 'image',
             tags: tagList,
-            uploadedBy: req.user._id
+            uploadedBy: (req.user && (req.user._id || req.user.id)) || (req.session.user && req.session.user.id)
         };
 
         if (req.contentUpload) {

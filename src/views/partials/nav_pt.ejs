@@ -112,7 +112,23 @@
 
     async function startScanner() {
         if (isScanning) return;
-        
+
+        // Bug 6/7 #P2: camera cần secure context. Nếu đang mở qua http (IP) → hướng dẫn sang HTTPS.
+        if (!window.isSecureContext) {
+            const warn = document.getElementById('cameraWarning');
+            const reader = document.getElementById('scanReader');
+            if (warn) {
+                warn.classList.remove('hidden');
+                warn.querySelector('p.text-\\[10px\\]')?.remove();
+                const p = document.createElement('p');
+                p.className = 'text-[10px] text-amber-700 mt-0.5';
+                p.innerHTML = 'Trình duyệt chặn camera vì trang không bảo mật. Hãy mở <strong>https://erp.fitcity.fit</strong> (có khoá xanh) hoặc <strong>nhập mã thủ công</strong> bên dưới.';
+                warn.appendChild(p);
+            }
+            if (reader) reader.classList.add('hidden');
+            return;
+        }
+
         try {
             if (!html5QrcodeScanner) {
                 html5QrcodeScanner = new Html5Qrcode('scanReader');

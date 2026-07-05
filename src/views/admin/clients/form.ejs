@@ -67,6 +67,50 @@
                     class="block w-full rounded-md border-slate-300 shadow-sm focus:border-lime-500 focus:ring focus:ring-lime-500 text-sm py-2 px-3 border bg-white">
             </div>
 
+            <%# Bug 6/7 #11: cac truong theo form hop dong mau %>
+            <div>
+                <label for="cccdNumber" class="block text-sm font-medium text-slate-700 mb-1">Số CCCD / Hộ chiếu</label>
+                <input type="text" id="cccdNumber" name="cccdNumber" value="<%= clientData && clientData.cccdNumber ? clientData.cccdNumber : '' %>"
+                    class="block w-full rounded-md border-slate-300 shadow-sm focus:border-lime-500 focus:ring focus:ring-lime-500 text-sm py-2 px-3 border bg-white">
+            </div>
+            <div>
+                <label for="cccdIssueDate" class="block text-sm font-medium text-slate-700 mb-1">Ngày cấp CCCD</label>
+                <input type="date" id="cccdIssueDate" name="cccdIssueDate"
+                    value="<%= clientData && clientData.cccdIssueDate ? new Date(clientData.cccdIssueDate).toISOString().split('T')[0] : '' %>"
+                    class="block w-full rounded-md border-slate-300 shadow-sm focus:border-lime-500 focus:ring focus:ring-lime-500 text-sm py-2 px-3 border bg-white">
+            </div>
+            <div>
+                <label for="cccdIssuePlace" class="block text-sm font-medium text-slate-700 mb-1">Nơi cấp CCCD</label>
+                <input type="text" id="cccdIssuePlace" name="cccdIssuePlace" value="<%= clientData && clientData.cccdIssuePlace ? clientData.cccdIssuePlace : '' %>"
+                    class="block w-full rounded-md border-slate-300 shadow-sm focus:border-lime-500 focus:ring focus:ring-lime-500 text-sm py-2 px-3 border bg-white">
+            </div>
+            <div>
+                <label for="gender" class="block text-sm font-medium text-slate-700 mb-1">Giới tính</label>
+                <select id="gender" name="gender" class="block w-full rounded-md border-slate-300 shadow-sm focus:border-lime-500 focus:ring focus:ring-lime-500 text-sm py-2 px-3 border bg-white">
+                    <option value="">-- Chọn --</option>
+                    <% ['Nam','Nữ','Khác'].forEach(g => { %>
+                    <option value="<%= g %>" <%= clientData && clientData.gender === g ? 'selected' : '' %>><%= g %></option>
+                    <% }) %>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Người liên hệ khẩn cấp</label>
+                <input type="text" name="emergencyContact[name]" placeholder="Họ tên"
+                    value="<%= clientData && clientData.emergencyContact && clientData.emergencyContact.name ? clientData.emergencyContact.name : '' %>"
+                    class="block w-full rounded-md border-slate-300 shadow-sm focus:border-lime-500 focus:ring focus:ring-lime-500 text-sm py-2 px-3 border bg-white">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">SĐT khẩn cấp / Quan hệ</label>
+                <div class="grid grid-cols-2 gap-2">
+                    <input type="tel" name="emergencyContact[phone]" placeholder="SĐT"
+                        value="<%= clientData && clientData.emergencyContact && clientData.emergencyContact.phone ? clientData.emergencyContact.phone : '' %>"
+                        class="block w-full rounded-md border-slate-300 shadow-sm focus:border-lime-500 focus:ring focus:ring-lime-500 text-sm py-2 px-3 border bg-white">
+                    <input type="text" name="emergencyContact[relationship]" placeholder="VD: Bố / Mẹ"
+                        value="<%= clientData && clientData.emergencyContact && clientData.emergencyContact.relationship ? clientData.emergencyContact.relationship : '' %>"
+                        class="block w-full rounded-md border-slate-300 shadow-sm focus:border-lime-500 focus:ring focus:ring-lime-500 text-sm py-2 px-3 border bg-white">
+                </div>
+            </div>
+
             <div>
                 <label for="status" class="block text-sm font-medium text-slate-700 mb-1">Trạng thái tài khoản</label>
                 <select id="status" name="status" class="block w-full rounded-md border-slate-300 shadow-sm focus:border-lime-500 focus:ring focus:ring-lime-500 text-sm py-2 px-3 border bg-white">

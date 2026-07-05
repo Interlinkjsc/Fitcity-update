@@ -33,6 +33,8 @@ exports.getAdminSettingsPage = async (req, res, next) => {
         const slotImages = await WebSlotImage.find().sort({ slotId: 1 }).lean();
         const branches = await WebBranch.find({ published: true }).sort({ sort: 1 }).select('slug name').lean();
         const KNOWN_SLOTS = [
+            { id: 'logo', label: 'Logo website (header)' },
+            { id: 'logo-dark', label: 'Logo footer (nền tối)' },
             { id: 'home-featured', label: 'Trang chủ — ảnh nổi bật' },
             { id: 'home-pose-before', label: 'Trang chủ — tư thế TRƯỚC' },
             { id: 'home-pose-after', label: 'Trang chủ — tư thế SAU' },
@@ -76,6 +78,15 @@ exports.uploadSlotImage = async (req, res, next) => {
             { slotId, mediaKey: req.slotUpload.key },
             { upsert: true, new: true }
         );
+        // Bug 6/7 #24: upload logo qua slot 'logo'/'logo-dark' → tự cập nhật setting tương ứng
+        if (slotId === 'logo' || slotId === 'logo-dark') {
+            const settingKey = slotId === 'logo' ? 'logo_key' : 'logo_dark_key';
+            await WebSetting.findOneAndUpdate(
+                { key: settingKey },
+                { key: settingKey, value: req.slotUpload.key },
+                { upsert: true }
+            );
+        }
         req.flash('success_msg', `Đã cập nhật ảnh cho vị trí "${slotId}". Website sẽ hiển thị ảnh mới ngay.`);
         res.redirect('/admin/website/settings');
     } catch (err) { next(err); }

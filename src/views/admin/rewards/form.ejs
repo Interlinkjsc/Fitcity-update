@@ -16,6 +16,10 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div>
                 <label class="block text-xs font-semibold text-slate-600 mb-1.5 uppercase tracking-wider">Khách hàng <span class="text-red-500">*</span></label>
+                <%# Bug 6/7 #23: lọc nhanh KH theo tên %>
+                <input type="text" placeholder="Gõ tên KH để lọc nhanh..." autocomplete="off"
+                    class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm mb-2 bg-slate-50 focus:ring-2 focus:ring-lime-500 outline-none"
+                    oninput="(function(v){const sel=document.querySelector('[name=clientId]');const q=v.trim().toLowerCase();let first=null;for(const o of sel.options){if(!o.value){o.hidden=false;continue;}const m=!q||o.text.toLowerCase().includes(q);o.hidden=!m;if(m&&!first)first=o;}if(q&&first)sel.value=first.value;})(this.value)">
                 <select name="clientId" required class="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-lime-500 outline-none">
                     <option value="">-- Chọn khách hàng --</option>
                     <% clients.forEach(c => { %>
