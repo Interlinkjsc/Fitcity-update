@@ -83,7 +83,9 @@
     </div>
 </div>
 
-<script src="https://unpkg.com/html5-qrcode@2.3.10/html5-qrcode.min.js"></script>
+<%# Bug camera: unpkg 2.3.10 KHÔNG tồn tại (CDN trả text lỗi) → thư viện chưa bao giờ load.
+   Tự host bản 2.3.8 trong /public/js — không phụ thuộc CDN. %>
+<script src="/js/html5-qrcode.min.js"></script>
 <script>
     let html5QrcodeScanner;
     let isScanning = false;
@@ -129,31 +131,54 @@
             return;
         }
 
+        const showCameraError = (msg) => {
+            const warn = document.getElementById('cameraWarning');
+            const reader = document.getElementById('scanReader');
+            if (warn) {
+                warn.classList.remove('hidden');
+                let detail = warn.querySelector('[data-cam-err]');
+                if (!detail) {
+                    detail = document.createElement('p');
+                    detail.setAttribute('data-cam-err', '');
+                    detail.className = 'text-[10px] text-amber-700 mt-0.5';
+                    warn.appendChild(detail);
+                }
+                detail.innerHTML = msg;
+            }
+            if (reader) reader.classList.add('hidden');
+        };
+
+        if (typeof Html5Qrcode === 'undefined') {
+            showCameraError('Không tải được bộ quét QR. Kéo xuống làm mới trang rồi thử lại; nếu vẫn lỗi hãy <strong>nhập mã thủ công</strong> bên dưới.');
+            return;
+        }
+
         try {
             if (!html5QrcodeScanner) {
                 html5QrcodeScanner = new Html5Qrcode('scanReader');
             }
-            
-            const cams = await Html5Qrcode.getCameras();
-            if (!cams || cams.length === 0) {
-                document.getElementById('cameraWarning').classList.remove('hidden');
-                document.getElementById('scanReader').classList.add('hidden');
-                return;
-            }
-            
-            const camId = cams[0].id;
+            document.getElementById('scanReader').classList.remove('hidden');
             isScanning = true;
-            
+            // Gọi start() trực tiếp — tự bật hộp xin quyền camera, ưu tiên camera sau.
+            // (KHÔNG gọi getCameras() trước: trên iOS bước đó fail khi chưa cấp quyền.)
             await html5QrcodeScanner.start(
-                { facingMode: "environment" }, // Prefer back camera
+                { facingMode: 'environment' },
                 { fps: 10, qrbox: { width: 220, height: 220 } },
                 onScanSuccess
             );
         } catch (e) {
             console.error('Lỗi khởi động camera:', e);
             isScanning = false;
-            document.getElementById('cameraWarning').classList.remove('hidden');
-            document.getElementById('scanReader').classList.add('hidden');
+            const name = (e && (e.name || String(e))) || '';
+            if (/NotAllowed|Permission/i.test(name)) {
+                showCameraError('Bạn đã <strong>chặn quyền camera</strong> cho trang này. Vào cài đặt trình duyệt → Quyền → Camera → Cho phép, rồi mở lại.');
+            } else if (/NotFound|Overconstrained/i.test(name)) {
+                showCameraError('Không tìm thấy camera trên thiết bị. Dùng <strong>nhập mã thủ công</strong> bên dưới.');
+            } else if (/NotReadable|TrackStart/i.test(name)) {
+                showCameraError('Camera đang bị ứng dụng khác chiếm. Đóng các app camera/video rồi thử lại.');
+            } else {
+                showCameraError('Không mở được camera (' + name + '). Thử làm mới trang hoặc <strong>nhập mã thủ công</strong>.');
+            }
         }
     }
 
