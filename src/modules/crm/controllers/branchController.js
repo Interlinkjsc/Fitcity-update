@@ -8,8 +8,18 @@ exports.getBranchList = async (req, res, next) => {
         const limit = 10;
         const skip = (page - 1) * limit;
 
-        const totalDocs = await Branch.countDocuments();
-        const branches = await Branch.find()
+        // Bug 6/7 #3: ô tìm kiếm chi nhánh theo tên / địa chỉ
+        const filters = {};
+        if (req.query.search && req.query.search.trim()) {
+            const escaped = req.query.search.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            filters.$or = [
+                { name: { $regex: escaped, $options: 'i' } },
+                { address: { $regex: escaped, $options: 'i' } }
+            ];
+        }
+
+        const totalDocs = await Branch.countDocuments(filters);
+        const branches = await Branch.find(filters)
             .populate('manager', 'name email')
             .sort({ createdAt: -1 })
             .skip(skip)
