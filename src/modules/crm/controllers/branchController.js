@@ -8,22 +8,26 @@ exports.getBranchList = async (req, res, next) => {
         const limit = 10;
         const skip = (page - 1) * limit;
 
-        // Bug 6/7 #3: ô tìm kiếm chi nhánh theo tên / địa chỉ
-        const filters = {};
-        if (req.query.search && req.query.search.trim()) {
-            const escaped = req.query.search.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            filters.$or = [
-                { name: { $regex: escaped, $options: 'i' } },
-                { address: { $regex: escaped, $options: 'i' } }
-            ];
-        }
+        // Bug 6/7 #3: tìm chi nhánh theo tên / địa chỉ — KHÔNG phân biệt dấu tiếng Việt
+        // (danh sách chi nhánh nhỏ nên lọc trong bộ nhớ sau khi bỏ dấu 2 phía)
+        const stripAccents = (str) => String(str || '')
+            .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+            .replace(/[đĐ]/g, 'd')
+            .toLowerCase();
+        const searchQ = (req.query.search || '').trim();
 
-        const totalDocs = await Branch.countDocuments(filters);
-        const branches = await Branch.find(filters)
+        let allBranches = await Branch.find()
             .populate('manager', 'name email')
             .sort({ createdAt: -1 })
-            .skip(skip)
-            .limit(limit);
+            .lean();
+        if (searchQ) {
+            const q = stripAccents(searchQ);
+            allBranches = allBranches.filter(b =>
+                stripAccents(b.name).includes(q) || stripAccents(b.address).includes(q)
+            );
+        }
+        const totalDocs = allBranches.length;
+        const branches = allBranches.slice(skip, skip + limit);
 
         const pagination = getPagination(totalDocs, page, limit);
 
