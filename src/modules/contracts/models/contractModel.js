@@ -191,25 +191,32 @@ contractSchema.set('toJSON', { virtuals: true });
 contractSchema.set('toObject', { virtuals: true });
 
 contractSchema.pre('save', async function(next) {
-    if (!this.contractCode) {
+    // Bug 23/7 A14: mã HĐ theo format FitCity `DD.MM.YYYY/<tên viết tắt KH>`.
+    // Nếu admin/khách đã tự điền contractCode → giữ nguyên (chỉ chuẩn hoá khoảng trắng).
+    if (this.contractCode) {
+        this.contractCode = String(this.contractCode).trim();
+    } else {
         const date = new Date();
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        
-        // Find the last contract created in this month
-        const lastContract = await this.constructor.findOne(
-            { contractCode: new RegExp(`^FMS-${year}-${month}-`) },
-            { contractCode: 1 }
-        ).sort({ contractCode: -1 });
+        const dd = String(date.getDate()).padStart(2, '0');
+        const mm = String(date.getMonth() + 1).padStart(2, '0');
+        const yyyy = date.getFullYear();
+        const datePart = `${dd}.${mm}.${yyyy}`;
 
-        let sequenceNumber = 1;
-        if (lastContract && lastContract.contractCode) {
-            const parts = lastContract.contractCode.split('-');
-            sequenceNumber = parseInt(parts[3], 10) + 1;
+        // Viết tắt tên KH (chữ cái đầu mỗi từ, tối đa 4 ký tự)
+        let initials = 'KH';
+        if (this._clientNameForCode) {
+            const words = String(this._clientNameForCode).trim().split(/\s+/).filter(Boolean);
+            initials = words.map(w => w[0]).join('').toUpperCase().slice(0, 4) || 'KH';
         }
 
-        const formattedSequence = String(sequenceNumber).padStart(4, '0');
-        this.contractCode = `FMS-${year}-${month}-${formattedSequence}`;
+        // Chống trùng: nếu đã có mã cùng ngày+tên → thêm hậu tố -2, -3...
+        let candidate = `${datePart}/${initials}`;
+        let n = 1;
+        while (await this.constructor.exists({ contractCode: candidate })) {
+            n++;
+            candidate = `${datePart}/${initials}-${n}`;
+        }
+        this.contractCode = candidate;
     }
     
     // Set EndDates initially if they are not set. Note: Validation ensures endDate exists.

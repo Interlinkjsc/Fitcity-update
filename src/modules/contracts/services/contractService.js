@@ -174,7 +174,26 @@ exports.createContract = async (data) => {
         explicit: explicitRevenueSource
     });
 
+    // Bug 23/7 A14: mã HĐ theo format DD.MM.YYYY/<viết tắt KH> — ưu tiên mã khách tự điền.
+    let contractCode = (data.contractCode || '').trim() || undefined;
+    if (!contractCode) {
+        const User = require('../../users/models/userModel');
+        const clientDoc = await User.findById(clientId).select('name').lean();
+        const d = new Date();
+        const datePart = `${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(2, '0')}.${d.getFullYear()}`;
+        const words = String(clientDoc?.name || '').trim().split(/\s+/).filter(Boolean);
+        const initials = words.map(w => w[0]).join('').toUpperCase().slice(0, 4) || 'KH';
+        let candidate = `${datePart}/${initials}`;
+        let n = 1;
+        while (await Contract.exists({ contractCode: candidate })) {
+            n++;
+            candidate = `${datePart}/${initials}-${n}`;
+        }
+        contractCode = candidate;
+    }
+
     const contract = await Contract.create({
+        contractCode,
         client: clientId,
         servicePackage: packageId || undefined,
         packageSnapshot: {
