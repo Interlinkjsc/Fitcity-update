@@ -472,7 +472,8 @@
                                         (contract.paidAmount || 0))) %>
                                 </td>
                                 <td class="p-4 text-center">
-                                    <a href="/admin/contracts/edit/<%= contract._id %>"
+                                    <%# Bug 23/7 A11: nhảy vào chi tiết HĐ để chọn thanh toán (HĐ đã trả đủ không còn trong danh sách) %>
+                                    <a href="/admin/contracts/detail/<%= contract._id %>#payment"
                                         class="px-4 py-1.5 bg-lime-500 hover:bg-lime-600 text-slate-900 text-[11px] font-bold rounded-lg shadow-sm transition-colors tracking-wide">Duyệt
                                         thu ngay</a>
                                 </td>

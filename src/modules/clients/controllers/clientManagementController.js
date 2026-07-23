@@ -241,3 +241,109 @@ exports.deleteClient = async (req, res, next) => {
     }
 };
 
+
+// Bug 23/7 A16: Xuất danh sách khách hàng ra Excel (.xlsx)
+exports.exportClients = async (req, res, next) => {
+    try {
+        const ExcelJS = require('exceljs');
+        const User = require('../../users/models/userModel.js');
+        const filters = { role: 'Client' };
+        if (req.session.user.role === 'Manager' && req.session.user.branch) {
+            filters.branch = req.session.user.branch;
+        }
+        const clients = await User.find(filters).populate('branch', 'name').sort({ createdAt: -1 });
+
+        const wb = new ExcelJS.Workbook();
+        const ws = wb.addWorksheet('Khách hàng');
+        ws.columns = [
+            { header: 'Họ tên', key: 'name', width: 24 },
+            { header: 'Số điện thoại', key: 'phone', width: 16 },
+            { header: 'Email', key: 'email', width: 26 },
+            { header: 'Số CCCD', key: 'cccd', width: 18 },
+            { header: 'Giới tính', key: 'gender', width: 10 },
+            { header: 'Ngày sinh', key: 'dob', width: 14 },
+            { header: 'Địa chỉ', key: 'address', width: 30 },
+            { header: 'Chi nhánh', key: 'branch', width: 22 },
+            { header: 'Trạng thái', key: 'status', width: 12 }
+        ];
+        ws.getRow(1).font = { bold: true };
+        clients.forEach(c => {
+            ws.addRow({
+                name: c.name || '',
+                phone: c.phone || '',
+                email: (c.email && !String(c.email).includes(':')) ? c.email : '',
+                cccd: c.cccdNumber || '',
+                gender: c.gender || '',
+                dob: c.dob ? new Date(c.dob).toLocaleDateString('vi-VN') : '',
+                address: c.address || '',
+                branch: c.branch ? c.branch.name : '',
+                status: c.status || ''
+            });
+        });
+
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename="danh_sach_kh_${Date.now()}.xlsx"`);
+        await wb.xlsx.write(res);
+        res.end();
+    } catch (err) { next(err); }
+};
+
+// Bug 23/7 A16: Import danh sách khách hàng từ Excel/CSV
+exports.importClients = async (req, res, next) => {
+    try {
+        if (!req.importFile || !req.importFile.path) {
+            req.flash('error_msg', 'Chưa chọn file danh sách (.xlsx hoặc .csv).');
+            return res.redirect('/admin/clients/list');
+        }
+        const ExcelJS = require('exceljs');
+        const fs = require('fs');
+        const wb = new ExcelJS.Workbook();
+        const path = req.importFile.path;
+        if (/\.csv$/i.test(req.importFile.filename || path)) {
+            await wb.csv.readFile(path);
+        } else {
+            await wb.xlsx.readFile(path);
+        }
+        const ws = wb.worksheets[0];
+        let created = 0, skipped = 0;
+        const rows = [];
+        ws.eachRow((row, idx) => { if (idx > 1) rows.push(row); });
+        for (const row of rows) {
+            const name = String(row.getCell(1).value || '').trim();
+            const phone = String(row.getCell(2).value || '').trim();
+            let email = row.getCell(3).value;
+            email = email && email.text ? email.text : String(email || '').trim();
+            const branchName = String(row.getCell(8).value || '').trim();
+            if (!name || !phone) { skipped++; continue; }
+            try {
+                const Branch = require('../../crm/models/branchModel.js');
+                let branchId = req.session.user.branch;
+                if (branchName) {
+                    const b = await Branch.findOne({ name: new RegExp('^' + branchName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', 'i') }).select('_id').lean();
+                    if (b) branchId = b._id;
+                }
+                await exports._createClientFromImport({ name, phone, email: email || `import_${Date.now()}_${created}@fitcity.temp`, branch: branchId,
+                    cccdNumber: String(row.getCell(4).value || '').trim() || undefined,
+                    gender: String(row.getCell(5).value || '').trim() || undefined,
+                    address: String(row.getCell(7).value || '').trim() || undefined });
+                created++;
+            } catch (e) { skipped++; }
+        }
+        try { fs.unlinkSync(path); } catch (_) {}
+        req.flash('success_msg', `Import hoàn tất: tạo mới ${created} khách hàng, bỏ qua ${skipped} dòng (thiếu tên/SĐT hoặc trùng).`);
+        res.redirect('/admin/clients/list');
+    } catch (err) {
+        req.flash('error_msg', 'Lỗi đọc file import: ' + err.message);
+        res.redirect('/admin/clients/list');
+    }
+};
+
+exports._createClientFromImport = async (data) => {
+    const clientManagementService = require('../services/clientManagementService');
+    const crypto = require('crypto');
+    return clientManagementService.createClient({
+        ...data,
+        password: crypto.randomBytes(5).toString('hex'),
+        status: 'Active'
+    });
+};

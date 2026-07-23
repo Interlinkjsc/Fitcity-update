@@ -125,7 +125,10 @@ exports.createViolation = async (req, res, next) => {
 
 exports.getEditViolation = async (req, res, next) => {
     try {
-        const violation = await Violation.findById(req.params.id);
+        // Bug 23/7 A2: populate staff → form giữ đúng nhân sự đã chọn, không bắt gõ lại tên.
+        const violation = await Violation.findById(req.params.id)
+            .populate('staff', 'name email role')
+            .lean();
         if (!violation) {
             req.flash('error_msg', 'Không tìm thấy thông tin vi phạm');
             return res.redirect('/admin/violations');
@@ -135,6 +138,10 @@ exports.getEditViolation = async (req, res, next) => {
             req.flash('error_msg', 'Không thể sửa vi phạm đã được tính vào lương');
             return res.redirect('/admin/violations');
         }
+
+        // Form dùng violation.staffInfo để hiển thị + violation.staff (id) cho hidden input.
+        violation.staffInfo = violation.staff && typeof violation.staff === 'object' ? violation.staff : null;
+        violation.staff = violation.staff && violation.staff._id ? String(violation.staff._id) : String(violation.staff || '');
 
         const staff = await User.find({ role: { $nin: ['Client'] }, status: 'Active' })
             .select('name email role');
