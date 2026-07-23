@@ -318,7 +318,8 @@ exports.importClients = async (req, res, next) => {
             try {
                 const Branch = require('../../crm/models/branchModel.js');
                 let branchId = req.session.user.branch;
-                // Bảo mật (codex review): Manager chỉ import vào chi nhánh mình; role khác mới được chọn theo tên.
+                // Bảo mật (codex review 2): Manager không có chi nhánh → không import (fail-closed).
+                if (req.session.user.role === 'Manager' && !branchId) { skipped++; continue; }
                 if (branchName && req.session.user.role !== 'Manager') {
                     const b = await Branch.findOne({ name: new RegExp('^' + branchName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', 'i') }).select('_id').lean();
                     if (b) branchId = b._id;

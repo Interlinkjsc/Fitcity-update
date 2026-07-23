@@ -155,16 +155,28 @@ exports.extendContract = async (contractId, months, paymentMethod, processedBy) 
     await contract.save();
 
     // Ghi giao dịch phí gia hạn SAU khi HĐ đã gia hạn thành công (phí riêng, không cộng paidAmount).
-    await PaymentTransaction.create({
-        contractId: contract._id,
-        clientId: contract.client,
-        amount: fee,
-        transactionType: 'Extension_Fee',
-        paymentMethod: paymentMethod || 'Cash',
-        status: 'Success',
-        notes: `Phí gia hạn hợp đồng ${m} tháng (${EXT_FEE_PER_MONTH.toLocaleString('vi-VN')} VNĐ/tháng)`,
-        processedBy: processedBy || null
-    });
+    // codex review 2: Mongo standalone không có transaction → nếu ghi phí lỗi, HOÀN TÁC gia hạn
+    // để tránh "gia hạn miễn phí".
+    try {
+        await PaymentTransaction.create({
+            contractId: contract._id,
+            clientId: contract.client,
+            amount: fee,
+            transactionType: 'Extension_Fee',
+            paymentMethod: paymentMethod || 'Cash',
+            status: 'Success',
+            notes: `Phí gia hạn hợp đồng ${m} tháng (${EXT_FEE_PER_MONTH.toLocaleString('vi-VN')} VNĐ/tháng)`,
+            processedBy: processedBy || null
+        });
+    } catch (txErr) {
+        // Rollback gia hạn
+        contract.currentEndDate = currentEnd;
+        contract.endDate = currentEnd;
+        contract.extensionMonthsUsed = used;
+        contract.pauseHistory.pop();
+        await contract.save();
+        throw new Error('Không ghi được phí gia hạn — đã hoàn tác. Vui lòng thử lại. (' + txErr.message + ')');
+    }
 
     return { contract, fee, months: m };
 };
