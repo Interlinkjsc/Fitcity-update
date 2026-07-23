@@ -51,9 +51,26 @@
                                    placeholder="09xx xxx xxx">
                         </div>
                         <div>
-                            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">CCCD / Passport (Bị khóa)</label>
-                            <input type="text" value="<%= user.cccdHash || 'Chưa cập nhật' %>" disabled
-                                   class="block w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-mono italic text-slate-400">
+                            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">CCCD / Passport</label>
+                            <input type="text" value="<%= user.cccdNumber || 'Chưa cập nhật' %>" disabled
+                                   class="block w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-500">
+                        </div>
+                        <%# Bug 23/7 C1: bổ sung các trường theo form HĐ %>
+                        <div>
+                            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Giới tính</label>
+                            <input type="text" value="<%= user.gender || 'Chưa cập nhật' %>" disabled class="block w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Ngày sinh</label>
+                            <input type="text" value="<%= user.dob ? new Date(user.dob).toLocaleDateString('vi-VN') : 'Chưa cập nhật' %>" disabled class="block w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Địa chỉ liên lạc</label>
+                            <input type="text" value="<%= user.address || 'Chưa cập nhật' %>" disabled class="block w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Liên hệ khẩn cấp</label>
+                            <input type="text" value="<%= (user.emergencyContact && (user.emergencyContact.name || user.emergencyContact.phone)) ? [user.emergencyContact.name, user.emergencyContact.phone].filter(Boolean).join(' — ') : 'Chưa cập nhật' %>" disabled class="block w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
                         </div>
                     </div>
                 </div>

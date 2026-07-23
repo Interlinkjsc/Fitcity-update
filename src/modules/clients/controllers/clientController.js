@@ -413,8 +413,9 @@ exports.previewMyContract = async (req, res, next) => {
     try {
         const clientId = req.session.user.id;
 
+        // Bug 23/7 C2: client xem HĐ phải đủ thông tin như admin (thiếu cccd/giới tính/địa chỉ/liên hệ khẩn cấp).
         const contractDoc = await Contract.findOne({ _id: req.params.id, client: clientId })
-            .populate('client', 'name email phone avatar cccdHash')
+            .populate('client', 'name email phone avatar cccdNumber cccdIssueDate cccdIssuePlace address dob gender emergencyContact')
             .populate('servicePackage', 'name price durationInMonths maxSessions type')
             .populate('pt', 'name phone')
             .populate('branch', 'name address')
