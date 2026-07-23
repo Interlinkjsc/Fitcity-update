@@ -134,6 +134,16 @@ exports.extendContract = async (contractId, months, paymentMethod, processedBy) 
 
     const fee = m * EXT_FEE_PER_MONTH;
 
+    // Lưu TRẠNG THÁI GỐC đầy đủ để hoàn tác nếu ghi phí lỗi (codex review 3).
+    const snapshot = {
+        currentEndDate: contract.currentEndDate,
+        endDate: contract.endDate,
+        extensionMonthsUsed: contract.extensionMonthsUsed || 0,
+        contractStatus: contract.contractStatus,
+        isFrozen: contract.isFrozen,
+        frozenAt: contract.frozenAt
+    };
+
     // Dời hạn thêm m tháng — LƯU HĐ TRƯỚC (codex review: tránh thu phí mà HĐ chưa gia hạn)
     const currentEnd = contract.currentEndDate || contract.endDate;
     const newEnd = new Date(currentEnd);
@@ -169,10 +179,13 @@ exports.extendContract = async (contractId, months, paymentMethod, processedBy) 
             processedBy: processedBy || null
         });
     } catch (txErr) {
-        // Rollback gia hạn
-        contract.currentEndDate = currentEnd;
-        contract.endDate = currentEnd;
-        contract.extensionMonthsUsed = used;
+        // Hoàn tác TOÀN BỘ về trạng thái gốc (codex review 3: kể cả Paused/isFrozen/frozenAt).
+        contract.currentEndDate = snapshot.currentEndDate;
+        contract.endDate = snapshot.endDate;
+        contract.extensionMonthsUsed = snapshot.extensionMonthsUsed;
+        contract.contractStatus = snapshot.contractStatus;
+        contract.isFrozen = snapshot.isFrozen;
+        contract.frozenAt = snapshot.frozenAt;
         contract.pauseHistory.pop();
         await contract.save();
         throw new Error('Không ghi được phí gia hạn — đã hoàn tác. Vui lòng thử lại. (' + txErr.message + ')');

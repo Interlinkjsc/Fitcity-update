@@ -45,7 +45,7 @@ const startCronJobs = () => {
             twelveMonthsAgo.setFullYear(twelveMonthsAgo.getFullYear() - 1);
             
             const overPausedContracts = await Contract.find({
-                contractStatus: { $ne: 'Liquidated' },
+                contractStatus: { $nin: ['Liquidated', 'Cancelled'] }, // codex review 3: đừng đụng HĐ đã Cancelled
                 $or: [
                     { isFrozen: true, frozenAt: { $lte: twelveMonthsAgo } },
                     { contractStatus: 'Paused', updatedAt: { $lte: twelveMonthsAgo } } // Backup check
