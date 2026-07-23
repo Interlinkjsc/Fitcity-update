@@ -66,13 +66,12 @@ services:
     # tắt để container không báo unhealthy vĩnh viễn.
     healthcheck:
       disable: true
-    environment:
-      TZ: Asia/Ho_Chi_Minh
     env_file:
       - /opt/fitcity/env/.env.production
     environment:
       NODE_ENV: production
       MONGODB_URI: mongodb://mongo:27017/Fitcity
+      TZ: Asia/Ho_Chi_Minh
     volumes:
       - /opt/fitcity/secrets:/opt/fitcity/secrets:ro
     depends_on:
