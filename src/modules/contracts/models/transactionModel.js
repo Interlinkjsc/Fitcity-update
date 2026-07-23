@@ -18,7 +18,7 @@ const paymentTransactionSchema = new mongoose.Schema({
     },
     transactionType: {
         type: String,
-        enum: ['Deposit', 'Full_Payment', 'Installment', 'Balance_Payment'],
+        enum: ['Deposit', 'Full_Payment', 'Installment', 'Balance_Payment', 'Extension_Fee'],
         required: [true, 'Loại giao dịch là bắt buộc']
     },
     paymentMethod: {

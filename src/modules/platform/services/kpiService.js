@@ -202,12 +202,14 @@ async function getPTKPI(user, monthOverride, yearOverride) {
 
     const sessionCount = sessionResult[0]?.sessionCount || 0;
     const workingDays = sessionResult[0]?.workingDays?.length || 0;
+    // Bug 23/7 A17: hoa hồng DẠY = số buổi đã dạy × (rate% × giá/buổi), mọi trạng thái HĐ.
+    const teaching = await payrollService.calculatePTTeachingCommission(user._id, startOfPeriod, endOfPeriod);
+    const commission = teaching.commission;
     const paidContracts = await Contract.find({
         pt: user._id,
         paymentStatus: 'Paid',
         ...dateFilter
-    }).select('ptCommission netAmount basePrice discount').lean();
-    const commission = payrollService.calculatePTCommissionFromContracts(paidContracts);
+    }).select('ptCommission').lean();
     const newContractRevenue = Math.round(revenueResult[0]?.totalNet || 0);
 
     // Bug 1.1: Hoa hồng chốt HĐ chỉ tính HĐ mà chính PT đó chốt (sales === pt)

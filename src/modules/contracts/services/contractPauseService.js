@@ -104,3 +104,68 @@ exports.unpauseContract = async (contractId) => {
     await contract.save();
     return contract;
 };
+
+/**
+ * Bug 23/7 A19: GIA HẠN hợp đồng (thay cho BẢO LƯU).
+ * - Tối đa 6 tháng cộng dồn, phí 200.000 VNĐ/tháng.
+ * - Ghi 1 giao dịch phí gia hạn (hiện trong lịch sử thanh toán).
+ * - Dời ngày kết thúc thêm `months` tháng.
+ * - Sau khi dùng hết 6 tháng và hết hạn, cron sẽ tự thanh lý (huỷ, không hoàn tiền).
+ */
+exports.extendContract = async (contractId, months, paymentMethod, processedBy) => {
+    const PaymentTransaction = require('../models/transactionModel.js');
+    const EXT_FEE_PER_MONTH = 200000;
+    const MAX_EXT_MONTHS = 6;
+
+    const contract = await Contract.findById(contractId);
+    if (!contract) throw new Error('Hợp đồng không tồn tại');
+    if (!['Active', 'Paused'].includes(contract.contractStatus)) {
+        throw new Error(`Chỉ gia hạn được hợp đồng đang hoạt động (hiện tại: ${contract.contractStatus})`);
+    }
+
+    const m = parseInt(months, 10);
+    if (!Number.isInteger(m) || m < 1) {
+        throw new Error('Số tháng gia hạn phải là số nguyên ≥ 1');
+    }
+    const used = contract.extensionMonthsUsed || 0;
+    if (used + m > MAX_EXT_MONTHS) {
+        throw new Error(`Vượt quá giới hạn gia hạn: đã dùng ${used} tháng, tối đa ${MAX_EXT_MONTHS} tháng (còn ${MAX_EXT_MONTHS - used}).`);
+    }
+
+    const fee = m * EXT_FEE_PER_MONTH;
+
+    // Ghi giao dịch phí gia hạn (KHÔNG cộng vào paidAmount của gói tập — đây là phí riêng)
+    await PaymentTransaction.create({
+        contractId: contract._id,
+        clientId: contract.client,
+        amount: fee,
+        transactionType: 'Extension_Fee',
+        paymentMethod: paymentMethod || 'Cash',
+        status: 'Success',
+        notes: `Phí gia hạn hợp đồng ${m} tháng (${EXT_FEE_PER_MONTH.toLocaleString('vi-VN')} VNĐ/tháng)`,
+        processedBy: processedBy || null
+    });
+
+    // Dời hạn thêm m tháng
+    const currentEnd = contract.currentEndDate || contract.endDate;
+    const newEnd = new Date(currentEnd);
+    newEnd.setMonth(newEnd.getMonth() + m);
+    contract.currentEndDate = newEnd;
+    contract.endDate = newEnd;
+    contract.extensionMonthsUsed = used + m;
+    if (contract.contractStatus === 'Paused') {
+        contract.contractStatus = 'Active';
+        contract.isFrozen = false;
+        contract.frozenAt = null;
+    }
+
+    contract.pauseHistory.push({
+        startDate: new Date(),
+        endDate: newEnd,
+        reason: `Gia hạn ${m} tháng — phí ${fee.toLocaleString('vi-VN')} VNĐ`,
+        duration: m * 30
+    });
+
+    await contract.save();
+    return { contract, fee, months: m };
+};

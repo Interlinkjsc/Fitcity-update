@@ -29,6 +29,7 @@ router.get('/:id/preview/contract', checkPermission('contract', 'view'), payment
 
 // Bảo lưu và Kích hoạt lại (Cần quyền Manage)
 router.post('/pause/:id', checkPermission('contract', 'manage'), contractController.pauseContract);
+router.post('/extend/:id', checkPermission('contract', 'manage'), contractController.extendContract);
 router.post('/unpause/:id', checkPermission('contract', 'manage'), contractController.unpauseContract);
 
 // Quản lý Yêu cầu Bảo lưu

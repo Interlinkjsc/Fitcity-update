@@ -49,6 +49,11 @@ exports.createPayment = async (data) => {
         updateData.contractStatus = 'Active';
     } else if (newPaidAmount > 0) {
         updateData.paymentStatus = 'Deposit';
+        // Bug 23/7 P3: HĐ đã đặt cọc cũng được kích hoạt để PT lên lịch dạy
+        // (không bắt buộc thanh toán 100% mới cho tập).
+        if (contract.contractStatus === 'Draft') {
+            updateData.contractStatus = 'Active';
+        }
     }
 
     // Also track payment method used

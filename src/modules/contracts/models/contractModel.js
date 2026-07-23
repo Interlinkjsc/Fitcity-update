@@ -121,6 +121,11 @@ const contractSchema = new mongoose.Schema({
     frozenAt: {
         type: Date
     },
+    // Bug 23/7 A19: gia hạn hợp đồng (max 6 tháng, 200k/tháng)
+    extensionMonthsUsed: {
+        type: Number,
+        default: 0
+    },
     freezeFee: {
         type: Number,
         default: 200000 // 200k/tháng

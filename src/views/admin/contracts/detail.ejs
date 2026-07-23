@@ -25,18 +25,12 @@
         </button>
         <% } %>
 
-        <% if (contract.contractStatus === 'Active') { %>
-        <button onclick="document.getElementById('pauseModal').classList.remove('hidden')" class="px-4 py-2 bg-amber-500 text-white font-semibold rounded-lg hover:bg-amber-600 transition-colors shadow-sm inline-flex items-center">
-            <span class="material-symbols-outlined text-[18px] mr-2">pause_circle</span>
-            Bảo Lưu
+        <%# Bug 23/7 A19: BẢO LƯU → GIA HẠN hợp đồng %>
+        <% if (['Active', 'Paused'].includes(contract.contractStatus)) { %>
+        <button onclick="document.getElementById('extendModal').classList.remove('hidden')" class="px-4 py-2 bg-amber-500 text-white font-semibold rounded-lg hover:bg-amber-600 transition-colors shadow-sm inline-flex items-center">
+            <span class="material-symbols-outlined text-[18px] mr-2">more_time</span>
+            Gia Hạn HĐ
         </button>
-        <% } else if (contract.contractStatus === 'Paused') { %>
-        <form action="/admin/contracts/unpause/<%= contract._id %>" method="POST" onsubmit="return confirm('Hệ thống sẽ tính toán số ngày nghỉ thực tế và gia hạn bù cho khách. Xác nhận kích hoạt lại?')">
-            <button type="submit" class="px-4 py-2 bg-emerald-600 text-white font-semibold rounded-lg hover:bg-emerald-700 transition-colors shadow-sm inline-flex items-center">
-                <span class="material-symbols-outlined text-[18px] mr-2">play_circle</span>
-                Kích Hoạt Lại
-            </button>
-        </form>
         <% } %>
 
         <a href="/admin/contracts/edit/<%= contract._id %>" class="px-4 py-2 bg-white border border-slate-200 text-slate-700 font-semibold rounded-lg hover:bg-slate-50 transition-colors shadow-sm inline-flex items-center">
@@ -48,28 +42,40 @@
     </div>
 </div>
 
-<!-- ============ PAUSE CONTRACT MODAL ============ -->
-<div id="pauseModal" class="hidden fixed inset-0 z-50 overflow-y-auto">
+<!-- ============ GIA HẠN HỢP ĐỒNG MODAL (Bug 23/7 A19) ============ -->
+<% const extUsed = contract.extensionMonthsUsed || 0; const extLeft = 6 - extUsed; %>
+<div id="extendModal" class="hidden fixed inset-0 z-50 overflow-y-auto">
     <div class="flex items-center justify-center min-h-screen px-4">
-        <div class="fixed inset-0 bg-black/50 transition-opacity" onclick="document.getElementById('pauseModal').classList.add('hidden')"></div>
+        <div class="fixed inset-0 bg-black/50 transition-opacity" onclick="document.getElementById('extendModal').classList.add('hidden')"></div>
         <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-md p-6 z-10">
-            <h3 class="text-xl font-bold text-slate-800 mb-4">Bảo lưu Hợp đồng</h3>
-            <form action="/admin/contracts/pause/<%= contract._id %>" method="POST" class="space-y-4">
+            <h3 class="text-xl font-bold text-slate-800 mb-1">Gia hạn Hợp đồng</h3>
+            <p class="text-xs text-slate-500 mb-4">Đã gia hạn <strong><%= extUsed %></strong>/6 tháng · còn tối đa <strong><%= extLeft %></strong> tháng. Phí 200.000đ/tháng, ghi vào lịch sử thanh toán. Hết 6 tháng gia hạn mà quá hạn, hợp đồng tự huỷ không hoàn tiền.</p>
+            <% if (extLeft <= 0) { %>
+            <p class="text-sm text-red-600 bg-red-50 rounded-lg p-3">Hợp đồng đã dùng hết 6 tháng gia hạn, không thể gia hạn thêm.</p>
+            <button type="button" onclick="document.getElementById('extendModal').classList.add('hidden')" class="mt-4 w-full px-4 py-2.5 bg-slate-100 text-slate-700 font-semibold rounded-lg hover:bg-slate-200">Đóng</button>
+            <% } else { %>
+            <form action="/admin/contracts/extend/<%= contract._id %>" method="POST" class="space-y-4">
                 <div>
-                    <label class="block text-sm font-semibold text-slate-700 mb-1">Số ngày bảo lưu dự kiến (Tối đa 365 ngày)</label>
-                    <input type="number" name="durationDays" required min="7" max="365" value="30"
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Số tháng gia hạn (tối đa <%= extLeft %>)</label>
+                    <input type="number" name="months" id="extMonths" required min="1" max="<%= extLeft %>" value="1"
+                           oninput="document.getElementById('extFee').textContent = (this.value*200000).toLocaleString('vi-VN')"
                            class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none">
-                    <p class="text-[10px] text-slate-500 mt-1">* Hệ thống sẽ tính phí 200.000đ/tháng dựa trên thời gian thực tế.</p>
+                    <p class="text-sm text-slate-600 mt-2">Phí gia hạn: <strong class="text-amber-600"><span id="extFee">200.000</span> VNĐ</strong></p>
                 </div>
                 <div>
-                    <label class="block text-sm font-semibold text-slate-700 mb-1">Lý do bảo lưu</label>
-                    <textarea name="reason" rows="3" required class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none" placeholder="VD: Khách đi công tác, chấn thương..."></textarea>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Phương thức thu phí</label>
+                    <select name="paymentMethod" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none">
+                        <option value="Cash">Tiền mặt</option>
+                        <option value="Transfer">Chuyển khoản</option>
+                        <option value="Card">Thẻ</option>
+                    </select>
                 </div>
                 <div class="flex gap-3 pt-2">
-                    <button type="submit" class="flex-1 px-4 py-2.5 bg-amber-500 text-white font-bold rounded-lg hover:bg-amber-600 transition-colors">XÁC NHẬN BẢO LƯU</button>
-                    <button type="button" onclick="document.getElementById('pauseModal').classList.add('hidden')" class="px-4 py-2.5 bg-slate-100 text-slate-700 font-semibold rounded-lg hover:bg-slate-200 transition-colors">Hủy</button>
+                    <button type="submit" class="flex-1 px-4 py-2.5 bg-amber-500 text-white font-bold rounded-lg hover:bg-amber-600 transition-colors">XÁC NHẬN GIA HẠN</button>
+                    <button type="button" onclick="document.getElementById('extendModal').classList.add('hidden')" class="px-4 py-2.5 bg-slate-100 text-slate-700 font-semibold rounded-lg hover:bg-slate-200 transition-colors">Hủy</button>
                 </div>
             </form>
+            <% } %>
         </div>
     </div>
 </div>
@@ -352,6 +358,8 @@
                             <span class="px-2 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700">Trả đủ</span>
                         <% } else if (txn.transactionType === 'Installment') { %>
                             <span class="px-2 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700">Trả góp</span>
+                        <% } else if (txn.transactionType === 'Extension_Fee') { %>
+                            <span class="px-2 py-1 rounded-full text-xs font-bold bg-orange-100 text-orange-700">Phí gia hạn</span>
                         <% } else { %>
                             <span class="px-2 py-1 rounded-full text-xs font-bold bg-purple-100 text-purple-700">Trả nốt</span>
                         <% } %>

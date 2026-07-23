@@ -579,6 +579,26 @@ exports.pauseContract = async (req, res, next) => {
     }
 };
 
+// Bug 23/7 A19: GIA HẠN hợp đồng (max 6 tháng, 200k/tháng)
+exports.extendContract = async (req, res, next) => {
+    try {
+        const contract = await Contract.findById(req.params.id);
+        if (!contract) return denyContractAccess(req, res, null);
+        if (!contractScope.canAccessContract(req.session.user, contract)) {
+            return denyContractAccess(req, res, contract);
+        }
+        const { months, paymentMethod } = req.body;
+        const { fee, months: m } = await contractPauseService.extendContract(
+            req.params.id, months, paymentMethod, req.session.user.id
+        );
+        req.flash('success_msg', `Đã gia hạn hợp đồng ${m} tháng — phí ${fee.toLocaleString('vi-VN')} VNĐ đã ghi vào lịch sử thanh toán.`);
+        res.redirect(`/admin/contracts/detail/${req.params.id}`);
+    } catch (err) {
+        req.flash('error_msg', err.message);
+        res.redirect(`/admin/contracts/detail/${req.params.id}`);
+    }
+};
+
 // 8. Kích hoạt lại hợp đồng
 exports.unpauseContract = async (req, res, next) => {
     try {

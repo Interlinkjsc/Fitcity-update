@@ -24,6 +24,44 @@ exports.calculatePTCommissionFromContracts = (contracts = []) => {
     return contracts.reduce((sum, c) => sum + (c.ptCommission || 0), 0);
 };
 
+/**
+ * Bug 23/7 A17: hoa hồng DẠY của PT tính theo TỪNG BUỔI ĐÃ DẠY.
+ * Mỗi buổi = ptCommissionRate% × (giá mỗi buổi của HĐ) = rate% × basePrice / totalSessions.
+ * KHÔNG phụ thuộc trạng thái thanh toán — HĐ đặt cọc/chưa trả vẫn tính comm dạy.
+ * "Đã dạy" = session Completed hoặc Confirmed trong kỳ.
+ */
+exports.calculatePTTeachingCommission = async (staffId, startOfMonth, endOfMonth) => {
+    const WorkoutSession = require('../../programs/models/workoutSessionModel');
+    const sessions = await WorkoutSession.find({
+        pt: staffId,
+        status: { $in: ['Completed', 'Confirmed'] },
+        scheduledTime: { $gte: startOfMonth, $lte: endOfMonth }
+    }).populate('contract', 'basePrice totalSessions pt').lean();
+
+    let commission = 0;
+    let taughtCount = 0;
+    for (const s of sessions) {
+        const c = s.contract;
+        if (!c || !c.basePrice || !c.totalSessions) continue;
+        // rate của PT phụ trách HĐ (fallback rate mặc định gói)
+        const pricePerSession = c.basePrice / c.totalSessions;
+        const rate = await resolvePtRateForContract(c, staffId);
+        commission += Math.round(pricePerSession * rate / 100);
+        taughtCount++;
+    }
+    return { commission, taughtCount };
+};
+
+/** Lấy % hoa hồng dạy của PT cho 1 HĐ — ưu tiên rate cá nhân PT, fallback 10%. */
+async function resolvePtRateForContract(contract, staffId) {
+    const User = require('../../users/models/userModel');
+    const pt = await User.findById(staffId).select('ptCommissionRate').lean();
+    if (pt && pt.ptCommissionRate != null && Number.isFinite(Number(pt.ptCommissionRate))) {
+        return Math.max(0, Math.min(100, Number(pt.ptCommissionRate)));
+    }
+    return 10;
+}
+
 exports.calculatePTCommissionFromTimesheets = async (staffId, month, year, ratePerShift = 120000) => {
     const count = await timesheetService.countApprovedShifts(staffId, month, year);
     return count * ratePerShift;
@@ -39,12 +77,9 @@ exports.resolvePTPayrollCommission = async (staffId, startOfMonth, endOfMonth) =
     const rate = settings.timesheetRatePerShift ?? 120000;
     const mode = settings.ptPayrollMode || 'contract';
 
-    const contracts = await Contract.find({
-        pt: staffId,
-        paymentStatus: 'Paid',
-        createdAt: { $gte: startOfMonth, $lte: endOfMonth }
-    });
-    const contractCommission = exports.calculatePTCommissionFromContracts(contracts);
+    // Bug 23/7 A17: comm dạy = số buổi đã dạy × (rate% × giá/buổi), mọi trạng thái HĐ.
+    const teaching = await exports.calculatePTTeachingCommission(staffId, startOfMonth, endOfMonth);
+    const contractCommission = teaching.commission;
     const timesheetCommission = await exports.calculatePTCommissionFromTimesheets(
         staffId,
         month,
@@ -65,15 +100,16 @@ exports.resolvePTPayrollCommission = async (staffId, startOfMonth, endOfMonth) =
     if (mode === 'hybrid') {
         return {
             commission: Math.round((contractCommission + timesheetCommission) / 2),
-            detailCount: contracts.length + timesheetShifts,
+            detailCount: teaching.taughtCount + timesheetShifts,
             commissionSource: 'hybrid',
             contractCommission,
             timesheetCommission
         };
     }
+    // Mặc định 'contract' = comm theo buổi đã dạy (đã đổi công thức)
     return {
         commission: contractCommission,
-        detailCount: contracts.length,
+        detailCount: teaching.taughtCount,
         commissionSource: 'contract',
         contractCommission,
         timesheetCommission
