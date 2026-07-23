@@ -53,6 +53,22 @@ exports.getAdminList = async (req, res, next) => {
     }
 };
 
+exports.getDetail = async (req, res, next) => {
+    try {
+        const DailyReport = require('../models/dailyReportModel.js');
+        const report = await DailyReport.findById(req.params.id)
+            .populate('author', 'name email role')
+            .populate('branch', 'name')
+            .populate('reviewedBy', 'name')
+            .lean();
+        if (!report) {
+            req.flash('error_msg', 'Không tìm thấy báo cáo.');
+            return res.redirect('/admin/daily-reports');
+        }
+        res.render('admin/daily-reports/detail', { report, activePage: 'daily-reports' });
+    } catch (err) { next(err); }
+};
+
 exports.getSubmitPage = async (req, res, next) => {
     try {
         const user = req.session.user;

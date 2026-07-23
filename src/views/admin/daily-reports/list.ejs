@@ -52,10 +52,12 @@
                     <span class="text-[10px] font-bold px-2 py-0.5 rounded-full <%= r.status === 'Approved' ? 'bg-emerald-100 text-emerald-700' : r.status === 'Rejected' ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-700' %>"><%= r.status.replace('_', ' ') %></span>
                 </td>
                 <td class="px-4 py-3 text-right space-x-2">
+                    <%# Bug 23/7 A8: nút xem chi tiết báo cáo (trước & sau khi duyệt) %>
+                    <a href="/admin/daily-reports/detail/<%= r._id %>" class="text-indigo-600 text-xs font-bold">Xem chi tiết</a>
                     <% if (r.status === 'Pending_Approval') { %>
                     <form action="/admin/daily-reports/approve/<%= r._id %>" method="POST" class="inline"><button class="text-emerald-600 text-xs font-bold">Duyệt</button></form>
                     <form action="/admin/daily-reports/reject/<%= r._id %>" method="POST" class="inline" onsubmit="return confirm('Từ chối?')"><button class="text-rose-600 text-xs font-bold">Từ chối</button></form>
-                    <% } else { %>—<% } %>
+                    <% } %>
                 </td>
             </tr>
             <% }) %>

@@ -1,0 +1,48 @@
+<%- include('../../partials/header', { title: 'Chi tiết Báo cáo ngày', activePage: 'daily-reports' }) %>
+
+<div class="mb-6 flex items-center justify-between">
+    <div>
+        <h2 class="text-2xl font-bold text-slate-800">Chi tiết Báo cáo ngày</h2>
+        <p class="text-slate-500 text-sm mt-1"><%= report.author ? report.author.name : 'N/A' %> · <%= new Date(report.reportDate).toLocaleDateString('vi-VN') %> · <%= report.branch ? report.branch.name : '—' %></p>
+    </div>
+    <a href="/admin/daily-reports" class="text-sm text-slate-500 hover:text-slate-800">← Danh sách</a>
+</div>
+
+<div class="max-w-3xl space-y-5">
+    <div class="bg-white rounded-xl border border-slate-200 p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="font-bold text-slate-800">Nội dung báo cáo <span class="text-[11px] font-normal text-slate-400">(nhân sự nộp — TRƯỚC khi duyệt)</span></h3>
+            <span class="text-[10px] font-bold px-2.5 py-1 rounded-full <%= report.status === 'Approved' ? 'bg-emerald-100 text-emerald-700' : report.status === 'Rejected' ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-700' %>"><%= report.status.replace('_',' ') %></span>
+        </div>
+        <div class="space-y-4 text-sm">
+            <div><p class="text-[11px] font-bold text-slate-400 uppercase mb-1">Tóm tắt</p><p class="text-slate-700 whitespace-pre-wrap"><%= report.summary || '—' %></p></div>
+            <div><p class="text-[11px] font-bold text-slate-400 uppercase mb-1">Kết quả đạt được</p><p class="text-slate-700 whitespace-pre-wrap"><%= report.accomplishments || '—' %></p></div>
+            <div><p class="text-[11px] font-bold text-slate-400 uppercase mb-1">Khó khăn / Vướng mắc</p><p class="text-slate-700 whitespace-pre-wrap"><%= report.blockers || '—' %></p></div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl border border-slate-200 p-6">
+        <h3 class="font-bold text-slate-800 mb-4">Kết quả duyệt <span class="text-[11px] font-normal text-slate-400">(SAU khi duyệt)</span></h3>
+        <% if (report.status === 'Pending_Approval') { %>
+            <p class="text-sm text-amber-600 mb-4">Báo cáo chưa được duyệt.</p>
+            <div class="flex gap-3">
+                <form action="/admin/daily-reports/approve/<%= report._id %>" method="POST" class="flex-1 flex gap-2">
+                    <input type="text" name="note" placeholder="Ghi chú duyệt (tuỳ chọn)" class="flex-1 border border-slate-200 rounded-lg text-sm px-3 py-2">
+                    <button class="px-4 py-2 bg-emerald-600 text-white font-bold rounded-lg text-sm">Duyệt</button>
+                </form>
+                <form action="/admin/daily-reports/reject/<%= report._id %>" method="POST" class="flex gap-2">
+                    <input type="text" name="note" placeholder="Lý do từ chối" class="border border-slate-200 rounded-lg text-sm px-3 py-2">
+                    <button class="px-4 py-2 bg-rose-600 text-white font-bold rounded-lg text-sm">Từ chối</button>
+                </form>
+            </div>
+        <% } else { %>
+            <div class="space-y-2 text-sm">
+                <p><span class="text-slate-400">Người duyệt:</span> <strong><%= report.reviewedBy ? report.reviewedBy.name : '—' %></strong></p>
+                <p><span class="text-slate-400">Thời gian:</span> <%= report.reviewedAt ? new Date(report.reviewedAt).toLocaleString('vi-VN') : '—' %></p>
+                <p><span class="text-slate-400">Ghi chú của quản lý:</span> <%= report.managerNote || '—' %></p>
+            </div>
+        <% } %>
+    </div>
+</div>
+
+<%- include('../../partials/footer') %>

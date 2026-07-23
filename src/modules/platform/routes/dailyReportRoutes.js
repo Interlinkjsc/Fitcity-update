@@ -6,6 +6,7 @@ const { protect, checkPermission, restrictTo } = require('../../../middlewares/a
 router.use(protect);
 
 router.get('/', checkPermission('daily_report', 'view'), dailyReportController.getAdminList);
+router.get('/detail/:id', checkPermission('daily_report', 'view'), dailyReportController.getDetail);
 router.get(
     '/submit',
     checkPermission('daily_report', 'submit'),

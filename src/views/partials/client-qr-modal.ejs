@@ -51,13 +51,15 @@
             const data = await res.json();
             if (data.success && data.token) {
                 if (typeof QRCode !== 'undefined') {
+                    <%# Bug 23/7 P4: QR quét chậm do quá dày (mức H 30%). Hạ xuống M (15%) +
+                        phóng to → ít module, camera bắt nhanh hơn. %>
                     new QRCode(qrContainer, {
                         text: data.token,
-                        width: 200,
-                        height: 200,
+                        width: 240,
+                        height: 240,
                         colorDark: '#0f172a',
                         colorLight: '#ffffff',
-                        correctLevel: QRCode.CorrectLevel.H
+                        correctLevel: QRCode.CorrectLevel.M
                     });
                 } else {
                     qrContainer.textContent = data.token;

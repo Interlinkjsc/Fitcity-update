@@ -60,7 +60,6 @@ function signQrToken({ sid, act, cid, pid, ttlSeconds = 60 }) {
         act,
         cid: String(cid),
         pid: String(pid),
-        iat: nowSec,
         exp: nowSec + Number(ttlSeconds || 60)
     };
 

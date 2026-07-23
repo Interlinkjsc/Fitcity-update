@@ -129,19 +129,19 @@
                     <div class="grid grid-cols-4 gap-3">
                         <div class="bg-slate-50 p-4 border border-slate-200 rounded-3xl text-center">
                             <label class="text-[9px] font-bold text-slate-500 block mb-1">🥩 ĐẠM</label>
-                            <input type="number" name="protein" value="30" min="0" max="100" class="w-full bg-transparent text-center font-black text-primary text-xl outline-none">
+                            <input type="number" name="protein" value="30" min="0" max="100" class="w-full bg-transparent text-center font-black text-primary text-lg outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
                         </div>
                         <div class="bg-slate-50 p-4 border border-slate-200 rounded-3xl text-center">
                             <label class="text-[9px] font-bold text-slate-500 block mb-1">🍚 T.BỘT</label>
-                            <input type="number" name="carbs" value="35" min="0" max="100" class="w-full bg-transparent text-center font-black text-primary text-xl outline-none">
+                            <input type="number" name="carbs" value="35" min="0" max="100" class="w-full bg-transparent text-center font-black text-primary text-lg outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
                         </div>
                         <div class="bg-slate-50 p-4 border border-slate-200 rounded-3xl text-center">
                             <label class="text-[9px] font-bold text-slate-500 block mb-1">🧈 BÉO</label>
-                            <input type="number" name="fat" value="25" min="0" max="100" class="w-full bg-transparent text-center font-black text-primary text-xl outline-none">
+                            <input type="number" name="fat" value="25" min="0" max="100" class="w-full bg-transparent text-center font-black text-primary text-lg outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
                         </div>
                         <div class="bg-slate-50 p-4 border border-slate-200 rounded-3xl text-center">
                             <label class="text-[9px] font-bold text-slate-500 block mb-1">🥬 XƠ</label>
-                            <input type="number" name="fiber" value="10" min="0" max="100" class="w-full bg-transparent text-center font-black text-primary text-xl outline-none">
+                            <input type="number" name="fiber" value="10" min="0" max="100" class="w-full bg-transparent text-center font-black text-primary text-lg outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
                         </div>
                     </div>
                     <p class="text-[10px] text-slate-400 text-center">* Tổng tỷ lệ nên bằng 100%</p>
@@ -158,29 +158,13 @@
                     <button type="button" onclick="addMealRow()" class="text-[10px] font-black text-primary uppercase border border-primary/30 px-3 py-1.5 rounded-full hover:bg-primary/10 bg-white transition-all">+ Thêm bữa</button>
                 </div>
                 <div id="mealsContainer" class="space-y-4">
-                    <!-- Bữa sáng -->
+                    <%# Bug 23/7 P2: bỏ bữa mặc định — PT tự set. Bắt đầu 1 dòng trống. %>
                     <div class="meal-row bg-slate-50 border border-slate-200 p-6 rounded-3xl relative group">
                         <div class="flex gap-4 mb-3 items-center">
                             <input type="time" value="07:00" class="meal-time bg-primary/10 border border-primary/30 text-primary font-black text-sm rounded-xl px-3 py-2 outline-none w-28">
-                            <input type="text" placeholder="Tên bữa (VD: Bữa sáng)" class="meal-name flex-1 bg-transparent border-b border-slate-200 focus:border-primary outline-none py-1 text-sm font-bold text-slate-900 tracking-tight" value="Bữa sáng">
+                            <input type="text" placeholder="Tên bữa (VD: Bữa sáng)" class="meal-name flex-1 bg-transparent border-b border-slate-200 focus:border-primary outline-none py-1 text-sm font-bold text-slate-900 tracking-tight" value="">
                         </div>
-                        <textarea placeholder="Thành phần, định lượng..." class="meal-foods w-full bg-transparent text-slate-600 text-xs py-2 outline-none h-16 resize-none">2 Quả trứng luộc, 1 Lát bánh mì đen, 1/2 Quả bơ</textarea>
-                    </div>
-                    <!-- Bữa trưa -->
-                    <div class="meal-row bg-slate-50 border border-slate-200 p-6 rounded-3xl relative group">
-                        <div class="flex gap-4 mb-3 items-center">
-                            <input type="time" value="12:00" class="meal-time bg-primary/10 border border-primary/30 text-primary font-black text-sm rounded-xl px-3 py-2 outline-none w-28">
-                            <input type="text" placeholder="Tên bữa" class="meal-name flex-1 bg-transparent border-b border-slate-200 focus:border-primary outline-none py-1 text-sm font-bold text-slate-900 tracking-tight" value="Bữa trưa">
-                        </div>
-                        <textarea placeholder="Thành phần, định lượng..." class="meal-foods w-full bg-transparent text-slate-600 text-xs py-2 outline-none h-16 resize-none">200g Ức gà nướng, 150g Cơm gạo lứt, Rau xanh luộc</textarea>
-                    </div>
-                    <!-- Bữa tối -->
-                    <div class="meal-row bg-slate-50 border border-slate-200 p-6 rounded-3xl relative group">
-                        <div class="flex gap-4 mb-3 items-center">
-                            <input type="time" value="18:30" class="meal-time bg-primary/10 border border-primary/30 text-primary font-black text-sm rounded-xl px-3 py-2 outline-none w-28">
-                            <input type="text" placeholder="Tên bữa" class="meal-name flex-1 bg-transparent border-b border-slate-200 focus:border-primary outline-none py-1 text-sm font-bold text-slate-900 tracking-tight" value="Bữa tối">
-                        </div>
-                        <textarea placeholder="Thành phần, định lượng..." class="meal-foods w-full bg-transparent text-slate-600 text-xs py-2 outline-none h-16 resize-none">200g Cá hồi áp chảo, Salad rau củ, Khoai lang</textarea>
+                        <textarea placeholder="Thành phần, định lượng..." class="meal-foods w-full bg-transparent text-slate-600 text-xs py-2 outline-none h-16 resize-none"></textarea>
                     </div>
                 </div>
             </section>
@@ -207,6 +191,11 @@
             `;
             container.appendChild(row);
         }
+
+        // Bug 23/7 P2: đảm bảo nút +Thêm bữa hoạt động kể cả khi có lỗi script khác
+        document.querySelectorAll('[onclick="addMealRow()"]').forEach(btn => {
+            btn.addEventListener('click', function(ev) { ev.preventDefault(); addMealRow(); });
+        });
 
         document.getElementById('mealPlanForm').addEventListener('submit', function(e) {
             const mealRows = document.querySelectorAll('.meal-row');
