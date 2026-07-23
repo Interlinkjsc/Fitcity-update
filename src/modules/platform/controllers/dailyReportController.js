@@ -65,6 +65,14 @@ exports.getDetail = async (req, res, next) => {
             req.flash('error_msg', 'Không tìm thấy báo cáo.');
             return res.redirect('/admin/daily-reports');
         }
+        // Bảo mật (codex review): Manager chỉ xem báo cáo trong chi nhánh mình.
+        if (req.session.user.role === 'Manager' && req.session.user.branch) {
+            const reportBranch = report.branch && report.branch._id ? String(report.branch._id) : '';
+            if (reportBranch && reportBranch !== String(req.session.user.branch)) {
+                req.flash('error_msg', 'Bạn không có quyền xem báo cáo của chi nhánh khác.');
+                return res.redirect('/admin/daily-reports');
+            }
+        }
         res.render('admin/daily-reports/detail', { report, activePage: 'daily-reports' });
     } catch (err) { next(err); }
 };

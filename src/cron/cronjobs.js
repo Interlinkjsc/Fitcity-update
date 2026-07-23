@@ -42,6 +42,22 @@ const startCronJobs = () => {
                 console.log(`[CRON] Liquidated contract ${contract.contractCode} (Frozen > 12 months)`);
             }
 
+            // 3. Bug 23/7 A19 (codex review): HĐ đã dùng hết 6 tháng gia hạn mà quá hạn → tự huỷ, không hoàn tiền.
+            const expiredExtended = await Contract.find({
+                contractStatus: { $nin: ['Cancelled', 'Liquidated'] },
+                extensionMonthsUsed: { $gte: 6 },
+                $or: [
+                    { currentEndDate: { $lte: now } },
+                    { currentEndDate: { $exists: false }, endDate: { $lte: now } }
+                ]
+            });
+            for (let contract of expiredExtended) {
+                contract.contractStatus = 'Cancelled';
+                contract.notes = (contract.notes || '') + '\n[Hệ thống] Tự động huỷ: đã dùng hết 6 tháng gia hạn và quá hạn (không hoàn tiền).';
+                await contract.save();
+                console.log(`[CRON] Cancelled contract ${contract.contractCode} (Extension 6 months exhausted + expired)`);
+            }
+
             console.log('[CRON] Contract liquidation check completed.');
         } catch (err) {
             console.error('[CRON] Error during contract liquidation:', err);

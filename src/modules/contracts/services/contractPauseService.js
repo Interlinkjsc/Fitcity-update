@@ -134,19 +134,7 @@ exports.extendContract = async (contractId, months, paymentMethod, processedBy) 
 
     const fee = m * EXT_FEE_PER_MONTH;
 
-    // Ghi giao dịch phí gia hạn (KHÔNG cộng vào paidAmount của gói tập — đây là phí riêng)
-    await PaymentTransaction.create({
-        contractId: contract._id,
-        clientId: contract.client,
-        amount: fee,
-        transactionType: 'Extension_Fee',
-        paymentMethod: paymentMethod || 'Cash',
-        status: 'Success',
-        notes: `Phí gia hạn hợp đồng ${m} tháng (${EXT_FEE_PER_MONTH.toLocaleString('vi-VN')} VNĐ/tháng)`,
-        processedBy: processedBy || null
-    });
-
-    // Dời hạn thêm m tháng
+    // Dời hạn thêm m tháng — LƯU HĐ TRƯỚC (codex review: tránh thu phí mà HĐ chưa gia hạn)
     const currentEnd = contract.currentEndDate || contract.endDate;
     const newEnd = new Date(currentEnd);
     newEnd.setMonth(newEnd.getMonth() + m);
@@ -158,14 +146,25 @@ exports.extendContract = async (contractId, months, paymentMethod, processedBy) 
         contract.isFrozen = false;
         contract.frozenAt = null;
     }
-
     contract.pauseHistory.push({
         startDate: new Date(),
         endDate: newEnd,
         reason: `Gia hạn ${m} tháng — phí ${fee.toLocaleString('vi-VN')} VNĐ`,
         duration: m * 30
     });
-
     await contract.save();
+
+    // Ghi giao dịch phí gia hạn SAU khi HĐ đã gia hạn thành công (phí riêng, không cộng paidAmount).
+    await PaymentTransaction.create({
+        contractId: contract._id,
+        clientId: contract.client,
+        amount: fee,
+        transactionType: 'Extension_Fee',
+        paymentMethod: paymentMethod || 'Cash',
+        status: 'Success',
+        notes: `Phí gia hạn hợp đồng ${m} tháng (${EXT_FEE_PER_MONTH.toLocaleString('vi-VN')} VNĐ/tháng)`,
+        processedBy: processedBy || null
+    });
+
     return { contract, fee, months: m };
 };

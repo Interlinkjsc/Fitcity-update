@@ -155,7 +155,7 @@
                         <h3 class="font-extrabold text-lg text-slate-900">Lịch trình bữa ăn 24h</h3>
                         <p class="text-[10px] text-slate-500 mt-1">Chọn giờ cố định cho từng bữa trong ngày</p>
                     </div>
-                    <button type="button" onclick="addMealRow()" class="text-[10px] font-black text-primary uppercase border border-primary/30 px-3 py-1.5 rounded-full hover:bg-primary/10 bg-white transition-all">+ Thêm bữa</button>
+                    <button type="button" id="addMealBtn" class="text-[10px] font-black text-primary uppercase border border-primary/30 px-3 py-1.5 rounded-full hover:bg-primary/10 bg-white transition-all">+ Thêm bữa</button>
                 </div>
                 <div id="mealsContainer" class="space-y-4">
                     <%# Bug 23/7 P2: bỏ bữa mặc định — PT tự set. Bắt đầu 1 dòng trống. %>
@@ -193,9 +193,7 @@
         }
 
         // Bug 23/7 P2: đảm bảo nút +Thêm bữa hoạt động kể cả khi có lỗi script khác
-        document.querySelectorAll('[onclick="addMealRow()"]').forEach(btn => {
-            btn.addEventListener('click', function(ev) { ev.preventDefault(); addMealRow(); });
-        });
+        document.getElementById('addMealBtn')?.addEventListener('click', function(ev) { ev.preventDefault(); addMealRow(); });
 
         document.getElementById('mealPlanForm').addEventListener('submit', function(e) {
             const mealRows = document.querySelectorAll('.meal-row');
