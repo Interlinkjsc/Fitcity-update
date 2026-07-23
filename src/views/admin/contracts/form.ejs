@@ -202,6 +202,17 @@
                             </select>
                             <input type="tel" name="newClientEmergencyPhone" x-model="newClientEmergencyPhone" placeholder="SĐT liên hệ khẩn cấp *"
                                 class="w-full border border-slate-300 rounded-lg text-sm py-2.5 px-3 focus:ring-2 focus:ring-green-500 outline-none">
+                            <%# Bug 23/7 M3: bổ sung đủ trường theo form HĐ mẫu %>
+                            <input type="text" name="newClientEmergencyName" placeholder="Tên người liên hệ khẩn cấp"
+                                class="w-full border border-slate-300 rounded-lg text-sm py-2.5 px-3 focus:ring-2 focus:ring-green-500 outline-none">
+                            <input type="text" name="newClientAddress" placeholder="Địa chỉ liên lạc"
+                                class="w-full border border-slate-300 rounded-lg text-sm py-2.5 px-3 focus:ring-2 focus:ring-green-500 outline-none">
+                            <div class="grid grid-cols-2 gap-2">
+                                <label class="text-[11px] text-slate-500">Ngày sinh<input type="date" name="newClientDob" class="w-full border border-slate-300 rounded-lg text-sm py-2 px-3 focus:ring-2 focus:ring-green-500 outline-none"></label>
+                                <label class="text-[11px] text-slate-500">Ngày cấp CCCD<input type="date" name="newClientCccdIssueDate" class="w-full border border-slate-300 rounded-lg text-sm py-2 px-3 focus:ring-2 focus:ring-green-500 outline-none"></label>
+                            </div>
+                            <input type="text" name="newClientCccdIssuePlace" placeholder="Nơi cấp CCCD"
+                                class="w-full border border-slate-300 rounded-lg text-sm py-2.5 px-3 focus:ring-2 focus:ring-green-500 outline-none">
                         </div>
                     </div>
 

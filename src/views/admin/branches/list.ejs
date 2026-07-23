@@ -55,7 +55,9 @@
                             <td class="p-4">
                                 <% if(branch.manager) { %>
                                     <div class="text-sm font-medium text-blue-700"><%= branch.manager.name %></div>
+                                    <% if (branch.manager.email && !String(branch.manager.email).includes(':')) { %>
                                     <div class="text-xs text-slate-500"><%= branch.manager.email %></div>
+                                    <% } %>
                                 <% } else { %>
                                     <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
                                         Chưa phân bổ

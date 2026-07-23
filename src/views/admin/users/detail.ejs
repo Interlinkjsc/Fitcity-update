@@ -262,7 +262,7 @@
             · Chỉ tiêu: <span class="font-semibold"><%= employeeKPI.targetSource === 'employee' ? 'Cá nhân' : (employeeKPI.targetSource === 'branch' ? 'Theo chi nhánh' : 'Chưa gán') %></span>
             <% } %>
         </div>
-        <% if (typeof canSetEmployeeKPI !== 'undefined' && canSetEmployeeKPI && ['PT','Sales'].includes(userData.role)) { %>
+        <% if (typeof canSetEmployeeKPI !== 'undefined' && canSetEmployeeKPI && ['PT','Sales','Manager','Marketing'].includes(userData.role)) { %>
         <div class="px-6 pb-4 border-b border-slate-100">
             <form method="POST" action="/admin/users/detail/<%= userData._id %>/kpi-target" class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
                 <input type="hidden" name="kpiMonth" value="<%= kpiMonth %>">

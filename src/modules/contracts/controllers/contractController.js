@@ -208,7 +208,8 @@ exports.storeContract = async (req, res, next) => {
         let resolvedClient = client;
         let newClientCredentials = null;
         if (req.body.createNewClient === 'true') {
-            const { newClientName, newClientPhone, newClientEmail, newClientCccd, newClientGender, newClientEmergencyPhone } = req.body;
+            const { newClientName, newClientPhone, newClientEmail, newClientCccd, newClientGender, newClientEmergencyPhone,
+                newClientEmergencyName, newClientAddress, newClientDob, newClientCccdIssueDate, newClientCccdIssuePlace } = req.body;
             if (!newClientName || !newClientPhone) {
                 req.flash('error_msg', 'Vui lòng nhập đầy đủ họ tên và số điện thoại cho hội viên mới.');
                 return res.redirect(back);
@@ -233,7 +234,12 @@ exports.storeContract = async (req, res, next) => {
                     branch: branch || req.session.user.branch,
                     cccdNumber: newClientCccd,
                     gender: newClientGender,
-                    emergencyContact: { phone: newClientEmergencyPhone }
+                    // Bug 23/7 M3: lưu đủ trường theo form HĐ mẫu
+                    address: newClientAddress || undefined,
+                    dob: newClientDob ? new Date(newClientDob) : undefined,
+                    cccdIssueDate: newClientCccdIssueDate ? new Date(newClientCccdIssueDate) : undefined,
+                    cccdIssuePlace: newClientCccdIssuePlace || undefined,
+                    emergencyContact: { phone: newClientEmergencyPhone, name: newClientEmergencyName || undefined }
                 });
             } catch (createErr) {
                 if (createErr.code === 11000) {

@@ -392,8 +392,8 @@ exports.saveEmployeeKPITarget = async (req, res, next) => {
             req.flash('error_msg', 'Không tìm thấy nhân viên.');
             return res.redirect('/admin/users/list');
         }
-        if (!['PT', 'Sales'].includes(userData.role)) {
-            req.flash('error_msg', 'Chỉ gán chỉ tiêu KPI cho PT hoặc Sales.');
+        if (!['PT', 'Sales', 'Manager', 'Marketing'].includes(userData.role)) {
+            req.flash('error_msg', 'Chỉ gán chỉ tiêu KPI cho PT, Sales, Manager hoặc Marketing.');
             return res.redirect(`/admin/users/detail/${userId}`);
         }
         if (req.session.user.role === 'Manager') {
