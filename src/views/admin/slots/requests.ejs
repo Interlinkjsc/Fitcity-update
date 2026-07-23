@@ -29,10 +29,10 @@
                     <% pendingSlots.forEach(s => { %>
                         <tr class="hover:bg-slate-50 transition-colors">
                             <td class="px-4 py-3 whitespace-nowrap text-slate-600">
-                                <%= s.pending && s.pending.requestedAt ? new Date(s.pending.requestedAt).toLocaleString('vi-VN') : '-' %>
+                                <%= s.pending && s.pending.requestedAt ? new Date(s.pending.requestedAt).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' }) : '-' %>
                             </td>
                             <td class="px-4 py-3 whitespace-nowrap text-slate-800 font-medium">
-                                <%= new Date(s.startTime).toLocaleString('vi-VN') %>
+                                <%= new Date(s.startTime).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' }) %>
                             </td>
                             <td class="px-4 py-3 text-slate-800"><%= s.pt ? s.pt.name : '-' %></td>
                             <td class="px-4 py-3 text-slate-600"><%= s.pending && s.pending.client ? s.pending.client.name : '-' %></td>

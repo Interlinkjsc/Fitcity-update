@@ -78,7 +78,7 @@
                     if (_m) _defaultSalesId = String(_m._id);
                 }
                 if (!_defaultSalesId && _salesList.length) _defaultSalesId = String(_salesList[0]._id);
-                const _defaultBranchId = (typeof contract !== 'undefined' && contract.branch) ? String(contract.branch) : (typeof branches !== 'undefined' && branches[0] ? String(branches[0]._id) : '');
+                const _defaultBranchId = (typeof contract !== 'undefined' && contract.branch) ? String(contract.branch) : ''; // Bug 23/7 A7: bỏ mặc định chi nhánh, bắt chọn
             %>
             <% if (!isEdit) { %>
                 <script type="application/json" id="contract-step1-json"><%- JSON.stringify({

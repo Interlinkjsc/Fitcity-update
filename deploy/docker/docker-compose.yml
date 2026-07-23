@@ -34,6 +34,9 @@ services:
       PORT: "3000"
       MONGODB_URI: mongodb://mongo:27017/Fitcity
       TRUST_PROXY: "1"
+      # Bug 23/7 A15: server chạy UTC làm toLocaleString('vi-VN') ra sai giờ.
+      # Đặt múi giờ VN cho toàn bộ format ngày/giờ phía server.
+      TZ: Asia/Ho_Chi_Minh
       # HTTP via IP (no domain/SSL yet). Set "true" when behind HTTPS.
       COOKIE_SECURE: "false"
       # Ảnh website do CMS upload — nằm ngoài container để sống qua rebuild
@@ -63,6 +66,8 @@ services:
     # tắt để container không báo unhealthy vĩnh viễn.
     healthcheck:
       disable: true
+    environment:
+      TZ: Asia/Ho_Chi_Minh
     env_file:
       - /opt/fitcity/env/.env.production
     environment:

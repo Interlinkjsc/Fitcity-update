@@ -63,7 +63,7 @@ exports.storePayment = async (req, res, next) => {
 exports.previewContract = async (req, res, next) => {
     try {
         const contractDoc = await Contract.findById(req.params.id)
-            .populate('client', 'name email phone cccdNumber cccdIssueDate cccdIssuePlace address dob emergencyContact')
+            .populate('client', 'name email phone cccdNumber cccdIssueDate cccdIssuePlace address dob gender emergencyContact')
             .populate('servicePackage', 'name price durationInMonths maxSessions type')
             .populate('pt', 'name phone')
             .populate('branch', 'name address')
