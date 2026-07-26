@@ -353,3 +353,77 @@ exports.checkZnsConnection = async () => {
     }
     return { ok: true, quota: quota.data, templates };
 };
+
+// ── OAuth connect flow (v4, PKCE) — lấy access+refresh token khớp đúng app ──────
+const crypto = require('crypto');
+
+function base64urlFromBuffer(buf) {
+    return buf.toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+/** Tạo code_verifier + code_challenge (S256) cho PKCE. */
+exports.makePkce = () => {
+    const verifier = base64urlFromBuffer(crypto.randomBytes(32));
+    const challenge = base64urlFromBuffer(crypto.createHash('sha256').update(verifier).digest());
+    return { verifier, challenge };
+};
+
+/** URL xin quyền OA (admin OA bấm để cấp quyền). */
+exports.buildPermissionUrl = async (redirectUri, codeChallenge, state) => {
+    const stored = await readStoredToken();
+    const appId = stored.appId || process.env.ZALO_APP_ID;
+    const params = new URLSearchParams({
+        app_id: appId || '',
+        redirect_uri: redirectUri,
+        code_challenge: codeChallenge,
+        state: state || 'fitcity'
+    });
+    return `https://oauth.zaloapp.com/v4/oa/permission?${params.toString()}`;
+};
+
+/** Đổi authorization code → access+refresh token, lưu lại. */
+exports.exchangeCodeForToken = async (code, codeVerifier) => {
+    const stored = await readStoredToken();
+    const appId = stored.appId || process.env.ZALO_APP_ID;
+    const appSecret = stored.appSecret || process.env.ZALO_APP_SECRET;
+    if (!appId || !appSecret) throw new Error('Chưa cấu hình App ID / Secret key.');
+
+    const payload = new URLSearchParams({
+        code,
+        app_id: appId,
+        grant_type: 'authorization_code',
+        code_verifier: codeVerifier
+    }).toString();
+
+    const resp = await new Promise((resolve) => {
+        const req = https.request({
+            hostname: 'oauth.zaloapp.com',
+            path: '/v4/oa/access_token',
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'secret_key': appSecret,
+                'Content-Length': Buffer.byteLength(payload)
+            }
+        }, (res) => {
+            let data = '';
+            res.on('data', (c) => { data += c; });
+            res.on('end', () => { try { resolve(JSON.parse(data)); } catch (_) { resolve(null); } });
+        });
+        req.on('error', () => resolve(null));
+        req.write(payload);
+        req.end();
+    });
+
+    if (!resp || !resp.access_token) {
+        throw new Error('Zalo từ chối: ' + (resp ? (resp.error_description || resp.error_name || resp.error) : 'không gọi được API'));
+    }
+    const expiresAt = Date.now() + (Number(resp.expires_in) || 90000) * 1000;
+    tokenCache = { access: resp.access_token, expiresAt };
+    await persistToken({
+        access: resp.access_token,
+        refresh: resp.refresh_token || stored.refresh,
+        expiresAt
+    });
+    return { ok: true };
+};

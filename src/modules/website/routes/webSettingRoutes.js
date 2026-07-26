@@ -14,5 +14,7 @@ router.post('/slot-images/delete', checkPermission('cms', 'view'), ctrl.deleteSl
 // Zalo ZNS: admin dán token / app creds + test kết nối
 router.post('/zalo', checkPermission('cms', 'view'), ctrl.updateZaloSettings);
 router.post('/zalo/test', checkPermission('cms', 'view'), ctrl.testZaloConnection);
+router.get('/zalo/connect', checkPermission('cms', 'view'), ctrl.zaloConnect);
+router.get('/zalo/callback', ctrl.zaloCallback);
 
 module.exports = router;

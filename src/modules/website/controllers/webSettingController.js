@@ -127,6 +127,37 @@ exports.testZaloConnection = async (req, res) => {
     res.json(result);
 };
 
+// GET /admin/website/settings/zalo/connect — chuyển tới Zalo xin quyền OA (OAuth PKCE)
+exports.zaloConnect = async (req, res, next) => {
+    try {
+        const { verifier, challenge } = zaloService.makePkce();
+        req.session.zaloCodeVerifier = verifier;
+        const proto = req.headers['x-forwarded-proto'] || req.protocol;
+        const redirectUri = `${proto}://${req.headers.host}/admin/website/settings/zalo/callback`;
+        const url = await zaloService.buildPermissionUrl(redirectUri, challenge, 'fitcity');
+        res.redirect(url);
+    } catch (err) { next(err); }
+};
+
+// GET /admin/website/settings/zalo/callback — Zalo trả code về, đổi lấy token
+exports.zaloCallback = async (req, res) => {
+    try {
+        const code = req.query.code;
+        const verifier = req.session.zaloCodeVerifier;
+        if (!code || !verifier) {
+            req.flash('error_msg', 'Thiếu code hoặc phiên hết hạn. Bấm "Kết nối Zalo OA" lại.');
+            return res.redirect('/admin/website/settings');
+        }
+        await zaloService.exchangeCodeForToken(code, verifier);
+        delete req.session.zaloCodeVerifier;
+        req.flash('success_msg', 'Kết nối Zalo OA thành công! Token đã lưu và sẽ tự động gia hạn.');
+        res.redirect('/admin/website/settings');
+    } catch (err) {
+        req.flash('error_msg', 'Kết nối Zalo thất bại: ' + err.message);
+        res.redirect('/admin/website/settings');
+    }
+};
+
 // GET /api/web/slot-images — public map { slotId: mediaKey }
 exports.apiGetSlotImages = async (req, res, next) => {
     try {
