@@ -45,7 +45,14 @@ exports.getLandingPage = async (req, res, next) => {
         return res.redirect('/admin');
     }
     const websiteUrl = process.env.WEBSITE_URL || 'https://fitcity.fit';
-    return res.redirect(websiteUrl);
+    // Phục vụ meta xác minh domain Zalo NGAY tại root (crawler Zalo có thể không đi theo 302),
+    // đồng thời chuyển hướng người dùng sang web đen tức thì.
+    const wu = JSON.stringify(websiteUrl);
+    return res.send('<!doctype html><html lang="vi"><head><meta charset="utf-8">'
+        + '<meta name="zalo-platform-site-verification" content="FUQ39k32KZ8So80tcCCXRdZTjbgKgsm5CZKp" />'
+        + '<meta http-equiv="refresh" content="0; url=' + websiteUrl + '"><title>FitCity</title>'
+        + '<script>location.replace(' + wu + ')</script></head>'
+        + '<body>Đang chuyển đến FitCity… <a href="' + websiteUrl + '">Bấm vào đây nếu không tự chuyển.</a></body></html>');
 };
 
 // Landing trắng cũ — giữ lại tại /landing-old phòng khi cần tham chiếu
