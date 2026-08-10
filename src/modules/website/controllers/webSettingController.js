@@ -158,6 +158,42 @@ exports.zaloCallback = async (req, res) => {
     }
 };
 
+// GET /admin/website/settings/zalo/callback — PUBLIC handler (mount TRƯỚC router admin).
+// Cho phép chủ OA bấm link cấp quyền từ điện thoại của họ mà KHÔNG cần đăng nhập ERP.
+// Mã PKCE verifier lấy từ WebSetting 'zalo_pkce_verifier' (đội kỹ thuật ghi sẵn khi tạo link).
+exports.zaloPublicCallback = async (req, res) => {
+    const page = (ok, title, msg) => `<!doctype html><html lang="vi"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Kết nối Zalo FitCity</title></head>
+<body style="font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:#f1f5f9;margin:0;padding:24px;color:#0f172a">
+<div style="max-width:420px;margin:40px auto;background:#fff;border-radius:16px;padding:28px;text-align:center;box-shadow:0 6px 24px rgba(0,0,0,.08)">
+<div style="font-size:52px;line-height:1">${ok ? '✅' : '⚠️'}</div>
+<h2 style="margin:12px 0 6px;color:${ok ? '#15803d' : '#b91c1c'}">${title}</h2>
+<p style="color:#475569;font-size:15px;margin:0">${msg}</p>
+</div></body></html>`;
+    try {
+        const code = req.query.code;
+        if (!code) {
+            return res.status(400).send(page(false, 'Thiếu mã xác thực', 'Vui lòng bấm lại link kết nối được gửi.'));
+        }
+        let verifier = req.session && req.session.zaloCodeVerifier;
+        if (!verifier) {
+            const row = await WebSetting.findOne({ key: 'zalo_pkce_verifier' }).lean();
+            verifier = row && row.value;
+        }
+        if (!verifier) {
+            return res.status(400).send(page(false, 'Phiên kết nối hết hạn', 'Đội kỹ thuật cần tạo lại link. Vui lòng báo lại.'));
+        }
+        await zaloService.exchangeCodeForToken(code, verifier);
+        // dùng xong xoá verifier để không tái sử dụng
+        await WebSetting.deleteOne({ key: 'zalo_pkce_verifier' }).catch(() => {});
+        if (req.session) delete req.session.zaloCodeVerifier;
+        return res.send(page(true, 'Kết nối Zalo thành công!', 'Hệ thống FitCity đã nhận quyền gửi tin. Bạn có thể đóng trang này.'));
+    } catch (err) {
+        return res.status(400).send(page(false, 'Kết nối thất bại', 'Lý do: ' + (err.message || 'không rõ') + '. Vui lòng thử lại.'));
+    }
+};
+
 // GET /api/web/slot-images — public map { slotId: mediaKey }
 exports.apiGetSlotImages = async (req, res, next) => {
     try {

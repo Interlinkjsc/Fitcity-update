@@ -63,6 +63,10 @@ function mountFeatureRouters(app) {
     const webApiRoutes = require('../modules/website/routes/webApiRoutes');
     app.use('/api/web', webApiRoutes);
 
+    // Zalo OA callback CÔNG KHAI (mount TRƯỚC router admin để chủ OA bấm link từ điện thoại
+    // của họ mà không cần đăng nhập ERP). Chỉ xử lý khi có ?code, phần còn lại vẫn qua router admin.
+    app.get('/admin/website/settings/zalo/callback', webSettingCtrl.zaloPublicCallback);
+
     // Admin website CMS: settings (mount TRƯỚC /admin/website để không bị nuốt route)
     const webSettingRoutes = require('../modules/website/routes/webSettingRoutes');
     app.use('/admin/website/settings', webSettingRoutes);
