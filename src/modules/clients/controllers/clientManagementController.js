@@ -267,6 +267,9 @@ exports.exportClients = async (req, res, next) => {
             { header: 'Trạng thái', key: 'status', width: 12 }
         ];
         ws.getRow(1).font = { bold: true };
+        // Rp27/7 A3: ép cột SĐT/CCCD định dạng TEXT để Excel không nuốt số 0 đầu khi khách mở/sửa file
+        ws.getColumn('phone').numFmt = '@';
+        ws.getColumn('cccd').numFmt = '@';
         clients.forEach(c => {
             ws.addRow({
                 name: c.name || '',
@@ -306,33 +309,46 @@ exports.importClients = async (req, res, next) => {
         }
         const ws = wb.worksheets[0];
         let created = 0, skipped = 0;
+        const skipReasons = [];
+
+        // Rp27/7 A3: chuẩn hoá cell + khôi phục số 0 đầu SĐT/CCCD (xem src/utils/importNormalize.js)
+        const { cellText, normalizePhone, normalizeCccd } = require('../../../utils/importNormalize');
+
         const rows = [];
-        ws.eachRow((row, idx) => { if (idx > 1) rows.push(row); });
-        for (const row of rows) {
-            const name = String(row.getCell(1).value || '').trim();
-            const phone = String(row.getCell(2).value || '').trim();
-            let email = row.getCell(3).value;
-            email = email && email.text ? email.text : String(email || '').trim();
-            const branchName = String(row.getCell(8).value || '').trim();
-            if (!name || !phone) { skipped++; continue; }
+        ws.eachRow((row, idx) => { if (idx > 1) rows.push({ row, idx }); });
+        for (const { row, idx } of rows) {
+            const name = cellText(row, 1);
+            const phone = normalizePhone(cellText(row, 2));
+            let email = cellText(row, 3);
+            const branchName = cellText(row, 8);
+            if (!name) { skipped++; skipReasons.push(`Dòng ${idx}: thiếu tên`); continue; }
+            if (!phone) { skipped++; skipReasons.push(`Dòng ${idx}: thiếu SĐT`); continue; }
+            if (!/^0\d{9}$/.test(phone)) { skipped++; skipReasons.push(`Dòng ${idx}: SĐT "${phone}" không hợp lệ (cần 10 số bắt đầu bằng 0)`); continue; }
+            const cccd = normalizeCccd(cellText(row, 4));
+            if (cccd && !/^\d{12}$/.test(cccd)) { skipped++; skipReasons.push(`Dòng ${idx}: CCCD "${cccd}" không hợp lệ (phải đủ 12 số)`); continue; }
             try {
                 const Branch = require('../../crm/models/branchModel.js');
                 let branchId = req.session.user.branch;
                 // Bảo mật (codex review 2): Manager không có chi nhánh → không import (fail-closed).
-                if (req.session.user.role === 'Manager' && !branchId) { skipped++; continue; }
+                if (req.session.user.role === 'Manager' && !branchId) { skipped++; skipReasons.push(`Dòng ${idx}: tài khoản Manager chưa gán chi nhánh`); continue; }
                 if (branchName && req.session.user.role !== 'Manager') {
                     const b = await Branch.findOne({ name: new RegExp('^' + branchName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', 'i') }).select('_id').lean();
                     if (b) branchId = b._id;
                 }
                 await exports._createClientFromImport({ name, phone, email: email || `import_${Date.now()}_${created}@fitcity.temp`, branch: branchId,
-                    cccdNumber: String(row.getCell(4).value || '').trim() || undefined,
-                    gender: String(row.getCell(5).value || '').trim() || undefined,
-                    address: String(row.getCell(7).value || '').trim() || undefined });
+                    cccdNumber: cccd || undefined,
+                    gender: cellText(row, 5) || undefined,
+                    address: cellText(row, 7) || undefined });
                 created++;
-            } catch (e) { skipped++; }
+            } catch (e) {
+                skipped++;
+                skipReasons.push(`Dòng ${idx}: ${e.message && e.message.length < 120 ? e.message : 'trùng SĐT/email hoặc dữ liệu không hợp lệ'}`);
+            }
         }
         try { fs.unlinkSync(path); } catch (_) {}
-        req.flash('success_msg', `Import hoàn tất: tạo mới ${created} khách hàng, bỏ qua ${skipped} dòng (thiếu tên/SĐT hoặc trùng).`);
+        let msg = `Import hoàn tất: tạo mới ${created} khách hàng, bỏ qua ${skipped} dòng.`;
+        if (skipReasons.length) msg += ' Chi tiết: ' + skipReasons.slice(0, 8).join('; ') + (skipReasons.length > 8 ? ` … (+${skipReasons.length - 8} dòng khác)` : '');
+        req.flash(created > 0 ? 'success_msg' : 'error_msg', msg);
         res.redirect('/admin/clients/list');
     } catch (err) {
         req.flash('error_msg', 'Lỗi đọc file import: ' + err.message);

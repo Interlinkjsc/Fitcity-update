@@ -25,8 +25,19 @@ async function computeStaffCommission(staff, startOfMonth, endOfMonth) {
         const salesCommission = salesContracts.length > 0
             ? payrollService.calculateSalesCommission(salesContracts, salesRate)
             : 0;
+        // Rp27/7 A2 (QC review 2): thành phần "PT" tách đúng theo mode —
+        // contract = hoa hồng dạy theo buổi; timesheet = thù lao ca trực; hybrid = trộn.
+        // teachingSource cho UI ghi chú rõ nguồn, không gắn nhầm nhãn "dạy" cho ca trực.
+        let teachingCommission;
+        let teachingSource = resolved.commissionSource || 'contract';
+        if (teachingSource === 'timesheet') teachingCommission = resolved.timesheetCommission || resolved.commission;
+        else if (teachingSource === 'hybrid') teachingCommission = resolved.commission;
+        else teachingCommission = (resolved.contractCommission != null ? resolved.contractCommission : resolved.commission);
         return {
             commission: resolved.commission + salesCommission,
+            teachingCommission,
+            teachingSource,
+            salesCommission,
             detailCount: resolved.detailCount + salesContracts.length,
             commissionSource: resolved.commissionSource,
             contractCommission: resolved.contractCommission,
@@ -40,12 +51,15 @@ async function computeStaffCommission(staff, startOfMonth, endOfMonth) {
             createdAt: { $gte: startOfMonth, $lte: endOfMonth }
         });
         const rate = staff.salesCommissionRate || 5;
+        const salesCommission = payrollService.calculateSalesCommission(contracts, rate);
         return {
-            commission: payrollService.calculateSalesCommission(contracts, rate),
+            commission: salesCommission,
+            teachingCommission: 0,
+            salesCommission,
             detailCount: contracts.length
         };
     }
-    return { commission: 0, detailCount: 0 };
+    return { commission: 0, teachingCommission: 0, salesCommission: 0, detailCount: 0 };
 }
 
 async function buildPayrollRow(staff, month, year) {
@@ -77,6 +91,11 @@ async function buildPayrollRow(staff, month, year) {
             return {
                 staff,
                 commission,
+                teachingCommission: computed.teachingCommission || 0,
+                teachingSource: computed.teachingSource || 'contract',
+                salesCommission: computed.salesCommission || 0,
+                halfTeaching: Math.round((computed.teachingCommission || 0) / 2),
+                halfSales: Math.round((computed.salesCommission || 0) / 2),
                 detailCount,
                 commissionSource: computed.commissionSource,
                 contractCommission: computed.contractCommission,
@@ -194,7 +213,14 @@ exports.finalizePayroll = async (req, res, next) => {
 
         const totalCommission = Number(commission) || 0;
 
-        const records = await payrollService.generateBiMonthlyPayroll(staff, totalCommission, Number(month), Number(year));
+        // Rp27/7 A2: tính lại split dạy/sale tại thời điểm chốt để lưu snapshot vào record
+        const som = new Date(Number(year), Number(month) - 1, 1);
+        const eom = new Date(Number(year), Number(month), 0, 23, 59, 59);
+        const computedSplit = await computeStaffCommission(staff, som, eom);
+        const records = await payrollService.generateBiMonthlyPayroll(staff, totalCommission, Number(month), Number(year), {
+            teaching: computedSplit.teachingCommission || 0,
+            sales: computedSplit.salesCommission || 0
+        });
 
         req.flash('success_msg', `Đã tạo ${records.length} kỳ lương cho ${staff.name} (Kỳ 1: ngày 5, Kỳ 2: ngày 15).`);
         res.redirect(`/admin/payroll?month=${month}&year=${year}`);
@@ -224,7 +250,10 @@ exports.autoSuggestPayroll = async (req, res, next) => {
             const computed = await computeStaffCommission(staff, startOfMonth, endOfMonth);
             commission = computed.commission;
 
-            const records = await payrollService.generateBiMonthlyPayroll(staff, commission, month, year);
+            const records = await payrollService.generateBiMonthlyPayroll(staff, commission, month, year, {
+                teaching: computed.teachingCommission || 0,
+                sales: computed.salesCommission || 0
+            });
             createdCount += records.length;
 
             if (records.length > 0 && staff.role === 'PT') {

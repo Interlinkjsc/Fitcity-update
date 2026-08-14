@@ -28,7 +28,7 @@
                     <input type="text" id="staffInput" placeholder="Tìm tên, email hoặc vai trò..." 
                         class="w-full pl-11 pr-12 text-sm border-slate-200 rounded-xl focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 py-3 outline-none transition-all shadow-sm bg-slate-50/50"
                         autocomplete="off"
-                        value="<%= isEdit && violation.staffInfo ? (violation.staffInfo.name + ' (' + violation.staffInfo.role + ') - ' + violation.staffInfo.email) : '' %>"
+                        value="<%= isEdit && violation.staffInfo ? (violation.staffInfo.name + ' (' + violation.staffInfo.role + ')') : '' %>"
                         required>
                     
                     <div id="selectionStatus" class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
@@ -43,7 +43,7 @@
                         <% staff.forEach(s => { %>
                             <button type="button" class="staff-option w-full text-left px-4 py-3 rounded-lg hover:bg-slate-50 transition-colors flex items-center justify-between group" 
                                 data-id="<%= s._id %>" 
-                                data-display="<%= s.name %> (<%= s.role %>) - <%= s.email %>">
+                                data-display="<%= s.name %> (<%= s.role %>)">
                                 <div>
                                     <div class="font-bold text-slate-800 text-sm group-hover:text-rose-600 transition-colors"><%= s.name %></div>
                                     <div class="text-[11px] text-slate-500"><%= s.role %> • <%= s.email %></div>

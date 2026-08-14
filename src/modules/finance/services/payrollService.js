@@ -36,15 +36,22 @@ exports.calculatePTTeachingCommission = async (staffId, startOfMonth, endOfMonth
         pt: staffId,
         status: { $in: ['Completed', 'Confirmed'] },
         scheduledTime: { $gte: startOfMonth, $lte: endOfMonth }
-    }).populate('contract', 'basePrice totalSessions pt').lean();
+    }).populate('contract', 'basePrice totalSessions pt packageSnapshot contractCode').lean();
 
     let commission = 0;
     let taughtCount = 0;
     for (const s of sessions) {
         const c = s.contract;
-        if (!c || !c.basePrice || !c.totalSessions) continue;
-        // rate của PT phụ trách HĐ (fallback rate mặc định gói)
-        const pricePerSession = c.basePrice / c.totalSessions;
+        if (!c) continue;
+        // QC review 1 (A12): HĐ legacy thiếu basePrice/totalSessions → fallback packageSnapshot,
+        // và log cảnh báo thay vì âm thầm trả 0.
+        const price = c.basePrice || (c.packageSnapshot && c.packageSnapshot.price) || 0;
+        const totalSessions = c.totalSessions || (c.packageSnapshot && c.packageSnapshot.sessions) || 0;
+        if (!price || !totalSessions) {
+            console.warn(`[Payroll] HĐ ${c.contractCode || c._id} thiếu basePrice/totalSessions — buổi dạy không tính được comm`);
+            continue;
+        }
+        const pricePerSession = price / totalSessions;
         const rate = await resolvePtRateForContract(c, staffId);
         commission += Math.round(pricePerSession * rate / 100);
         taughtCount++;
@@ -129,9 +136,12 @@ exports.calculateTotalSalary = (baseSalary = 0, commission = 0, bonus = 0, deduc
 
 const Violation = require('../../crm/models/violationModel.js');
 
-exports.generateBiMonthlyPayroll = async (staff, commission = 0, month, year) => {
+exports.generateBiMonthlyPayroll = async (staff, commission = 0, month, year, commissionSplit = null) => {
     const halfBase = Math.round((staff.baseSalary || 5000000) / 2);
     const halfCommission = Math.round(commission / 2);
+    // Rp27/7 A2 (QC review 1): snapshot tách comm dạy/sale tại thời điểm chốt
+    const halfTeaching = commissionSplit ? Math.round((commissionSplit.teaching || 0) / 2) : null;
+    const halfSales = commissionSplit ? Math.round((commissionSplit.sales || 0) / 2) : null;
     const results = [];
 
     const startOfMonth = new Date(year, month - 1, 1);
@@ -174,6 +184,8 @@ exports.generateBiMonthlyPayroll = async (staff, commission = 0, month, year) =>
             period,
             baseSalary: halfBase,
             commission: halfCommission,
+            teachingCommission: halfTeaching,
+            salesCommission: halfSales,
             bonus: 0,
             deductions: halfDeductions,
             totalSalary,

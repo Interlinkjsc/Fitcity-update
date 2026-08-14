@@ -171,8 +171,12 @@ exports.updateViolation = async (req, res, next) => {
         }
 
         const { staff, type, description, penaltyAmount, date, status } = req.body;
-        
-        violation.staff = staff;
+
+        // Rp27/7 A8: staff rỗng/không hợp lệ (hidden input bị clear khi chỉ đổi trạng thái)
+        // → giữ nguyên nhân sự cũ thay vì crash Cast to ObjectId.
+        if (staff && require('mongoose').Types.ObjectId.isValid(staff)) {
+            violation.staff = staff;
+        }
         violation.type = type;
         violation.description = description;
         violation.penaltyAmount = penaltyAmount;

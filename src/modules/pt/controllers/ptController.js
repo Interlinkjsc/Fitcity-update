@@ -162,7 +162,10 @@ exports.getIncome = async (req, res, next) => {
                 const salesComm = salesContracts.length > 0
                     ? payrollService.calculateSalesCommission(salesContracts, salesRate)
                     : 0;
-                records = await payrollService.generateBiMonthlyPayroll(staff, commission + salesComm, month, year);
+                records = await payrollService.generateBiMonthlyPayroll(staff, commission + salesComm, month, year, {
+                    teaching: commission,
+                    sales: salesComm
+                });
             }
         }
 

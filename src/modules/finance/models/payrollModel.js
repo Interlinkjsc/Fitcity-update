@@ -32,6 +32,16 @@ const payrollSchema = new mongoose.Schema({
         default: 0,
         min: [0, 'Hoa hồng không được âm']
     },
+    // Rp27/7 A2 (QC review 1): snapshot tách hoa hồng tại thời điểm chốt kỳ lương —
+    // hiển thị lịch sử không bị trôi khi dữ liệu buổi dạy/HĐ thay đổi sau khi chốt.
+    teachingCommission: {
+        type: Number,
+        default: null
+    },
+    salesCommission: {
+        type: Number,
+        default: null
+    },
     bonus: {
         type: Number,
         default: 0

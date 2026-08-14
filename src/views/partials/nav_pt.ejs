@@ -155,7 +155,11 @@
 
         try {
             if (!html5QrcodeScanner) {
-                html5QrcodeScanner = new Html5Qrcode('scanReader');
+                // Rp27/7 A11: dùng BarcodeDetector phần cứng khi trình duyệt hỗ trợ — decode nhanh hơn hẳn WASM
+                html5QrcodeScanner = new Html5Qrcode('scanReader', {
+                    experimentalFeatures: { useBarCodeDetectorIfSupported: true },
+                    verbose: false
+                });
             }
             document.getElementById('scanReader').classList.remove('hidden');
             isScanning = true;
@@ -163,7 +167,13 @@
             // (KHÔNG gọi getCameras() trước: trên iOS bước đó fail khi chưa cấp quyền.)
             await html5QrcodeScanner.start(
                 { facingMode: 'environment' },
-                { fps: 10, qrbox: { width: 220, height: 220 } },
+                {
+                    fps: 15,
+                    // Vùng quét 75% khung hình — đỡ phải căn QR chính giữa
+                    qrbox: (vw, vh) => { const s = Math.floor(Math.min(vw, vh) * 0.75); return { width: s, height: s }; },
+                    disableFlip: true,
+                    videoConstraints: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }
+                },
                 onScanSuccess
             );
         } catch (e) {

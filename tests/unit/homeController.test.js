@@ -58,6 +58,9 @@ describe('Home Controller', () => {
             jest.spyOn(Contract, 'find').mockReturnValue(mockQuery);
             jest.spyOn(WorkoutSession, 'aggregate').mockResolvedValue([]);
             jest.spyOn(Payroll, 'aggregate').mockResolvedValue([]);
+            // Rp27/7 A5: dashboard giờ cộng doanh thu Extension_Fee qua PaymentTransaction.aggregate
+            const PaymentTransaction = require('../../src/modules/contracts/models/transactionModel.js');
+            jest.spyOn(PaymentTransaction, 'aggregate').mockResolvedValue([]);
 
             // Mock Lead.aggregate for the direct call in homeController (lead counts per sales)
             jest.spyOn(Lead, 'aggregate').mockResolvedValue([]);
@@ -189,6 +192,9 @@ describe('Home Controller', () => {
             jest.spyOn(Contract, 'aggregate').mockResolvedValue([]);
             jest.spyOn(KPIConfig, 'findOne').mockResolvedValue(null);
             jest.spyOn(Violation, 'find').mockResolvedValue([]);
+            // Rp27/7 A12: dashboard giờ tính comm dạy thật qua payrollService
+            const payrollService = require('../../src/modules/finance/services/payrollService.js');
+            jest.spyOn(payrollService, 'calculatePTTeachingCommission').mockResolvedValue({ commission: 500000, taughtCount: 5 });
 
             await homeController.getPtDashboard(req, res, next);
             

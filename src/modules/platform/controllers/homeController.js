@@ -84,8 +84,35 @@ exports.getAdminDashboard = async (req, res, next) => {
             { $group: contractScope.revenueAggregateGroup() }
         ]);
 
-        const totalRevenueAfterTax = revenueStats[0] ? revenueStats[0].totalAfterTax : 0;
-        const totalRevenueBeforeTax = revenueStats[0] ? revenueStats[0].totalNet : 0;
+        let totalRevenueAfterTax = revenueStats[0] ? revenueStats[0].totalAfterTax : 0;
+        let totalRevenueBeforeTax = revenueStats[0] ? revenueStats[0].totalNet : 0;
+
+        // Rp27/7 A5: cộng doanh thu phí gia hạn HĐ (Extension_Fee, chưa VAT) vào doanh thu
+        const PaymentTransaction = require('../../contracts/models/transactionModel');
+        // QC review 1: chỉ spread createdAt khi tồn tại — refactor sau này bỏ default tháng vẫn an toàn
+        const extFeeMatch = {
+            transactionType: 'Extension_Fee',
+            status: 'Success',
+            ...(dateFilter.createdAt ? { createdAt: dateFilter.createdAt } : {})
+        };
+        let extensionRevenue = 0;
+        {
+            const extAgg = await PaymentTransaction.aggregate([
+                { $match: extFeeMatch },
+                { $lookup: { from: 'contracts', localField: 'contractId', foreignField: '_id', as: 'ct' } },
+                { $unwind: '$ct' },
+                ...(branchId && branchId !== 'all'
+                    ? [{ $match: { 'ct.branch': new mongoose.Types.ObjectId(branchId) } }]
+                    : (user.role === 'Manager' && user.branch
+                        ? [{ $match: { 'ct.branch': new mongoose.Types.ObjectId(user.branch) } }]
+                        : [])),
+                { $group: { _id: null, total: { $sum: '$amount' } } }
+            ]);
+            extensionRevenue = extAgg[0] ? extAgg[0].total : 0;
+        }
+        // QC review 2: phí gia hạn 200k/tháng là số CHƯA VAT (khách chưa chốt quy tắc VAT)
+        // → chỉ cộng vào "Doanh thu trước thuế"; KHÔNG tự suy ra số sau thuế.
+        totalRevenueBeforeTax += extensionRevenue;
 
         
         // 3. Expenses (vận hành + lương đã thanh toán) — dùng field `date` / `paymentDate`, không dùng createdAt HĐ
@@ -256,6 +283,23 @@ exports.getAdminDashboard = async (req, res, next) => {
             s.leadCount = leadCountMap[s._id.toString()] || 0;
         });
 
+        // Rp27/7 A9+A10: thẻ hiệu suất CÁ NHÂN trong tháng cho tài khoản Manager/Marketing/Sales
+        let myPerformance = null;
+        if (['Manager', 'Marketing', 'Sales'].includes(user.role)) {
+            const myAgg = await Contract.aggregate([
+                { $match: {
+                    sales: new mongoose.Types.ObjectId(user.id),
+                    createdAt: dateFilter.createdAt,
+                    contractStatus: { $ne: 'Cancelled' }
+                } },
+                { $group: { _id: null, revenue: { $sum: contractScope.NET_AMOUNT_EXPR }, contractCount: { $sum: 1 } } }
+            ]);
+            myPerformance = {
+                contractCount: myAgg[0] ? myAgg[0].contractCount : 0,
+                revenue: myAgg[0] ? Math.round(myAgg[0].revenue) : 0
+            };
+        }
+
         // 10. Recent pending contracts - scope theo branch của Manager
         const pendingContractsFilter = mergeContractScope(
             { paymentStatus: { $ne: 'Paid' }, contractStatus: { $ne: 'Cancelled' } },
@@ -299,6 +343,8 @@ exports.getAdminDashboard = async (req, res, next) => {
             totalPayrollPaid,
             netProfit,
             pendingReceivables,
+            extensionRevenue,
+            myPerformance,
             activeMembers,
             onlineMembers,
             membersWithActiveContract,
@@ -381,9 +427,11 @@ exports.getPtDashboard = async (req, res, next) => {
         });
         const totalDeductions = violations.reduce((sum, v) => sum + v.penaltyAmount, 0);
 
-        // Bug 2.3: estimatedCommission (hoa hồng dạy) = 0 trên dashboard PT
-        // ptCommission trên HĐ là input cho payroll, không hiển thị ở đây
-        const estimatedCommission = 0;
+        // Rp27/7 A12: hoa hồng dạy = số buổi đã dạy × (rate% × giá/buổi) — cùng công thức payroll/KPI
+        const payrollService = require('../../finance/services/payrollService');
+        const teachingResult = await payrollService.calculatePTTeachingCommission(ptId, startOfMonth, endOfMonth);
+        const estimatedCommission = teachingResult.commission;
+        const taughtSessions = teachingResult.taughtCount;
 
         // Hoa hồng chốt HĐ: chỉ tính HĐ mà chính PT đó chốt (sales === ptId)
         const ptUserFull = ptUser || await User.findById(ptId).lean();
@@ -415,6 +463,7 @@ exports.getPtDashboard = async (req, res, next) => {
 
         res.render('pt/dashboard', {
             estimatedCommission,
+            taughtSessions,
             salesCommission,
             totalEstimatedIncome,
             baseSalary,

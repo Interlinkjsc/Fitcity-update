@@ -152,7 +152,7 @@
             <div class="flex justify-between items-center text-sm py-3 border-b border-slate-100">
                 <div class="flex items-center gap-2">
                     <span class="material-symbols-outlined text-green-500 text-lg">history_edu</span>
-                    <span class="text-slate-500 font-bold">Hoa hồng dạy (<%= completedSessions %> buổi)</span>
+                    <span class="text-slate-500 font-bold">Hoa hồng dạy (<%= typeof taughtSessions !== 'undefined' ? taughtSessions : completedSessions %> buổi)</span>
                 </div>
                 <span class="font-black text-green-600">+<%= (estimatedCommission/1000).toLocaleString() %>K</span>
             </div>
@@ -192,7 +192,7 @@
 
         <div class="mt-8 p-4 bg-slate-100/50 rounded-2xl flex items-center gap-4">
             <span class="material-symbols-outlined text-slate-400 text-xl">info</span>
-            <p class="text-[10px] text-slate-500 font-medium leading-relaxed italic">THU NHẬP DỰ KIẾN MỖI THÁNG GỒM CÓ LƯƠNG CỨNG VÀ HOA HỒNG CHỐT ĐƯỢC HỢP ĐỒNG VỚI KHÁCH HÀNG VÀ KHÔNG CÒN CÔNG NỢ</p>
+            <p class="text-[10px] text-slate-500 font-medium leading-relaxed italic">THU NHẬP DỰ KIẾN MỖI THÁNG GỒM CÓ LƯƠNG CỨNG, HOA HỒNG DẠY THEO BUỔI, HOA HỒNG CHỐT ĐƯỢC HỢP ĐỒNG VÀ KHÔNG CÒN CÔNG NỢ</p>
         </div>
     </section>
 
