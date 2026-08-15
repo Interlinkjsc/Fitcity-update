@@ -65,7 +65,7 @@ beforeAll(async () => {
     // dọn dữ liệu sót từ run trước (marker ở bất kỳ vị trí nào trong tên/email)
     await User.deleteMany({ $or: [{ name: new RegExp(M) }, { email: /rtimp/i }] });
     await Branch.deleteMany({ name: new RegExp(M) });
-    await Reservation.deleteMany({ phoneHash: { $in: ['0912000001','0912000002','0913000001','0916000001','0916000002','0917000002','0919000001','0919000002','0919000003','0921000001','0921000009','0922000001','0923000001'].map(hash) } });
+    await Reservation.deleteMany({ phoneHash: { $in: ['0912000001','0912000002','0913000001','0916000001','0916000002','0917000002','0919000001','0919000002','0919000003','0921000001','0921000009','0922000001','0923000001','0924000001'].map(hash) } });
     brA = await Branch.create({ name: `${M} Chi Nhánh Hoàn Kiếm`, address: 'a', phone: '0900000101', status: 'Open' });
     brB = await Branch.create({ name: `${M} Chi Nhánh Đà Nẵng`, address: 'b', phone: '0900000102', status: 'Open' });
     brClosed = await Branch.create({ name: `${M} Chi Nhánh Đã Đóng`, address: 'c', phone: '0900000103', status: 'Closed' });
@@ -77,7 +77,7 @@ afterAll(async () => {
     try {
         await User.deleteMany({ $or: [{ name: new RegExp(M) }, { email: /rtimp/i }] });
         await Branch.deleteMany({ name: new RegExp(M) });
-        await Reservation.deleteMany({ phoneHash: { $in: ['0912000001','0912000002','0913000001','0916000001','0916000002','0917000002','0919000001','0919000002','0919000003','0921000001','0921000009','0922000001','0923000001'].map(hash) } });
+        await Reservation.deleteMany({ phoneHash: { $in: ['0912000001','0912000002','0913000001','0916000001','0916000002','0917000002','0919000001','0919000002','0919000003','0921000001','0921000009','0922000001','0923000001','0924000001'].map(hash) } });
         fs.rmSync(TMP, { recursive: true, force: true });
     } finally { await mongoose.connection.close(); }
 });
@@ -331,6 +331,14 @@ describe('E. Security/regression', () => {
             'preamble.xlsx', { preRows: [['Email', 'Giới tính', 'Địa chỉ', 'Số CCCD', 'Ngày sinh'], ['—']] });
         const r = await importFile(p, admin);
         expect(r.created).toBe(1);
+    });
+    test('prod-like: KH cũ có CCCD legacy sai định dạng → dòng đó báo TRÙNG (đã tồn tại), không báo lỗi CCCD', async () => {
+        await User.create({ role: 'Client', status: 'Active', password: 'x12345678', name: `${M} Legacy CCCD`, email: `legacy.rtimp@test.local`, phone: '0924000001', branch: brA._id });
+        const p = await writeXlsx(['Họ tên', 'Số điện thoại', 'Số CCCD', 'Chi nhánh'], [[`${M} Legacy CCCD`, '0924000001', '0123211121345', brA.name]], 'legacy.xlsx');
+        const r = await importFile(p, admin);
+        expect(r.created).toBe(0);
+        expect(r.skipReasons[0]).toMatch(/trùng SĐT/);
+        expect(r.skipReasons[0]).not.toMatch(/CCCD ".*không hợp lệ/);
     });
     test('export không phá filter branch của Manager (chỉ thấy KH branch mình)', async () => {
         const wb = await exportViaController(manager);

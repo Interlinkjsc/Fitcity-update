@@ -354,6 +354,7 @@ exports.importClients = async (req, res, next) => {
  */
 exports._importClientsFromFile = async (path, filename, sessionUser) => {
     const ExcelJS = require('exceljs');
+    const User = require('../../users/models/userModel.js');
     const { cellText, detectHeader } = require('../../../utils/importNormalize');
     const wb = new ExcelJS.Workbook();
     if (/\.csv$/i.test(filename || path)) await wb.csv.readFile(path);
@@ -397,6 +398,16 @@ exports._importClientsFromFile = async (path, filename, sessionUser) => {
         if (nonEmpty.length === 1 && !rawByKey.phone && /^(ghi ch[uú]|l[uư]u [yý]|note)/i.test(String(rawByKey.name || ''))) continue;
 
         const { values, errors } = clientImportSchema.normalizeAndValidateRow(rawByKey);
+        // Ưu tiên báo TRÙNG (KH đã tồn tại) trước các lỗi định dạng phụ (CCCD/giới tính/dob) — file export
+        // của KH cũ có thể chứa dữ liệu legacy chưa chuẩn, nhưng bản chất dòng đó là "đã có trong hệ thống".
+        if (values.phone && /^0\d{9}$/.test(values.phone)) {
+            const dupOld = await User.findOne({ role: 'Client', phoneHash: hash(values.phone) }).select('name').lean();
+            if (dupOld) { skipped++; skipReasons.push(`Dòng ${idx}: trùng SĐT — SĐT ${values.phone} đã tồn tại (khách "${dupOld.name || ''}")`); continue; }
+        }
+        if (values.email) {
+            const dupMail = await User.findOne({ emailHash: hash(values.email) }).select('_id').lean();
+            if (dupMail) { skipped++; skipReasons.push(`Dòng ${idx}: trùng email — email ${values.email} đã dùng cho khách khác`); continue; }
+        }
         if (errors.length) { skipped++; skipReasons.push(`Dòng ${idx}: ${errors.join('; ')}`); continue; }
         if (seenPhones.has(values.phone)) { skipped++; skipReasons.push(`Dòng ${idx}: SĐT ${values.phone} trùng với dòng khác trong file`); continue; }
 
