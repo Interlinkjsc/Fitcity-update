@@ -221,14 +221,26 @@ exports.createContract = async (data) => {
     // contractCode → bắt E11000 và sinh candidate KẾ TIẾP rồi create lại (tối đa 5 lần). Mã nhập tay: không retry.
     let contract;
     let contractCode = userCode || await generateContractCode(clientName, existsFn);
+    const MAX_ATTEMPTS = 8;
     for (let attempt = 1; ; attempt++) {
         try {
             contract = await Contract.create({ ...payload, contractCode });
             break;
         } catch (e) {
             const dupCode = e && e.code === 11000 && e.keyPattern && e.keyPattern.contractCode;
-            if (!dupCode || userCode || attempt >= 5) throw e;
-            contractCode = await generateContractCode(clientName, existsFn);
+            if (!dupCode || userCode || attempt >= MAX_ATTEMPTS) throw e;
+            // Race giữa nhiều request đồng thời: nếu chỉ hỏi lại existsFn thì các request lại cùng thấy
+            // cùng 1 candidate kế tiếp và va nhau tiếp. → hậu tố = số thứ tự đã có + bước nhảy ngẫu nhiên nhỏ.
+            const base = String(contractCode).replace(/-\d+$/, '');
+            const cur = /-(\d+)$/.exec(contractCode);
+            const n = (cur ? Number(cur[1]) : 1) + 1 + Math.floor(Math.random() * 3);
+            contractCode = `${base}-${n}`;
+            // vẫn tôn trọng existsFn để không nhảy quá số đã dùng (best-effort)
+            let guard = 0;
+            while (guard++ < 20 && await existsFn(contractCode)) {
+                const m = /-(\d+)$/.exec(contractCode);
+                contractCode = `${base}-${Number(m[1]) + 1}`;
+            }
         }
     }
 

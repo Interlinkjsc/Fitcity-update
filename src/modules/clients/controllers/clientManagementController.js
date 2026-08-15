@@ -242,47 +242,47 @@ exports.deleteClient = async (req, res, next) => {
 };
 
 
-// Bug 23/7 A16: Xuất danh sách khách hàng ra Excel (.xlsx)
+/* ============================================================================
+ * Rp 15/8 (158.xlsx v2) — XUẤT / MẪU / IMPORT khách hàng dùng CHUNG 1 CONTRACT:
+ *   src/modules/clients/clientImportSchema.js (cột, alias, required, normalize, validate, format)
+ *   src/modules/clients/resolveBranch.js      (chi nhánh: fail-safe, lỗi đúng nguyên nhân)
+ * Round-trip bắt buộc: file "Xuất Excel" → thêm dòng → import phải chạy; dòng cũ báo trùng, không MISSING_BRANCH sai.
+ * ========================================================================== */
+const clientImportSchema = require('../clientImportSchema');
+const { resolveBranch, loadBranchCache } = require('../resolveBranch');
+
+// chống formula injection khi xuất Excel (=, +, -, @ đầu ô)
+function safeCell(v) {
+    const t = v == null ? '' : String(v);
+    return /^[=+\-@]/.test(t) ? "'" + t : t;
+}
+
+// Bug 23/7 A16 + Rp15/8 v2: Xuất danh sách khách hàng ra Excel (.xlsx) — cột từ schema chung
 exports.exportClients = async (req, res, next) => {
     try {
         const ExcelJS = require('exceljs');
         const User = require('../../users/models/userModel.js');
         const filters = { role: 'Client' };
-        if (req.session.user.role === 'Manager' && req.session.user.branch) {
-            filters.branch = req.session.user.branch;
+        if (req.session.user.role === 'Manager') {
+            // fail-closed: Manager chưa gán chi nhánh → không xuất gì
+            filters.branch = req.session.user.branch || null;
         }
         const clients = await User.find(filters).populate('branch', 'name').sort({ createdAt: -1 });
 
         const wb = new ExcelJS.Workbook();
+        wb.creator = 'FitCity ERP';
         const ws = wb.addWorksheet('Khách hàng');
-        ws.columns = [
-            { header: 'Họ tên', key: 'name', width: 24 },
-            { header: 'Số điện thoại', key: 'phone', width: 16 },
-            { header: 'Email', key: 'email', width: 26 },
-            { header: 'Số CCCD', key: 'cccd', width: 18 },
-            { header: 'Giới tính', key: 'gender', width: 10 },
-            { header: 'Ngày sinh', key: 'dob', width: 14 },
-            { header: 'Địa chỉ', key: 'address', width: 30 },
-            { header: 'Chi nhánh', key: 'branch', width: 22 },
-            { header: 'Trạng thái', key: 'status', width: 12 }
-        ];
+        const cols = clientImportSchema.getExportColumns();
+        ws.columns = cols.map(f => ({ header: f.header, key: f.key, width: f.excel.width }));
         ws.getRow(1).font = { bold: true };
-        // Rp27/7 A3: ép cột SĐT/CCCD định dạng TEXT để Excel không nuốt số 0 đầu khi khách mở/sửa file
-        ws.getColumn('phone').numFmt = '@';
-        ws.getColumn('cccd').numFmt = '@';
-        clients.forEach(c => {
-            ws.addRow({
-                name: c.name || '',
-                phone: c.phone || '',
-                email: (c.email && !String(c.email).includes(':')) ? c.email : '',
-                cccd: c.cccdNumber || '',
-                gender: c.gender || '',
-                dob: c.dob ? new Date(c.dob).toLocaleDateString('vi-VN') : '',
-                address: c.address || '',
-                branch: c.branch ? c.branch.name : '',
-                status: c.status || ''
-            });
-        });
+        cols.forEach(f => { if (f.excel.numFmt) ws.getColumn(f.key).numFmt = f.excel.numFmt; });
+        for (const c of clients) {
+            const row = clientImportSchema.formatExportRow(c);
+            const out = {};
+            cols.forEach(f => { out[f.key] = safeCell(row[f.key]); });
+            ws.addRow(out);
+        }
+        ws.views = [{ state: 'frozen', ySplit: 1 }];
 
         res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         res.setHeader('Content-Disposition', `attachment; filename="danh_sach_kh_${Date.now()}.xlsx"`);
@@ -291,132 +291,35 @@ exports.exportClients = async (req, res, next) => {
     } catch (err) { next(err); }
 };
 
-// Bug 23/7 A16: Import danh sách khách hàng từ Excel/CSV
-exports.importClients = async (req, res, next) => {
-    try {
-        if (!req.importFile || !req.importFile.path) {
-            req.flash('error_msg', 'Chưa chọn file danh sách (.xlsx hoặc .csv).');
-            return res.redirect('/admin/clients/list');
-        }
-        const ExcelJS = require('exceljs');
-        const fs = require('fs');
-        const wb = new ExcelJS.Workbook();
-        const path = req.importFile.path;
-        if (/\.csv$/i.test(req.importFile.filename || path)) {
-            await wb.csv.readFile(path);
-        } else {
-            await wb.xlsx.readFile(path);
-        }
-        const ws = wb.worksheets[0];
-        if (!ws) {
-            try { fs.unlinkSync(path); } catch (_) {}
-            req.flash('error_msg', 'File không có sheet dữ liệu.');
-            return res.redirect('/admin/clients/list');
-        }
-        let created = 0, skipped = 0;
-        const skipReasons = [];
-
-        // Rp27/7 A3 + Rp15/8 ISSUE 3: chuẩn hoá cell, khôi phục số 0 đầu, AUTO-DETECT HEADER theo tên cột
-        const { cellText, normalizePhone, normalizeCccd, detectHeader } = require('../../../utils/importNormalize');
-        const hdr = detectHeader(ws, ['name', 'phone']);
-        if (!hdr) {
-            try { fs.unlinkSync(path); } catch (_) {}
-            req.flash('error_msg', 'Không tìm thấy dòng tiêu đề trong 10 dòng đầu. File cần có cột "Họ tên" và "Số điện thoại" (tải file mẫu ở nút "Tải mẫu import").');
-            return res.redirect('/admin/clients/list');
-        }
-        if (hdr.missing.length) {
-            try { fs.unlinkSync(path); } catch (_) {}
-            const vi = { name: 'Họ tên', phone: 'Số điện thoại' };
-            req.flash('error_msg', `File thiếu cột bắt buộc: ${hdr.missing.map(k => vi[k] || k).join(', ')}. Không đọc theo vị trí cột để tránh nhầm dữ liệu — tải file mẫu và điền đúng tiêu đề.`);
-            return res.redirect('/admin/clients/list');
-        }
-        const col = hdr.map;
-        const get = (row, key) => (col[key] != null ? cellText(row, col[key]) : '');
-
-        const rows = [];
-        ws.eachRow((row, idx) => { if (idx > hdr.headerRow) rows.push({ row, idx }); });
-        const Branch = require('../../crm/models/branchModel.js');
-        const seenPhones = new Set();
-        for (const { row, idx } of rows) {
-            const name = get(row, 'name');
-            const phone = normalizePhone(get(row, 'phone'));
-            const email = get(row, 'email');
-            const branchName = get(row, 'branch');
-            // dòng trống hoàn toàn → bỏ qua âm thầm (không tính là lỗi)
-            if (!name && !phone && !email) continue;
-            if (!name) { skipped++; skipReasons.push(`Dòng ${idx}: thiếu tên`); continue; }
-            if (!phone) { skipped++; skipReasons.push(`Dòng ${idx}: thiếu SĐT`); continue; }
-            if (!/^0\d{9}$/.test(phone)) { skipped++; skipReasons.push(`Dòng ${idx}: SĐT "${phone}" không hợp lệ (cần 10 số bắt đầu bằng 0)`); continue; }
-            if (seenPhones.has(phone)) { skipped++; skipReasons.push(`Dòng ${idx}: SĐT ${phone} trùng với dòng khác trong file`); continue; }
-            const cccd = normalizeCccd(get(row, 'cccd'));
-            if (cccd && !/^\d{12}$/.test(cccd)) { skipped++; skipReasons.push(`Dòng ${idx}: CCCD "${cccd}" không hợp lệ (phải đủ 12 số)`); continue; }
-            try {
-                let branchId = req.session.user.branch;
-                // Bảo mật (codex review 2): Manager không có chi nhánh → không import (fail-closed).
-                if (req.session.user.role === 'Manager' && !branchId) { skipped++; skipReasons.push(`Dòng ${idx}: tài khoản Manager chưa gán chi nhánh`); continue; }
-                if (branchName && req.session.user.role !== 'Manager') {
-                    const b = await Branch.findOne({ name: new RegExp('^' + branchName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', 'i') }).select('_id').lean();
-                    if (b) branchId = b._id;
-                }
-                let dob;
-                const dobRaw = get(row, 'dob');
-                if (dobRaw) {
-                    const m = /^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})$/.exec(dobRaw);
-                    if (m) dob = new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]));
-                    else if (!Number.isNaN(new Date(dobRaw).getTime())) dob = new Date(dobRaw);
-                }
-                await exports._createClientFromImport({ name, phone, email: email || `import_${Date.now()}_${created}@fitcity.temp`, branch: branchId,
-                    cccdNumber: cccd || undefined,
-                    gender: get(row, 'gender') || undefined,
-                    address: get(row, 'address') || undefined,
-                    dob: dob || undefined });
-                seenPhones.add(phone);
-                created++;
-            } catch (e) {
-                skipped++;
-                const m = e && e.message ? e.message : '';
-                skipReasons.push(`Dòng ${idx}: ${/duplicate|E11000|trùng|exist/i.test(m) ? 'SĐT/email đã tồn tại trong hệ thống' : (m && m.length < 120 ? m : 'dữ liệu không hợp lệ')}`);
-            }
-        }
-        try { fs.unlinkSync(path); } catch (_) {}
-        // Rp15/8: phân biệt rõ 3 mức — thành công / một phần / thất bại hoàn toàn
-        let level, msg;
-        if (created > 0 && skipped === 0) { level = 'success_msg'; msg = `Import THÀNH CÔNG: tạo mới ${created} khách hàng.`; }
-        else if (created > 0) { level = 'success_msg'; msg = `Import MỘT PHẦN: tạo mới ${created} khách hàng, bỏ qua ${skipped} dòng.`; }
-        else { level = 'error_msg'; msg = `Import THẤT BẠI: không tạo được khách hàng nào (bỏ qua ${skipped} dòng).`; }
-        if (skipReasons.length) msg += ' Chi tiết: ' + skipReasons.slice(0, 8).join('; ') + (skipReasons.length > 8 ? ` … (+${skipReasons.length - 8} dòng khác)` : '');
-        req.flash(level, msg);
-        res.redirect('/admin/clients/list');
-    } catch (err) {
-        req.flash('error_msg', 'Lỗi đọc file import: ' + err.message);
-        res.redirect('/admin/clients/list');
-    }
-};
-
-// Rp15/8 (158.xlsx ISSUE 3): file MẪU import chính thức — cột chuẩn, SĐT/CCCD định dạng TEXT, 2 dòng ví dụ.
+// Rp15/8 v2: file MẪU import — cột importable từ schema; hướng dẫn nằm ở SHEET RIÊNG (không lẫn vào vùng dữ liệu)
 exports.downloadImportTemplate = async (req, res, next) => {
     try {
         const ExcelJS = require('exceljs');
         const wb = new ExcelJS.Workbook();
-        const ws = wb.addWorksheet('Mau import KH');
-        ws.columns = [
-            { header: 'Họ tên', key: 'name', width: 24 },
-            { header: 'Số điện thoại', key: 'phone', width: 16 },
-            { header: 'Email', key: 'email', width: 26 },
-            { header: 'Số CCCD', key: 'cccd', width: 18 },
-            { header: 'Giới tính', key: 'gender', width: 10 },
-            { header: 'Ngày sinh', key: 'dob', width: 14 },
-            { header: 'Địa chỉ', key: 'address', width: 30 },
-            { header: 'Chi nhánh', key: 'branch', width: 22 }
-        ];
+        wb.creator = 'FitCity ERP';
+        const ws = wb.addWorksheet('Danh sách KH');
+        const cols = clientImportSchema.getTemplateColumns();
+        ws.columns = cols.map(f => ({ header: f.header, key: f.key, width: f.excel.width }));
         ws.getRow(1).font = { bold: true };
-        ws.getColumn('phone').numFmt = '@';
-        ws.getColumn('cccd').numFmt = '@';
-        ws.getColumn('dob').numFmt = '@';
-        ws.addRow({ name: 'Nguyễn Văn A', phone: '0912345678', email: 'a@example.com', cccd: '079212345678', gender: 'Nam', dob: '15/08/1990', address: '12 Lê Lợi, Q1', branch: '' });
-        ws.addRow({ name: 'Trần Thị B', phone: '0987654321', email: '', cccd: '', gender: 'Nữ', dob: '', address: '', branch: '' });
-        const note = ws.addRow({ name: 'Ghi chú: giữ nguyên tiêu đề cột; SĐT 10 số bắt đầu bằng 0; xoá 2 dòng ví dụ trước khi import.' });
-        note.font = { italic: true, color: { argb: 'FF64748B' } };
+        cols.forEach(f => { if (f.excel.numFmt) ws.getColumn(f.key).numFmt = f.excel.numFmt; });
+        ws.addRow({ name: 'Nguyễn Văn A', phone: '0912345678', email: 'a@example.com', cccd: '079212345678', gender: 'Nam', dob: '15/08/1990', address: '12 Lê Lợi, Q1', branch: 'FITCITY PARK12 TIMECITY' });
+        ws.addRow({ name: 'Trần Thị B', phone: '0987654321', email: '', cccd: '', gender: 'Nữ', dob: '', address: '', branch: 'FITCITY PARK12 TIMECITY' });
+        ws.views = [{ state: 'frozen', ySplit: 1 }];
+
+        const guide = wb.addWorksheet('Hướng dẫn');
+        guide.columns = [{ header: 'Cột', key: 'c', width: 18 }, { header: 'Bắt buộc', key: 'r', width: 10 }, { header: 'Ghi chú', key: 'n', width: 70 }];
+        guide.getRow(1).font = { bold: true };
+        const notes = {
+            name: 'Họ tên đầy đủ', phone: '10 số bắt đầu bằng 0 (giữ định dạng chữ để không mất số 0)',
+            email: 'Không bắt buộc; nếu có phải đúng định dạng và chưa dùng cho khách khác',
+            cccd: '12 số (không bắt buộc)', gender: 'Nam / Nữ / Khác', dob: 'dd/mm/yyyy (ví dụ 15/08/1990)',
+            address: 'Không bắt buộc', branch: 'Ghi ĐÚNG tên chi nhánh như trong hệ thống (không phân biệt hoa/thường, khoảng trắng)'
+        };
+        cols.forEach(f => guide.addRow({ c: f.header, r: f.required ? 'Có' : 'Không', n: notes[f.key] || '' }));
+        guide.addRow({});
+        guide.addRow({ c: 'Lưu ý', n: 'Xoá 2 dòng ví dụ trong sheet "Danh sách KH" trước khi import. Không đổi tên cột. File "Xuất Excel" cũng import lại được: dòng khách cũ sẽ báo trùng SĐT/email và bị bỏ qua, dòng mới sẽ được tạo.' });
+        guide.addRow({ c: 'Chi nhánh hiện có', n: (await require('../../crm/models/branchModel.js').find({ status: 'Open' }).select('name').lean()).map(b => b.name).join(' | ') });
+
         res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         res.setHeader('Content-Disposition', 'attachment; filename="Mau_import_khach_hang.xlsx"');
         await wb.xlsx.write(res);
@@ -424,12 +327,152 @@ exports.downloadImportTemplate = async (req, res, next) => {
     } catch (err) { next(err); }
 };
 
-exports._createClientFromImport = async (data) => {
+// Bug 23/7 A16 + Rp15/8 v2: Import danh sách khách hàng từ Excel/CSV theo schema chung
+exports.importClients = async (req, res, next) => {
+    const fs = require('fs');
+    const path = req.importFile && req.importFile.path;
+    const cleanup = () => { if (path) { try { fs.unlinkSync(path); } catch (_) {} } };
+    try {
+        if (!path) {
+            req.flash('error_msg', 'Chưa chọn file danh sách (.xlsx hoặc .csv).');
+            return res.redirect('/admin/clients/list');
+        }
+        const result = await exports._importClientsFromFile(path, req.importFile.filename, req.session.user);
+        req.flash(result.level, result.message);
+        return res.redirect('/admin/clients/list');
+    } catch (err) {
+        req.flash('error_msg', 'Lỗi đọc file import: ' + (err && err.message ? err.message : 'không rõ'));
+        return res.redirect('/admin/clients/list');
+    } finally {
+        cleanup(); // luôn xoá file tạm — kể cả khi parse/service lỗi
+    }
+};
+
+/**
+ * Lõi import — tách riêng để test round-trip trực tiếp.
+ * @returns {{ level:'success_msg'|'error_msg', message:string, created:number, skipped:number, skipReasons:string[], createdIds:ObjectId[] }}
+ */
+exports._importClientsFromFile = async (path, filename, sessionUser) => {
+    const ExcelJS = require('exceljs');
+    const { cellText, detectHeader } = require('../../../utils/importNormalize');
+    const wb = new ExcelJS.Workbook();
+    if (/\.csv$/i.test(filename || path)) await wb.csv.readFile(path);
+    else await wb.xlsx.readFile(path);
+    // Ưu tiên sheet dữ liệu (bỏ qua sheet "Hướng dẫn" của template)
+    const ws = wb.worksheets.find(w => !/^h(ư|u)(ớ|o)ng d(ẫ|a)n$/i.test(w.name || '')) || wb.worksheets[0];
+    if (!ws) return { level: 'error_msg', message: 'File không có sheet dữ liệu.', created: 0, skipped: 0, skipReasons: [], createdIds: [] };
+
+    const requiredKeys = clientImportSchema.getImportRequiredKeys();
+    const hdr = detectHeader(ws, requiredKeys, { aliases: clientImportSchema.getHeaderAliases() });
+    if (!hdr) {
+        return { level: 'error_msg', created: 0, skipped: 0, skipReasons: [], createdIds: [],
+            message: `Không tìm thấy dòng tiêu đề trong 10 dòng đầu. File cần có các cột: ${requiredKeys.map(clientImportSchema.fieldLabel).join(', ')} (tải file mẫu ở nút "Tải mẫu import").` };
+    }
+    if (hdr.missing.length) {
+        return { level: 'error_msg', created: 0, skipped: 0, skipReasons: [], createdIds: [],
+            message: `File thiếu cột bắt buộc: ${hdr.missing.map(clientImportSchema.fieldLabel).join(', ')}. Không đọc theo vị trí cột để tránh nhầm dữ liệu — tải file mẫu và điền đúng tiêu đề.` };
+    }
+    if (hdr.ambiguous && hdr.ambiguous.length) {
+        return { level: 'error_msg', created: 0, skipped: 0, skipReasons: [], createdIds: [],
+            message: `File có nhiều cột cùng ý nghĩa: ${hdr.ambiguous.map(clientImportSchema.fieldLabel).join(', ')}. Giữ lại 1 cột cho mỗi trường.` };
+    }
+
+    const branchCache = await loadBranchCache();
+    const importableKeys = clientImportSchema.getTemplateColumns().map(f => f.key);
+    const get = (row, key) => (hdr.map[key] != null ? cellText(row, hdr.map[key]) : '');
+
+    let created = 0, skipped = 0;
+    const skipReasons = [];
+    const createdIds = [];
+    const seenPhones = new Set();
+    const rows = [];
+    ws.eachRow((row, idx) => { if (idx > hdr.headerRow) rows.push({ row, idx }); });
+
+    for (const { row, idx } of rows) {
+        const rawByKey = {};
+        importableKeys.forEach(k => { rawByKey[k] = get(row, k); });
+        // dòng trống hoàn toàn / dòng ghi chú (chỉ có 1 ô text không phải tên+SĐT) → bỏ qua âm thầm
+        const nonEmpty = importableKeys.filter(k => rawByKey[k] !== '' && rawByKey[k] != null);
+        if (nonEmpty.length === 0) continue;
+        if (nonEmpty.length === 1 && !rawByKey.phone && /^(ghi ch[uú]|l[uư]u [yý]|note)/i.test(String(rawByKey.name || ''))) continue;
+
+        const { values, errors } = clientImportSchema.normalizeAndValidateRow(rawByKey);
+        if (errors.length) { skipped++; skipReasons.push(`Dòng ${idx}: ${errors.join('; ')}`); continue; }
+        if (seenPhones.has(values.phone)) { skipped++; skipReasons.push(`Dòng ${idx}: SĐT ${values.phone} trùng với dòng khác trong file`); continue; }
+
+        const br = resolveBranch(values.branch, sessionUser, branchCache);
+        if (br.error) { skipped++; skipReasons.push(`Dòng ${idx}: ${br.message}`); continue; }
+
+        try {
+            await exports._createClientFromImport({
+                name: values.name, phone: values.phone,
+                email: values.email || `import_${require('crypto').randomUUID()}@fitcity.temp`,
+                branch: br.branchId,
+                cccdNumber: values.cccd || undefined,
+                gender: values.gender || undefined,
+                address: values.address || undefined,
+                dob: values.dob || undefined
+            }, sessionUser && sessionUser.id).then(doc => { if (doc && doc._id) createdIds.push(doc._id); });
+            seenPhones.add(values.phone);
+            created++;
+        } catch (e) {
+            skipped++;
+            const code = e && e.code;
+            const msg = e && e.message ? e.message : '';
+            let reason;
+            if (code === 'DUPLICATE_PHONE') reason = `trùng SĐT — ${msg}`;
+            else if (code === 'DUPLICATE_EMAIL') reason = `trùng email — email ${values.email} đã dùng cho khách khác`;
+            else if (code === 'MISSING_BRANCH' || code === 'INVALID_BRANCH') reason = `chi nhánh không hợp lệ (${msg})`;
+            else if (code === 'INVALID_NAME' || code === 'INVALID_EMAIL' || code === 'INVALID_STATUS' || code === 'INVALID_PASSWORD') reason = msg;
+            else if (e && e.name === 'ValidationError') reason = Object.values(e.errors || {}).map(x => x.message).join(', ') || 'dữ liệu không hợp lệ';
+            else if (/E11000|duplicate/i.test(msg)) reason = 'SĐT/email/CCCD đã tồn tại';
+            else reason = msg && msg.length < 140 ? msg : 'dữ liệu không hợp lệ';
+            skipReasons.push(`Dòng ${idx}: ${reason}`);
+        }
+    }
+
+    let level, message;
+    if (created > 0 && skipped === 0) { level = 'success_msg'; message = `Import THÀNH CÔNG: tạo mới ${created} khách hàng.`; }
+    else if (created > 0) { level = 'success_msg'; message = `Import MỘT PHẦN: tạo mới ${created} khách hàng, bỏ qua ${skipped} dòng.`; }
+    else if (skipped === 0) { level = 'error_msg'; message = 'File không có dòng dữ liệu khách hàng nào (sau dòng tiêu đề).'; }
+    else { level = 'error_msg'; message = `Import THẤT BẠI: không tạo được khách hàng nào (bỏ qua ${skipped} dòng).`; }
+    if (skipReasons.length) message += ' Chi tiết: ' + skipReasons.slice(0, 8).join('; ') + (skipReasons.length > 8 ? ` … (+${skipReasons.length - 8} dòng khác)` : '');
+    return { level, message, created, skipped, skipReasons, createdIds };
+};
+
+exports._createClientFromImport = async (data, importedBy) => {
     const clientManagementService = require('../services/clientManagementService');
+    const { ClientServiceError } = clientManagementService;
     const crypto = require('crypto');
-    return clientManagementService.createClient({
-        ...data,
-        password: crypto.randomBytes(5).toString('hex'),
-        status: 'Active'
-    });
+    const { hash } = require('../../../utils/encryption');
+    const Reservation = require('../models/clientImportReservationModel');
+
+    // QA1 [HIGH]: đặt chỗ SĐT ATOMIC (unique index) TRƯỚC khi tạo user → 2 import đồng thời cùng SĐT
+    // chỉ 1 request thắng; request kia nhận E11000 → DUPLICATE_PHONE. Không đụng users.phoneHash legacy.
+    const phoneHash = hash(String(data.phone));
+    const mongoose = require('mongoose');
+    const importedById = importedBy && mongoose.Types.ObjectId.isValid(String(importedBy)) ? importedBy : null;
+    let reservation;
+    try {
+        reservation = await Reservation.create({ phoneHash, importedBy: importedById });
+    } catch (e) {
+        if (e && e.code === 11000) {
+            throw new ClientServiceError(`SĐT ${data.phone} đã tồn tại (đang/đã được import)`, 'DUPLICATE_PHONE');
+        }
+        throw e;
+    }
+    try {
+        const doc = await clientManagementService.createClient({
+            ...data,
+            password: crypto.randomBytes(5).toString('hex'),
+            status: 'Active',           // Trạng thái từ file export KHÔNG được import (bỏ qua có chủ đích)
+            __checkDuplicatePhone: true // vẫn kiểm tra khách LEGACY đã có SĐT này trong users
+        });
+        await Reservation.updateOne({ _id: reservation._id }, { $set: { createdUser: doc._id } }).catch(() => {});
+        return doc;
+    } catch (e) {
+        // tạo user thất bại (trùng email/legacy phone/validation) → trả chỗ để không khoá nhầm SĐT
+        await Reservation.deleteOne({ _id: reservation._id }).catch(() => {});
+        throw e;
+    }
 };

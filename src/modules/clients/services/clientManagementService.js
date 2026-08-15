@@ -95,6 +95,16 @@ exports.createClient = async (payload) => {
     if (existing) {
         throw new ClientServiceError('Email này đã được sử dụng!', 'DUPLICATE_EMAIL');
     }
+    // Rp15/8 v2 (import KH): chặn trùng SĐT theo phoneHash — trước đây chỉ chặn email nên re-import
+    // file export (email trống → email tạm mới) tạo TRÙNG khách cùng SĐT. Chỉ áp dụng khi caller yêu cầu
+    // (import) để không phá luồng tạo tay hiện hữu (DB prod đang có 17 nhóm trùng phone legacy).
+    if (payload && payload.__checkDuplicatePhone && data.phone) {
+        const dupPhone = await User.findOne({ role: 'Client', phoneHash: hash(String(data.phone)) }).select('_id name').lean();
+        if (dupPhone) {
+            throw new ClientServiceError(`SĐT ${data.phone} đã tồn tại (khách "${dupPhone.name || ''}")`, 'DUPLICATE_PHONE');
+        }
+    }
+    delete data.__checkDuplicatePhone;
 
     const branchId = data?.branch;
     if (!branchId || !mongoose.Types.ObjectId.isValid(String(branchId))) {

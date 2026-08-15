@@ -58,34 +58,40 @@ const HEADER_ALIASES = {
 
 /**
  * Tìm dòng header trong 10 dòng đầu + map key → chỉ số cột.
- * @returns {{ headerRow: number, map: Object<string, number>, missing: string[] }|null}
+ * Rp15/8 v2: nhận aliases từ schema (opts.aliases) để export/template/import dùng CHUNG 1 contract;
+ * phát hiện 2 cột cùng map 1 field (ambiguous) → báo lỗi thay vì lấy bừa cột đầu.
+ * @returns {{ headerRow: number, map: Object<string, number>, missing: string[], ambiguous: string[] }|null}
  */
-function detectHeader(ws, requiredKeys = ['name', 'phone']) {
+function detectHeader(ws, requiredKeys = ['name', 'phone'], opts = {}) {
+    const aliasesByKey = opts.aliases || HEADER_ALIASES;
     const maxScan = Math.min(ws.rowCount || 10, 10);
     let best = null;
     for (let r = 1; r <= maxScan; r++) {
         const row = ws.getRow(r);
         const map = {};
-        const colCount = row.cellCount || (ws.columnCount || 0);
-        for (let c = 1; c <= Math.max(colCount, ws.columnCount || 0); c++) {
+        const dup = new Set();
+        const colCount = Math.max(row.cellCount || 0, ws.columnCount || 0);
+        for (let c = 1; c <= colCount; c++) {
             const raw = cellText(row, c);
             if (!raw) continue;
             const key = stripDiacritics(raw);
-            for (const [field, aliases] of Object.entries(HEADER_ALIASES)) {
-                if (map[field] != null) continue;
-                if (aliases.includes(key) || aliases.some(a => key === a || key.startsWith(a + ' ') || key.endsWith(' ' + a))) {
-                    map[field] = c;
-                    break;
-                }
+            for (const [field, aliases] of Object.entries(aliasesByKey)) {
+                const hit = aliases.includes(key) || aliases.some(a => key === a || key.startsWith(a + ' ') || key.endsWith(' ' + a));
+                if (!hit) continue;
+                if (map[field] != null) dup.add(field); else map[field] = c;
+                break;
             }
         }
         const found = Object.keys(map).length;
-        if (found >= 2 && (!best || found > best.found)) best = { headerRow: r, map, found };
-        if (best && best.found >= 5) break;
+        if (found < 2) continue;
+        // QA1 [LOW]: quét ĐỦ 10 dòng, không dừng sớm; xếp hạng: đủ required > không ambiguous > nhiều field > dòng trên
+        const hasRequired = requiredKeys.every(k => map[k] != null) ? 1 : 0;
+        const score = hasRequired * 1000 + (dup.size === 0 ? 100 : 0) + found;
+        if (!best || score > best.score) best = { headerRow: r, map, found, ambiguous: [...dup], score };
     }
     if (!best) return null;
     const missing = requiredKeys.filter(k => best.map[k] == null);
-    return { headerRow: best.headerRow, map: best.map, missing };
+    return { headerRow: best.headerRow, map: best.map, missing, ambiguous: best.ambiguous };
 }
 
 module.exports = { cellText, normalizePhone, normalizeCccd, detectHeader, stripDiacritics, HEADER_ALIASES };
