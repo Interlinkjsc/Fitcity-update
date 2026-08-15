@@ -175,7 +175,7 @@ const contractSchema = new mongoose.Schema({
     }
 }, { timestamps: true });
 
-// Auto-generate contractCode using FMS-YYYY-MM-XXXX format
+// contractCode: xem pre('save') — format DD.MM.YYYY/<viết tắt KH> (utils/contractCode.js)
 // Virtual to calculate current accumulated freeze fee
 contractSchema.virtual('calculatedFreezeFee').get(function() {
     if (!this.isFrozen || !this.frozenAt) return 0;
@@ -191,32 +191,18 @@ contractSchema.set('toJSON', { virtuals: true });
 contractSchema.set('toObject', { virtuals: true });
 
 contractSchema.pre('save', async function(next) {
-    // Bug 23/7 A14: mã HĐ theo format FitCity `DD.MM.YYYY/<tên viết tắt KH>`.
+    // Bug 23/7 A14 + Rp15/8 ISSUE 0: mã HĐ theo format FitCity `DD.MM.YYYY/<tên viết tắt KH>`
+    // (helper dùng chung src/utils/contractCode.js — bỏ dấu tiếng Việt, chống trùng -2/-3).
     // Nếu admin/khách đã tự điền contractCode → giữ nguyên (chỉ chuẩn hoá khoảng trắng).
     if (this.contractCode) {
         this.contractCode = String(this.contractCode).trim();
     } else {
-        const date = new Date();
-        const dd = String(date.getDate()).padStart(2, '0');
-        const mm = String(date.getMonth() + 1).padStart(2, '0');
-        const yyyy = date.getFullYear();
-        const datePart = `${dd}.${mm}.${yyyy}`;
-
-        // Viết tắt tên KH (chữ cái đầu mỗi từ, tối đa 4 ký tự)
-        let initials = 'KH';
-        if (this._clientNameForCode) {
-            const words = String(this._clientNameForCode).trim().split(/\s+/).filter(Boolean);
-            initials = words.map(w => w[0]).join('').toUpperCase().slice(0, 4) || 'KH';
-        }
-
-        // Chống trùng: nếu đã có mã cùng ngày+tên → thêm hậu tố -2, -3...
-        let candidate = `${datePart}/${initials}`;
-        let n = 1;
-        while (await this.constructor.exists({ contractCode: candidate })) {
-            n++;
-            candidate = `${datePart}/${initials}-${n}`;
-        }
-        this.contractCode = candidate;
+        const { generateContractCode } = require('../../../utils/contractCode');
+        const Model = this.constructor;
+        this.contractCode = await generateContractCode(
+            this._clientNameForCode || '',
+            (code) => Model.exists({ contractCode: code }).then(Boolean)
+        );
     }
     
     // Set EndDates initially if they are not set. Note: Validation ensures endDate exists.

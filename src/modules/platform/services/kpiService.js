@@ -202,35 +202,28 @@ async function getPTKPI(user, monthOverride, yearOverride) {
 
     const sessionCount = sessionResult[0]?.sessionCount || 0;
     const workingDays = sessionResult[0]?.workingDays?.length || 0;
-    // Bug 23/7 A17: hoa hồng DẠY = số buổi đã dạy × (rate% × giá/buổi), mọi trạng thái HĐ.
-    const teaching = await payrollService.calculatePTTeachingCommission(user._id, startOfPeriod, endOfPeriod);
-    const commission = teaching.commission;
+    // Rp15/8 (158.xlsx): dùng NGUỒN CHUẨN duy nhất — cùng số với bảng lương & dashboard.
+    const commCalc = await payrollService.calculateStaffCommission(user, startOfPeriod, endOfPeriod);
+    const commission = commCalc.teachingCommission;
+    const timesheetCommission = commCalc.timesheetCommission;
+    const taughtSessionCount = commCalc.teaching.taughtSessionCount;
     const paidContracts = await Contract.find({
         pt: user._id,
         paymentStatus: 'Paid',
         ...dateFilter
     }).select('ptCommission').lean();
     const newContractRevenue = Math.round(revenueResult[0]?.totalNet || 0);
-
-    // Bug 1.1: Hoa hồng chốt HĐ chỉ tính HĐ mà chính PT đó chốt (sales === pt)
-    const salesCommissionRate = user.salesCommissionRate || 0;
-    const salesPaidContracts = await Contract.find({
-        sales: user._id,
-        paymentStatus: 'Paid',
-        ...dateFilter
-    }).select('netAmount basePrice discount').lean();
-    const salesCommissionBase = salesPaidContracts.reduce((sum, c) => {
-        const net = (c.netAmount != null) ? c.netAmount : Math.max(0, (c.basePrice || 0) - (c.discount || 0));
-        return sum + net;
-    }, 0);
-    const salesCommission = Math.round((salesCommissionBase * salesCommissionRate) / 100);
+    const salesCommissionRate = commCalc.sales.rate;
+    const salesCommission = commCalc.salesCommission;
 
     return {
         userId: user._id,
         name: user.name,
         sessionCount,
+        taughtSessionCount,
         workingDays,
         commission,
+        timesheetCommission,
         salesCommission,
         salesCommissionRate,
         paidContractCount: paidContracts.length,
@@ -278,21 +271,16 @@ async function getBranchStaffKPIs(branchId, monthOverride, yearOverride) {
  * phải thấy thưởng comm giống phần Lương & thưởng.
  */
 async function getPersonalSalesCommission(user, month, year) {
+    // Rp15/8: nguồn chuẩn duy nhất (chỉ HĐ Paid, sales = user, rate `??` giữ 0 chủ động)
     const dateFilter = monthRangeFilter(month, year);
-    const salesCommissionRate = user.salesCommissionRate || 5;
-    const contracts = await Contract.find({
-        sales: user._id,
-        paymentStatus: 'Paid',
-        ...dateFilter
-    }).select('netAmount basePrice discount').lean();
-    const netTotal = contracts.reduce((sum, c) => {
-        const net = (c.netAmount != null) ? c.netAmount : Math.max(0, (c.basePrice || 0) - (c.discount || 0));
-        return sum + net;
-    }, 0);
+    const start = dateFilter.createdAt.$gte;
+    // monthRangeFilter dùng $lt đầu tháng sau; engine dùng $lte → lùi 1ms để không dính 00:00:00.000 tháng sau
+    const end = dateFilter.createdAt.$lte || new Date(dateFilter.createdAt.$lt.getTime() - 1);
+    const calc = await payrollService.calculateStaffCommission(user, start, end);
     return {
-        personalCommission: Math.round(netTotal * salesCommissionRate / 100),
-        personalContractCount: contracts.length,
-        salesCommissionRate
+        personalCommission: calc.salesCommission,
+        personalContractCount: calc.sales.eligibleContractCount,
+        salesCommissionRate: calc.sales.rate
     };
 }
 

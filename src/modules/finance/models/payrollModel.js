@@ -38,8 +38,18 @@ const payrollSchema = new mongoose.Schema({
         type: Number,
         default: null
     },
+    // Rp15/8: thù lao ca trực (timesheet) tách khỏi HH dạy — 2 khoản độc lập
+    timesheetCommission: {
+        type: Number,
+        default: null
+    },
     salesCommission: {
         type: Number,
+        default: null
+    },
+    // Rp15/8: audit — snapshot tính lúc nào; Pending có thể refresh, Paid bất biến
+    commissionCalculatedAt: {
+        type: Date,
         default: null
     },
     bonus: {

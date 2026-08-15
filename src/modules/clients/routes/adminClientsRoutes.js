@@ -14,6 +14,7 @@ router.post('/delete/:id', checkPermission('client_management', 'delete'), clien
 router.get('/detail/:id', checkPermission('client_management', 'view'), clientManagementController.getDetail);
 // Bug 23/7 A16: xuất / nhập danh sách khách hàng (Excel/CSV)
 router.get('/export', checkPermission('client_management', 'view'), clientManagementController.exportClients);
+router.get('/import-template', checkPermission('client_management', 'view'), clientManagementController.downloadImportTemplate);
 const { clientImportUploadMiddleware } = require('../../../middlewares/clientImportUploadMiddleware');
 router.post('/import', checkPermission('client_management', 'create'), clientImportUploadMiddleware, clientManagementController.importClients);
 

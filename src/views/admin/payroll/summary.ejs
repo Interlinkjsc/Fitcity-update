@@ -69,14 +69,17 @@
 
 <div class="flex flex-wrap items-center justify-end gap-2 mb-6">
     <div class="flex items-center gap-2">
+        <a href="/admin/payroll/export-xlsx?month=<%= month %>&year=<%= year %>&role=<%= typeof role !== 'undefined' ? role : 'All' %>&branchId=<%= typeof branchId !== 'undefined' ? branchId : 'all' %>&payStatus=<%= typeof payStatus !== 'undefined' ? payStatus : 'all' %>" class="px-3 py-2 bg-emerald-600 text-white rounded-lg text-xs font-bold hover:bg-emerald-700 transition-all inline-flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-sm">table_view</span> Excel (.xlsx)
+        </a>
         <a href="/admin/payroll/export-csv?month=<%= month %>&year=<%= year %>&role=<%= typeof role !== 'undefined' ? role : 'All' %>&branchId=<%= typeof branchId !== 'undefined' ? branchId : 'all' %>&payStatus=<%= typeof payStatus !== 'undefined' ? payStatus : 'all' %>" class="px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-all inline-flex items-center gap-1.5">
             <span class="material-symbols-outlined text-sm">download</span> CSV
         </a>
-        <form method="POST" action="/admin/payroll/auto-suggest" class="inline-block" onsubmit="return confirm('Hệ thống sẽ tạo 2 kỳ lương (ngày 5 & 15) cho tất cả nhân viên đang hoạt động. Tiếp tục?');">
+        <form method="POST" action="/admin/payroll/auto-suggest" class="inline-block" onsubmit="return confirm('Hệ thống sẽ tạo mới HOẶC tính lại các kỳ lương CHỜ TRẢ (ngày 5 & 15) cho tất cả nhân viên đang hoạt động theo dữ liệu hiện tại. Kỳ ĐÃ TRẢ giữ nguyên. Tiếp tục?');">
             <input type="hidden" name="month" value="<%= month %>">
             <input type="hidden" name="year" value="<%= year %>">
             <button type="submit" class="px-3 py-2 bg-indigo-600 text-white rounded-lg text-xs font-bold hover:bg-indigo-700 transition-all inline-flex items-center gap-1.5">
-                <span class="material-symbols-outlined text-sm">bolt</span> Đề xuất 2 Kỳ
+                <span class="material-symbols-outlined text-sm">bolt</span> Đề xuất / Tính lại 2 Kỳ
             </button>
         </form>
         <button onclick="window.print()" class="px-3 py-2 bg-slate-900 text-white rounded-lg text-xs font-bold hover:bg-slate-800 transition-all inline-flex items-center gap-1.5">
@@ -88,7 +91,7 @@
 <style>
     @media print {
         aside, nav, .sidebar, [class*="complementary"],
-        button, a[href*="export-csv"], form[action*="auto-suggest"],
+        button, a[href*="export-csv"], a[href*="export-xlsx"], form[action*="auto-suggest"],
         .flex.gap-3 { display: none !important; }
         main { margin: 0 !important; padding: 0 !important; width: 100% !important; }
         body { background: white !important; }
@@ -165,6 +168,7 @@
                     <th class="px-3 py-3 text-center w-[100px]">Ngày TT</th>
                     <th class="px-3 py-3 text-right">Lương cứng</th>
                     <th class="px-3 py-3 text-right">Hoa hồng dạy</th>
+                    <th class="px-3 py-3 text-right">Thù lao ca trực</th>
                     <th class="px-3 py-3 text-right">Hoa hồng sale</th>
                     <th class="px-3 py-3 text-right">Khấu trừ</th>
                     <th class="px-3 py-3 text-right">Thực nhận</th>
@@ -202,9 +206,21 @@
                                             <div>
                                                 <p class="text-sm font-semibold text-slate-800 leading-tight"><%= p.staff.name %></p>
                                                 <p class="text-[10px] text-slate-400 uppercase tracking-wider">
-                                                    <%= roleVN %> · <%= p.detailCount %> <%= p.staff.role === 'PT' ? 'đơn vị' : 'HĐ' %>
+                                                    <%- /* Rp15/8: count tách theo loại, không còn "N đơn vị" mơ hồ */ '' %>
+                                                    <%= roleVN %>
+                                                    <% if (p.staff.role === 'PT') { %>
+                                                        · <%= p.taughtCount || 0 %> buổi dạy
+                                                        <% if (p.commissionSource && p.commissionSource !== 'contract') { %>· <%= p.shiftCount || 0 %> ca trực<% } %>
+                                                    <% } %>
+                                                    · <%= p.salesContractCount || 0 %> HĐ sale
                                                     <% if (p.staff.role === 'PT' && p.commissionSource) { %>
                                                     · <span class="text-amber-600"><%= p.commissionSource %></span>
+                                                    <% } %>
+                                                    <% if (p.warnings && p.warnings.length) { %>
+                                                    · <span class="text-rose-500" title="<%= p.warnings.join('; ') %>">⚠</span>
+                                                    <% } %>
+                                                    <% if (p.staff.role === 'PT' && (p.taughtCount || 0) > 0 && p.ptRate === 0) { %>
+                                                    <span class="block text-rose-500 normal-case tracking-normal font-semibold">⚠ % hoa hồng dạy đang cấu hình = 0% → HH dạy = 0 dù có buổi dạy. Nếu không đúng, sửa trong hồ sơ nhân sự.</span>
                                                     <% } %>
                                                 </p>
                                             </div>
@@ -238,39 +254,51 @@
                                     <%= new Intl.NumberFormat('vi-VN').format(Math.round(pr.record ? pr.record.baseSalary : p.halfBase)) %>
                                 </td>
 
-                                <!-- Rp27/7 A2 (QC review 1): record đã chốt dùng SNAPSHOT teachingCommission/salesCommission
-                                     lưu tại thời điểm chốt; record cũ chưa có snapshot → fallback phân bổ theo ước tính. -->
+                                <!-- Rp15/8: 3 khoản tách riêng — HH dạy | Thù lao ca trực | HH sale.
+                                     Record: ưu tiên snapshot (đã refresh nếu Pending); record cũ chưa có snapshot → ước tính hiện tại. -->
                                 <%
                                     const estHalfTeach = p.halfTeaching || 0;
+                                    const estHalfShift = p.halfTimesheet || 0;
                                     const estHalfSales = p.halfSales || 0;
-                                    let cellTeach = estHalfTeach, cellSales = estHalfSales;
+                                    let cellTeach = estHalfTeach, cellShift = estHalfShift, cellSales = estHalfSales;
                                     if (pr.record) {
-                                        if (pr.record.teachingCommission != null || pr.record.salesCommission != null) {
-                                            cellTeach = pr.record.teachingCommission || 0;
-                                            cellSales = pr.record.salesCommission || 0;
+                                        const r = pr.record;
+                                        if (r.teachingCommission != null || r.salesCommission != null || r.timesheetCommission != null) {
+                                            cellTeach = r.teachingCommission || 0;
+                                            cellShift = r.timesheetCommission || 0;
+                                            cellSales = r.salesCommission || 0;
                                         } else {
-                                            const recTotal = pr.record.commission || 0;
-                                            const estTotal = estHalfTeach + estHalfSales;
+                                            const recTotal = r.commission || 0;
+                                            const estTotal = estHalfTeach + estHalfShift + estHalfSales;
                                             if (estTotal > 0) {
                                                 cellTeach = Math.round(recTotal * estHalfTeach / estTotal);
-                                                cellSales = recTotal - cellTeach;
-                                            } else { cellTeach = 0; cellSales = recTotal; }
+                                                cellShift = Math.round(recTotal * estHalfShift / estTotal);
+                                                cellSales = recTotal - cellTeach - cellShift;
+                                            } else { cellTeach = 0; cellShift = 0; cellSales = recTotal; }
                                         }
                                     }
+                                    const fmtPlus = (v) => v > 0 ? '+' + new Intl.NumberFormat('vi-VN').format(v) : '0';
+                                    const cellDeduct = Math.round(pr.record ? pr.record.deductions : p.halfPenalty);
                                 %>
                                 <td class="px-3 py-3 text-right text-xs font-bold tabular-nums <%= cellTeach > 0 ? 'text-green-600' : 'text-slate-400' %>">
-                                    +<%= new Intl.NumberFormat('vi-VN').format(cellTeach) %>
-                                    <% if (p.teachingSource && p.teachingSource !== 'contract') { %>
-                                        <span class="block text-[9px] font-medium text-amber-500"><%= p.teachingSource === 'timesheet' ? '(thù lao ca trực)' : '(hybrid: buổi dạy + ca trực)' %></span>
+                                    <%= fmtPlus(cellTeach) %>
+                                    <% if (p.staff.role === 'PT' && p.ptRate != null) { %>
+                                        <span class="block text-[9px] font-medium text-slate-400"><%= p.ptRate %>%/buổi</span>
                                     <% } %>
                                 </td>
+                                <td class="px-3 py-3 text-right text-xs font-bold tabular-nums <%= cellShift > 0 ? 'text-sky-600' : 'text-slate-400' %>">
+                                    <%= fmtPlus(cellShift) %>
+                                </td>
                                 <td class="px-3 py-3 text-right text-xs font-bold tabular-nums <%= cellSales > 0 ? 'text-amber-600' : 'text-slate-400' %>">
-                                    +<%= new Intl.NumberFormat('vi-VN').format(cellSales) %>
+                                    <%= fmtPlus(cellSales) %>
+                                    <% if (p.salesRate != null && (p.salesContractCount || 0) > 0) { %>
+                                        <span class="block text-[9px] font-medium text-slate-400"><%= p.salesRate %>% × net</span>
+                                    <% } %>
                                 </td>
 
-                                <!-- Khấu trừ -->
-                                <td class="px-3 py-3 text-right text-xs font-medium text-rose-500 tabular-nums">
-                                    -<%= new Intl.NumberFormat('vi-VN').format(Math.round(pr.record ? pr.record.deductions : p.halfPenalty)) %>
+                                <!-- Khấu trừ — Rp15/8: 0 hiển thị "0", không "-0" -->
+                                <td class="px-3 py-3 text-right text-xs font-medium tabular-nums <%= cellDeduct > 0 ? 'text-rose-500' : 'text-slate-400' %>">
+                                    <%= cellDeduct > 0 ? '-' + new Intl.NumberFormat('vi-VN').format(cellDeduct) : '0' %>
                                 </td>
 
                                 <!-- Thực nhận -->
@@ -333,7 +361,7 @@
                     <% }) %>
                 <% } else { %>
                     <tr>
-                        <td colspan="9" class="px-6 py-12 text-center text-slate-400 italic bg-slate-50/20">
+                        <td colspan="10" class="px-6 py-12 text-center text-slate-400 italic bg-slate-50/20">
                             Không tìm thấy nhân viên nào trong kỳ tính lương này.
                         </td>
                     </tr>

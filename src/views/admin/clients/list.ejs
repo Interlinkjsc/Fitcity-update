@@ -10,6 +10,10 @@
         <a href="/admin/clients/export" class="inline-flex items-center px-3 py-2 bg-white border border-slate-200 text-slate-700 font-semibold rounded-lg hover:bg-slate-50 text-sm">
             <span class="material-symbols-outlined text-[18px] mr-1.5">download</span> Xuất Excel
         </a>
+        <%# Rp15/8 ISSUE 3: file mẫu import chính thức (không dùng file export dữ liệu thật làm mẫu) %>
+        <a href="/admin/clients/import-template" class="inline-flex items-center px-3 py-2 bg-white border border-emerald-200 text-emerald-700 font-semibold rounded-lg hover:bg-emerald-50 text-sm" title="Tải file mẫu để điền rồi import">
+            <span class="material-symbols-outlined text-[18px] mr-1.5">description</span> Tải mẫu import
+        </a>
         <form action="/admin/clients/import" method="POST" enctype="multipart/form-data" class="inline-flex items-center gap-2" onsubmit="return this.importFile.files.length ? confirm('Import khách hàng từ file đã chọn?') : (alert('Chọn file .xlsx/.csv trước'), false)">
             <label class="inline-flex items-center px-3 py-2 bg-white border border-slate-200 text-slate-700 font-semibold rounded-lg hover:bg-slate-50 text-sm cursor-pointer">
                 <span class="material-symbols-outlined text-[18px] mr-1.5">upload</span>

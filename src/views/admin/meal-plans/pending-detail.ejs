@@ -78,19 +78,27 @@
 <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 mb-6">
     <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">Phân bổ Macros</p>
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <%# Rp15/8 (158.xlsx ISSUE 1): macros lưu & nhập theo TỶ LỆ % (mealPlanModel + form PT), không phải gram.
+            Không convert giá trị — chỉ sửa đơn vị hiển thị. Gram/bữa tính riêng bởi mealNutritionHelper. %>
         <% const macroItems = [
-            { label: 'Protein', value: mealPlan.macros.protein, color: 'blue', unit: 'g' },
-            { label: 'Carbs', value: mealPlan.macros.carbs, color: 'amber', unit: 'g' },
-            { label: 'Fat', value: mealPlan.macros.fat, color: 'rose', unit: 'g' },
-            { label: 'Fiber', value: mealPlan.macros.fiber, color: 'emerald', unit: 'g' }
-        ]; %>
+            { label: 'Protein', value: mealPlan.macros.protein, color: 'blue' },
+            { label: 'Carbs', value: mealPlan.macros.carbs, color: 'amber' },
+            { label: 'Fat', value: mealPlan.macros.fat, color: 'rose' },
+            { label: 'Fiber', value: mealPlan.macros.fiber, color: 'emerald' }
+        ];
+        const macroSum = macroItems.reduce((s, m) => s + (Number(m.value) || 0), 0); %>
         <% macroItems.forEach(m => { %>
         <div class="bg-<%= m.color %>-50 border border-<%= m.color %>-100 rounded-xl p-4 text-center">
             <p class="text-xs font-semibold text-<%= m.color %>-500 uppercase tracking-wider mb-1"><%= m.label %></p>
-            <p class="text-2xl font-black text-<%= m.color %>-700"><%= m.value || 0 %></p>
-            <p class="text-xs text-<%= m.color %>-400"><%= m.unit %>/ngày</p>
+            <p class="text-2xl font-black text-<%= m.color %>-700"><%= m.value || 0 %><span class="text-base font-bold">%</span></p>
+            <p class="text-xs text-<%= m.color %>-400">tỷ lệ năng lượng/ngày</p>
         </div>
         <% }) %>
+    </div>
+    <% if (macroSum !== 100) { %>
+    <p class="mt-3 text-xs text-amber-600 font-medium">⚠ Tổng phân bổ hiện = <%= macroSum %>% (chuẩn là 100%). PT cần chỉnh lại trước khi duyệt.</p>
+    <% } %>
+    <div class="hidden">
     </div>
 </div>
 <% } %>

@@ -147,24 +147,12 @@ exports.getIncome = async (req, res, next) => {
             if (staff) {
                 const startOfMonth = new Date(year, month - 1, 1);
                 const endOfMonth = new Date(year, month, 0, 23, 59, 59, 999);
-                const { commission } = await payrollService.resolvePTPayrollCommission(
-                    ptId,
-                    startOfMonth,
-                    endOfMonth
-                );
-                // Cộng thêm salesCommission nếu PT cũng là người chốt HĐ
-                const salesContracts = await Contract.find({
-                    sales: ptId,
-                    paymentStatus: 'Paid',
-                    createdAt: { $gte: startOfMonth, $lte: endOfMonth }
-                });
-                const salesRate = staff.salesCommissionRate || 0;
-                const salesComm = salesContracts.length > 0
-                    ? payrollService.calculateSalesCommission(salesContracts, salesRate)
-                    : 0;
-                records = await payrollService.generateBiMonthlyPayroll(staff, commission + salesComm, month, year, {
-                    teaching: commission,
-                    sales: salesComm
+                // Rp15/8: dùng nguồn chuẩn duy nhất (HH dạy + thù lao ca trực + HH sale)
+                const calc = await payrollService.calculateStaffCommission(staff, startOfMonth, endOfMonth);
+                records = await payrollService.generateBiMonthlyPayroll(staff, calc.totalCommission, month, year, {
+                    teaching: calc.teachingCommission,
+                    timesheet: calc.timesheetCommission,
+                    sales: calc.salesCommission
                 });
             }
         }
@@ -227,14 +215,17 @@ exports.updateMealPlan = async (req, res, next) => {
             return res.redirect('/pt/clients');
         }
 
+        // Rp15/8 ISSUE 1: macros là % — validate tổng 100 server-side (không chỉ nhắc ở form)
+        const { normalizeMacros, validateMacros } = require('../../../utils/macroValidate');
+        const macros = normalizeMacros({ protein, carbs, fat, fiber });
+        const macroErr = validateMacros(macros);
+        if (macroErr) {
+            req.flash('error_msg', macroErr);
+            return res.redirect(`/pt/meal-plan/${req.params.id}/edit`);
+        }
         mealPlan.goal = goal;
         mealPlan.dailyCalories = Number(dailyCalories) || 2000;
-        mealPlan.macros = {
-            protein: Number(protein) || 30,
-            carbs: Number(carbs) || 35,
-            fat: Number(fat) || 25,
-            fiber: Number(fiber) || 10
-        };
+        mealPlan.macros = macros;
         await mealPlan.save();
 
         req.flash('success_msg', 'Đã cập nhật chế độ dinh dưỡng thành công!');

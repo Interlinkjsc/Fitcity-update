@@ -110,9 +110,10 @@
     <section class="grid grid-cols-2 gap-4">
         <div class="glass p-6 rounded-[32px] border border-slate-200/60 shadow-sm relative overflow-hidden group">
             <div class="absolute -right-4 -top-4 size-16 bg-primary/5 rounded-full blur-xl group-hover:bg-primary/10 transition-colors"></div>
+            <%# QA1 ISSUE 8: thẻ này phải khớp dòng "Hoa hồng dạy" — chỉ đếm buổi ĐÃ DẠY (Completed/Confirmed) %>
             <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-2">Số buổi đã dạy</p>
-            <div class="text-3xl font-black text-slate-900 italic" data-sessions-count><%= completedSessions %></div>
-            <p class="text-[9px] text-slate-500 mt-1 font-bold uppercase tracking-tighter">Trong tháng này</p>
+            <div class="text-3xl font-black text-slate-900 italic" data-sessions-count><%= typeof taughtSessions !== 'undefined' ? taughtSessions : completedSessions %></div>
+            <p class="text-[9px] text-slate-500 mt-1 font-bold uppercase tracking-tighter">Đã hoàn thành · <%= completedSessions %> buổi có lịch trong tháng</p>
         </div>
         <div class="glass p-6 rounded-[32px] border-2 border-primary/20 shadow-sm relative overflow-hidden group">
             <div class="absolute -right-4 -top-4 size-16 bg-primary/10 rounded-full blur-xl"></div>
@@ -152,10 +153,28 @@
             <div class="flex justify-between items-center text-sm py-3 border-b border-slate-100">
                 <div class="flex items-center gap-2">
                     <span class="material-symbols-outlined text-green-500 text-lg">history_edu</span>
-                    <span class="text-slate-500 font-bold">Hoa hồng dạy (<%= typeof taughtSessions !== 'undefined' ? taughtSessions : completedSessions %> buổi)</span>
+                    <div>
+                        <span class="text-slate-500 font-bold">Hoa hồng dạy (<%= typeof taughtSessions !== 'undefined' ? taughtSessions : completedSessions %> buổi đã dạy)</span>
+                        <% if (typeof ptCommissionRate !== 'undefined' && ptCommissionRate != null) { %>
+                            <span class="block text-[10px] text-slate-400"><%= ptCommissionRate %>% × giá/buổi<%= ptCommissionRate === 0 ? ' — đang cấu hình 0%, liên hệ quản lý nếu chưa đúng' : '' %></span>
+                        <% } %>
+                        <% if (typeof commissionWarnings !== 'undefined' && commissionWarnings && commissionWarnings.length) { %>
+                            <span class="block text-[10px] text-rose-500"><%= commissionWarnings.join('; ') %></span>
+                        <% } %>
+                    </div>
                 </div>
                 <span class="font-black text-green-600">+<%= (estimatedCommission/1000).toLocaleString() %>K</span>
             </div>
+            <% if (typeof timesheetCommission !== 'undefined' && timesheetCommission > 0) { %>
+            <!-- Rp15/8: thù lao ca trực — khoản độc lập với HH dạy (mode chấm công) -->
+            <div class="flex justify-between items-center text-sm py-3 border-b border-slate-100">
+                <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-sky-500 text-lg">schedule</span>
+                    <span class="text-slate-500 font-bold">Thù lao ca trực (<%= typeof approvedShifts !== 'undefined' ? approvedShifts : 0 %> ca)</span>
+                </div>
+                <span class="font-black text-sky-600">+<%= (timesheetCommission/1000).toLocaleString() %>K</span>
+            </div>
+            <% } %>
             <div class="flex justify-between items-center text-sm py-3 border-b border-slate-100">
                 <div class="flex items-center gap-2">
                     <span class="material-symbols-outlined text-amber-500 text-lg">handshake</span>

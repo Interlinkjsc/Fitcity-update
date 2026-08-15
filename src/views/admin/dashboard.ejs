@@ -173,6 +173,15 @@
             <p class="text-[11px] uppercase tracking-wider text-slate-400 font-bold">Doanh thu</p>
             <p class="text-xl font-black text-emerald-600"><%= new Intl.NumberFormat('vi-VN').format(myPerformance.revenue) %> <span class="text-xs font-normal text-slate-400">VNĐ</span></p>
         </div>
+        <!-- Rp15/8: HH sale cá nhân — cùng nguồn với bảng lương (chỉ HĐ đã thanh toán) -->
+        <div>
+            <p class="text-[11px] uppercase tracking-wider text-slate-400 font-bold">Hoa hồng sale</p>
+            <p class="text-xl font-black text-amber-600"><%= new Intl.NumberFormat('vi-VN').format(myPerformance.salesCommission || 0) %> <span class="text-xs font-normal text-slate-400">VNĐ</span></p>
+            <p class="text-[10px] text-slate-400">
+                <%= myPerformance.eligibleContractCount || 0 %> HĐ đã thanh toán
+                <% if (myPerformance.salesCommissionRate != null) { %>· <%= myPerformance.salesCommissionRate %>% × net<% } %>
+            </p>
+        </div>
     </div>
     <% } %>
 

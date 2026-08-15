@@ -109,6 +109,12 @@ describe('More Controller Error Coverage', () => {
         jest.spyOn(Payroll, 'findOne').mockResolvedValue({ status: 'Paid' });
         const payrollService = require('../../src/modules/finance/services/payrollService.js');
         jest.spyOn(payrollService, 'generateBiMonthlyPayroll').mockResolvedValue([{ _id: 'p1' }, { _id: 'p2' }]);
+        // Rp15/8: finalizePayroll giờ tính split qua engine chuẩn → mock engine (không có DB trong unit test)
+        jest.spyOn(payrollService, 'calculateStaffCommission').mockResolvedValue({
+            teachingCommission: 0, timesheetCommission: 0, salesCommission: 0, totalCommission: 0,
+            teaching: { mode: 'contract', taughtSessionCount: 0, approvedShiftCount: 0, contractTeachingCommission: 0, timesheetCommission: 0, ptRate: null },
+            sales: { eligibleContractCount: 0, netAmount: 0, rate: 5 }, warnings: []
+        });
         await payrollController.finalizePayroll(req, res, next);
         // Controller hiện tại không chặn "đã Paid" ở đây; nó luôn tạo 2 kỳ theo service
         expect(req.flash).toHaveBeenCalledWith('success_msg', expect.stringContaining('Đã tạo 2 kỳ lương'));

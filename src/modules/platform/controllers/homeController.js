@@ -294,9 +294,25 @@ exports.getAdminDashboard = async (req, res, next) => {
                 } },
                 { $group: { _id: null, revenue: { $sum: contractScope.NET_AMOUNT_EXPR }, contractCount: { $sum: 1 } } }
             ]);
+            // Rp15/8 (158.xlsx ISSUE 6/7/9): HH sale cá nhân — CÙNG nguồn chuẩn với bảng lương
+            // (payrollService.calculateStaffCommission: chỉ HĐ Paid, sales = tôi, rate của tôi).
+            const meDoc = await User.findById(user.id).select('role salesCommissionRate ptCommissionRate').lean();
+            const pStart = dateFilter.createdAt && dateFilter.createdAt.$gte
+                ? dateFilter.createdAt.$gte
+                : new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+            const pEnd = dateFilter.createdAt && dateFilter.createdAt.$lte
+                ? dateFilter.createdAt.$lte
+                : new Date();
+            const comm = meDoc
+                ? await payrollService.calculateStaffCommission(meDoc, pStart, pEnd)
+                : null;
             myPerformance = {
                 contractCount: myAgg[0] ? myAgg[0].contractCount : 0,
-                revenue: myAgg[0] ? Math.round(myAgg[0].revenue) : 0
+                revenue: myAgg[0] ? Math.round(myAgg[0].revenue) : 0,
+                eligibleContractCount: comm ? comm.sales.eligibleContractCount : 0,
+                eligibleNet: comm ? comm.sales.netAmount : 0,
+                salesCommissionRate: comm ? comm.sales.rate : null,
+                salesCommission: comm ? comm.salesCommission : 0
             };
         }
 
@@ -427,26 +443,23 @@ exports.getPtDashboard = async (req, res, next) => {
         });
         const totalDeductions = violations.reduce((sum, v) => sum + v.penaltyAmount, 0);
 
-        // Rp27/7 A12: hoa hồng dạy = số buổi đã dạy × (rate% × giá/buổi) — cùng công thức payroll/KPI
-        const payrollService = require('../../finance/services/payrollService');
-        const teachingResult = await payrollService.calculatePTTeachingCommission(ptId, startOfMonth, endOfMonth);
-        const estimatedCommission = teachingResult.commission;
-        const taughtSessions = teachingResult.taughtCount;
-
-        // Hoa hồng chốt HĐ: chỉ tính HĐ mà chính PT đó chốt (sales === ptId)
+        // Rp15/8 (158.xlsx ISSUE 8): DÙNG NGUỒN CHUẨN DUY NHẤT — cùng số với bảng lương/KPI.
+        // HH dạy (buổi Completed/Confirmed) + thù lao ca trực (mode timesheet/hybrid) + HH sale (HĐ Paid).
         const ptUserFull = ptUser || await User.findById(ptId).lean();
-        const salesCommissionRate = ptUserFull ? (ptUserFull.salesCommissionRate || 0) : 0;
-        const salesCommissionResult = await Contract.aggregate([
-            { $match: {
-                sales: new mongoose.Types.ObjectId(ptId),
-                paymentStatus: 'Paid',
-                createdAt: { $gte: startOfMonth }
-            }},
-            { $group: { _id: null, total: { $sum: contractScope.NET_AMOUNT_EXPR } } }
-        ]);
-        const salesCommission = ((salesCommissionResult[0]?.total || 0) * salesCommissionRate) / 100;
+        const commCalc = await payrollService.calculateStaffCommission(
+            ptUserFull || { _id: ptId, role: 'PT' }, startOfMonth, endOfMonth
+        );
+        const estimatedCommission = commCalc.teachingCommission;
+        const timesheetCommission = commCalc.timesheetCommission;
+        const taughtSessions = commCalc.teaching.taughtSessionCount;   // chỉ buổi ĐƯỢC TÍNH comm
+        const approvedShifts = commCalc.teaching.approvedShiftCount;
+        const ptCommissionRate = commCalc.teaching.ptRate;
+        const commissionWarnings = commCalc.warnings;
+        const salesCommissionRate = commCalc.sales.rate;
+        const salesCommission = commCalc.salesCommission;
+        const salesEligibleCount = commCalc.sales.eligibleContractCount;
 
-        const totalEstimatedIncome = baseSalary + estimatedCommission + salesCommission - totalDeductions;
+        const totalEstimatedIncome = baseSalary + estimatedCommission + timesheetCommission + salesCommission - totalDeductions;
 
         const recentFeedbacks = await WorkoutSession.find({
             pt: ptId,
@@ -463,8 +476,14 @@ exports.getPtDashboard = async (req, res, next) => {
 
         res.render('pt/dashboard', {
             estimatedCommission,
+            timesheetCommission,
             taughtSessions,
+            approvedShifts,
+            ptCommissionRate,
+            commissionWarnings,
             salesCommission,
+            salesCommissionRate,
+            salesEligibleCount,
             totalEstimatedIncome,
             baseSalary,
             totalDeductions,

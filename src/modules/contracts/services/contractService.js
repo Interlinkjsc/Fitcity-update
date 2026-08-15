@@ -174,32 +174,20 @@ exports.createContract = async (data) => {
         explicit: explicitRevenueSource
     });
 
-    // Bug 23/7 A14: mã HĐ theo format DD.MM.YYYY/<viết tắt KH> — ưu tiên mã khách tự điền.
-    let contractCode = (data.contractCode || '').trim() || undefined;
-    if (!contractCode) {
-        let clientName = '';
+    // Bug 23/7 A14 + Rp15/8 ISSUE 0: mã HĐ DD.MM.YYYY/<viết tắt KH> — helper dùng chung, ưu tiên mã khách tự điền.
+    const userCode = (data.contractCode || '').trim() || undefined;
+    let clientName = '';
+    if (!userCode) {
         try {
             const User = require('../../users/models/userModel');
             const clientDoc = await User.findById(clientId).select('name').lean();
             clientName = clientDoc && clientDoc.name ? clientDoc.name : '';
         } catch (_) { /* fallback: mã chỉ theo ngày */ }
-        const d = new Date();
-        const datePart = `${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(2, '0')}.${d.getFullYear()}`;
-        const words = String(clientName).trim().split(/\s+/).filter(Boolean);
-        const initials = words.map(w => w[0]).join('').toUpperCase().slice(0, 4) || 'KH';
-        let candidate = `${datePart}/${initials}`;
-        try {
-            let n = 1;
-            while (await Contract.exists({ contractCode: candidate })) {
-                n++;
-                candidate = `${datePart}/${initials}-${n}`;
-            }
-        } catch (_) { /* Contract.exists mock có thể thiếu — dùng candidate gốc */ }
-        contractCode = candidate;
     }
+    const { generateContractCode } = require('../../../utils/contractCode');
+    const existsFn = (code) => Contract.exists({ contractCode: code }).then(Boolean);
 
-    const contract = await Contract.create({
-        contractCode,
+    const payload = {
         client: clientId,
         servicePackage: packageId || undefined,
         packageSnapshot: {
@@ -227,7 +215,22 @@ exports.createContract = async (data) => {
         contractStatus: 'Draft',
         paymentStatus: 'Unpaid',
         revenueSource
-    });
+    };
+
+    // QA2 (ISSUE 0): exists()→create() không atomic. Tạo đồng thời cùng viết tắt có thể đụng unique
+    // contractCode → bắt E11000 và sinh candidate KẾ TIẾP rồi create lại (tối đa 5 lần). Mã nhập tay: không retry.
+    let contract;
+    let contractCode = userCode || await generateContractCode(clientName, existsFn);
+    for (let attempt = 1; ; attempt++) {
+        try {
+            contract = await Contract.create({ ...payload, contractCode });
+            break;
+        } catch (e) {
+            const dupCode = e && e.code === 11000 && e.keyPattern && e.keyPattern.contractCode;
+            if (!dupCode || userCode || attempt >= 5) throw e;
+            contractCode = await generateContractCode(clientName, existsFn);
+        }
+    }
 
     return contract;
 };

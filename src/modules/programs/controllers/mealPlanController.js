@@ -43,10 +43,23 @@ exports.getCreateForm = async (req, res, next) => {
 
 exports.saveMealPlan = async (req, res, next) => {
     try {
-        const { contractId, goal, calories, protein, carbs, fat, mealsJson } = req.body;
+        const { contractId, goal, calories, protein, carbs, fat, fiber, mealsJson } = req.body;
         
         const contract = await Contract.findById(contractId);
         if (!contract) return next(new Error('Contract not found'));
+
+        // Rp15/8 ISSUE 1: macros là % — validate tổng 100 server-side.
+        // Form tạo hiện chỉ có protein/carbs/fat → fiber tự bù để tổng = 100 (không âm).
+        const { validateMacros } = require('../../../utils/macroValidate');
+        const pP = Number(protein), pC = Number(carbs), pF = Number(fat);
+        let pFi = fiber === '' || fiber == null ? null : Number(fiber);
+        if (pFi == null) pFi = Math.max(0, 100 - ((pP || 0) + (pC || 0) + (pF || 0)));
+        const macros = { protein: pP || 0, carbs: pC || 0, fat: pF || 0, fiber: pFi };
+        const macroErr = validateMacros(macros);
+        if (macroErr) {
+            req.flash('error_msg', macroErr);
+            return res.redirect(`/pt/meal-plans/create?contractId=${encodeURIComponent(contractId || '')}`);
+        }
 
         const { parseMealFoodsText } = require('../../../utils/mealNutritionHelper');
         const parsedRaw = JSON.parse(mealsJson || '[]');
@@ -81,7 +94,8 @@ exports.saveMealPlan = async (req, res, next) => {
             endDate: planEnd,
             goal,
             dailyCalories: Number(calories),
-            macros: { protein, carbs, fat },
+            // Rp15/8 ISSUE 1: macros = % (đã validate tổng 100 ở trên)
+            macros,
             meals: parsedMeals,
             status: 'pending_admin',
             active: false
